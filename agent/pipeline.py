@@ -225,7 +225,8 @@ def main(argv=None):
     run = Run(a.run_id)
     spec, reqs = a.spec.read_text(), a.requirements.read_text()
     ctx = spec_context(spec, reqs)
-    opts = {"max_tokens": 8000}
+    # Reasoning counts toward output; 8000 cut off a full module on 31 Oct.
+    opts = {"max_tokens": int(os.environ.get("DAVINCI_MAX_OUTPUT_TOKENS", "24000"))}
     if a.reasoning_effort:
         opts["reasoning_effort"] = a.reasoning_effort
 
@@ -285,6 +286,8 @@ def main(argv=None):
             run.event("diagnosis", attempt=n, label=AI_LABEL, text=diagnosis[:300])
 
         rejection = validate(rtl)
+        if rejection and reply is not None and reply.extra.get("finish_reason") == "length":
+            rejection = f"reply cut off at the output token limit ({opts['max_tokens']} tokens); {rejection}"
         if rejection:
             att.update(status="rejected", measured={"rejection": rejection})
             record["attempts"].append(att)

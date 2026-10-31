@@ -36,6 +36,8 @@ REFERENCE = ROOT / "spec" / "requirements.json"
 SPEC = ROOT / "spec" / "fifo_spec.md"
 AI_LABEL = "AI interpretation · not verified"
 MAX_PAGES = 8
+# Muse Spark's reasoning counts toward output; 8000 truncated a 2-page PDF (31 Oct).
+MAX_OUTPUT_TOKENS = 24000
 IMAGE_MIME = {".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpeg",
               ".webp": "image/webp", ".gif": "image/gif"}
 XID = re.compile(r"^x-[0-9]{8}-[0-9]{6}-[0-9a-f]{4}$")
@@ -112,6 +114,8 @@ def _sha(b: bytes) -> str:
 
 
 def _json_reply(reply: "llm.Reply", what: str) -> dict:
+    if reply.extra.get("finish_reason") == "length":
+        raise llm.LLMError(f"{what}: reply cut off at the output token limit")
     text = reply.text.strip()
     m = re.search(r"\{.*\}", text, flags=re.S)
     try:
@@ -142,7 +146,7 @@ def extract(path: Path, provider: str = "meta", xid: str | None = None) -> dict:
         (d / "extracted.json").write_text(json.dumps(rec, indent=2))
 
     def call(step, messages, schema):
-        opts = {"max_tokens": 8000,
+        opts = {"max_tokens": MAX_OUTPUT_TOKENS,
                 "response_format": {"type": "json_schema", "json_schema": {"name": step, "strict": True,
                                                                            "schema": schema}}}
         try:
@@ -171,7 +175,11 @@ def extract(path: Path, provider: str = "meta", xid: str | None = None) -> dict:
                  f"{json.dumps([{k: r[k] for k in ('id', 'text')} for r in got['requirements']], indent=1)}\n```\n\n"
                  f"## Reference\n\n```json\n{json.dumps([{k: r[k] for k in ('id', 'text')} for r in ref], indent=1)}\n```"}]
         rec["mapping"] = _json_reply(call("map", mmsg, MAP_SCHEMA), "map")["mapping"]
-    except (llm.BudgetError, llm.LLMError):
+    except (llm.BudgetError, llm.LLMError) as e:
+        if rec["status"] == "running":  # the call succeeded but its reply was unusable
+            rec.update(status="aborted", error=str(e)[:500])
+        rec["cost_usd"] = round(sum(c.get("cost_usd", 0) for c in rec["calls"]), 6)
+        save()
         return rec
     rec["comparison"] = compare(rec)
     rec["status"] = "awaiting_approval"
