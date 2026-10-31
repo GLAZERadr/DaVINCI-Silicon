@@ -1,5 +1,7 @@
 # 06 — Risk register and inversion review
 
+> **Update, 31 Oct (after the review):** the P0 items are fixed and tested. R1 (replay reads each run's own `response.md`; the cache archives live replies by content and never overwrites), R2 (no `$`, no directive except `` `timescale ``; model RTL refused outside Docker; secrets removed from the local env), R5 (fail-closed token with `compare_digest`; no client-chosen sandbox), and the pinned hash now covers `verify/run_suite.py` and `verify/mutants.json`. live01 and live02-m1 replay with `reproduced: true` again. `request_match` is false because the system prompt changed, which is the intended drift flag.
+
 Inversion question for each decision: *what would make this fail?* Likelihood (L) and impact (I) are rated H/M/L. Status reflects 31 Oct 2026.
 
 ## 1. Risk register
