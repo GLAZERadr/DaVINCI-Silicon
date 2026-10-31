@@ -2,7 +2,7 @@ RTL ?= rtl/sync_fifo.v
 RUN ?= manual
 IMAGE = davinci-sim:latest
 
-.PHONY: sim mutate weak-demo image sandbox api
+.PHONY: sim mutate weak-demo image sandbox api evidence board
 
 # Local run (needs iverilog + cocotb installed)
 sim:
@@ -33,3 +33,12 @@ weak-demo:
 # HTTP API for the UI (runs execute one at a time in a background worker).
 api:
 	uvicorn api.server:app --port 8000
+
+# Committed evidence bundle for the Evidence Board (live runs + today's-gates replays).
+LIVE ?= live01 live02-m1 live03-pdf
+evidence:
+	python3 scripts/export_evidence.py $(LIVE)
+
+# Static Evidence Board from evidence/ -> web/out (set NEXT_PUBLIC_DAVINCI_API for live replay).
+board:
+	cd web && npm ci --no-audit --no-fund && npx next build

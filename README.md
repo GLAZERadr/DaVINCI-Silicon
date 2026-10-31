@@ -18,7 +18,7 @@ Built for the Meta Global AI Developer Hackathon 2026 (Startup Track, "Push the 
 | Verified loop with bounded repair, evidence `run.json` (`agent/pipeline.py`) | done; 2 live runs + extraction-based live runs |
 | HTTP API: runs, SSE progress, replay, mutation, ledger (`api/server.py`) | done |
 | Image/PDF spec input → extracted requirements → human approval → RTL (`agent/extract.py`) | done |
-| UI | next |
+| Evidence Board: static Next.js site over the committed `evidence/` bundle (`web/`, `make evidence board`) | done; Run Console deferred |
 
 ## Run
 
@@ -32,6 +32,8 @@ python -m agent.pipeline --run-id dry01 --provider fake          # offline loop,
 python -m agent.pipeline --run-id demo01 --seed-bug M1           # seeded bug → repair
 python -m agent.pipeline --run-id sbx01 --sandbox docker        # simulate inside the sandbox
 make api                                                         # HTTP API on :8000
+make evidence                                                    # export live runs + replays to evidence/
+make board                                                       # build the Evidence Board to web/out
 python -m agent.extract spec/fixtures/sf16_datasheet.pdf         # spec page → requirements for approval
 python -m agent.extract --remap <xid>                            # re-run only the mapping step
 python -m agent.extract --approve <xid> --by "Name"              # approve; then run with
