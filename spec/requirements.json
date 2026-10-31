@@ -1,0 +1,15 @@
+{
+  "block": "sync_fifo",
+  "params": {"WIDTH": 8, "DEPTH": 16, "AF_THRESH": 14},
+  "requirements": [
+    {"id": "REQ-01", "text": "Synchronous reset empties the FIFO: count 0, empty 1, dout 0, overflow and underflow 0.", "tests": ["test_reset_state", "test_random_regression"]},
+    {"id": "REQ-02", "text": "Data is read out in the order it was written, including across pointer wraparound.", "tests": ["test_wraparound_order", "test_random_regression"]},
+    {"id": "REQ-03", "text": "full is 1 exactly when DEPTH entries are stored; empty is 1 exactly when none are.", "tests": ["test_full_flag", "test_empty_flag", "test_random_regression"]},
+    {"id": "REQ-04", "text": "A write when full with no read is ignored and pulses overflow for one cycle.", "tests": ["test_overflow", "test_random_regression"]},
+    {"id": "REQ-05", "text": "A read when empty is ignored, pulses underflow for one cycle, and dout holds its value.", "tests": ["test_underflow", "test_random_regression"]},
+    {"id": "REQ-06", "text": "Read and write in the same cycle when full: the oldest word is read, the new word is stored, count stays DEPTH.", "tests": ["test_full_simultaneous_rw", "test_random_regression"]},
+    {"id": "REQ-07", "text": "Read and write in the same cycle when empty: the word is stored, the read is ignored, underflow pulses.", "tests": ["test_empty_simultaneous_rw", "test_random_regression"]},
+    {"id": "REQ-08", "text": "almost_full is 1 exactly when count >= AF_THRESH.", "tests": ["test_almost_full", "test_random_regression"]},
+    {"id": "REQ-09", "text": "count equals the number of stored entries after every cycle.", "tests": ["test_full_flag", "test_random_regression"]}
+  ]
+}

@@ -1,0 +1,18 @@
+[
+  {"id": "M1", "req": "REQ-06", "desc": "write blocked when full even with a same-cycle read",
+   "find": "wire do_write = wr_en && (!full || rd_en);", "replace": "wire do_write = wr_en && !full;"},
+  {"id": "M2", "req": "REQ-03", "desc": "full asserts one entry early",
+   "find": "assign full        = (count == DEPTH);", "replace": "assign full        = (count == DEPTH-1);"},
+  {"id": "M3", "req": "REQ-08", "desc": "almost_full threshold off by one",
+   "find": "assign almost_full = (count >= AF_THRESH);", "replace": "assign almost_full = (count > AF_THRESH);"},
+  {"id": "M4", "req": "REQ-02", "desc": "read pointer wraps one slot early",
+   "find": "rd_ptr <= (rd_ptr == DEPTH-1) ? 0 : rd_ptr + 1;", "replace": "rd_ptr <= (rd_ptr == DEPTH-2) ? 0 : rd_ptr + 1;"},
+  {"id": "M5", "req": "REQ-05", "desc": "underflow flag never raised",
+   "find": "underflow <= rd_en && empty;", "replace": "underflow <= 1'b0;"},
+  {"id": "M6", "req": "REQ-01", "desc": "reset does not clear dout",
+   "find": "            dout      <= 0;\n", "replace": ""},
+  {"id": "M7", "req": "REQ-07", "desc": "read when empty treated as a real read",
+   "find": "wire do_read  = rd_en && !empty;", "replace": "wire do_read  = rd_en;"},
+  {"id": "M8", "req": "REQ-04", "desc": "overflow pulses even when a read frees a slot",
+   "find": "overflow  <= wr_en && full && !rd_en;", "replace": "overflow  <= wr_en && full;"}
+]
