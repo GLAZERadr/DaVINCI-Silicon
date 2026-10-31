@@ -49,6 +49,7 @@ export default function ReplayButton({ runId }: { runId: string }) {
   return (
     <div>
       <button type="button" className="btn btn-sm" onClick={replay} disabled={busy}>
+        <svg className="icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M5 3.2v9.6L12.5 8 5 3.2Z" fill="currentColor" /></svg>
         {busy ? "Replaying…" : "Replay this run"}
       </button>
       {state && <p className="replay-status" role="status">{state}{done && <> <Link href={`/console/?run=${encodeURIComponent(done)}`}>Open in Run Console</Link></>}</p>}
