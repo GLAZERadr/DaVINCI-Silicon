@@ -139,6 +139,13 @@ export default function Board({ data, runs }: { data: BoardData; runs: RunSummar
         <section className="card" aria-labelledby="trace">
           <p id="trace" className="label">Traceability</p>
           <p className="lede">Each requirement, the frozen tests that check it, the seeded bugs those tests catch, and what the simulator measured.</p>
+          {data.planId && (
+            <p className="lede">
+              Verification plan for {data.planId}, generated from the stored run (measured only):{" "}
+              <a href={`/plans/${data.planId}.md`} download>Markdown</a> · <a href={`/plans/${data.planId}.json`} download>JSON</a>
+              {data.referencePlan && <>{" "}· reference RTL: <a href="/plans/reference.md" download>Markdown</a></>}
+            </p>
+          )}
           <div className="table-wrap">
             <table>
               <thead>
@@ -240,6 +247,7 @@ export default function Board({ data, runs }: { data: BoardData; runs: RunSummar
             <dt>Recorded replay</dt>
             <dd>{replay ? <>{replay.id}: <Pill s={replay.status} />{" "}{replay.replayCheck?.reproduced ? "reproduced the live run attempt for attempt" : "did not reproduce the live run"}</> : "none"}</dd>
             <dt>Command</dt><dd><code className="cmd">python -m agent.pipeline --run-id {live.id} --provider replay</code></dd>
+            {data.planId && <><dt>Plan</dt><dd><code className="cmd">make plan RUN={data.planId}</code></dd></>}
           </dl>
           <p className="foot" style={{ marginTop: 16, marginBottom: 0 }}>
             Replay re-simulates the recorded model output; it shows the pipeline and simulator are deterministic, not that the model would answer the same way again.

@@ -1,6 +1,6 @@
 {
-  "run_id": "live01-replay4",
-  "started": "2026-10-31T16:43:44+0700",
+  "run_id": "live01-replay-7c96",
+  "started": "2026-10-31T17:03:03+0700",
   "providers": {
     "generate": "replay",
     "repair": "replay"
@@ -44,14 +44,14 @@
         "total": 10,
         "failed": [],
         "simulator": "Icarus Verilog version 12.0 (stable) ()",
-        "sim_seconds": 0.35,
+        "sim_seconds": 0.3,
         "suite_sha256": "4adc7da757edd72117db7a297aa7900d5744361903b2b9d1aea339da5dcc7db1",
         "sandbox": "docker"
       },
       "sweep": {
         "label": "measured",
         "status": "pass",
-        "seconds": 0.96,
+        "seconds": 0.72,
         "sets": [
           {
             "params": {
@@ -88,19 +88,19 @@
           }
         ]
       },
-      "finished_s": 2.46
+      "finished_s": 3.57
     }
   ],
   "spec_file": "spec/fifo_spec.md",
   "requirements_file": "spec/requirements.json",
   "sweep_sha256": "b73c1b823e400e72eaf76f91d72a90aa370f56711604f309f1037ed5710e16e2",
-  "finished": "2026-10-31T16:43:47+0700",
+  "finished": "2026-10-31T17:03:06+0700",
   "status": "pass",
   "attempts_total": 1,
   "attempts_to_green": 1,
   "first_pass": true,
-  "time_to_green_s": 2.46,
-  "wall_seconds": 2.46,
+  "time_to_green_s": 3.57,
+  "wall_seconds": 3.57,
   "cost_usd": 0.0,
   "tokens": {
     "in": 0,

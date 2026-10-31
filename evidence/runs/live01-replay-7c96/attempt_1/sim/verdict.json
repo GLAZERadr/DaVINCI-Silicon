@@ -1,6 +1,6 @@
 {
   "rtl": "/work/in/dut.v",
-  "rtl_sha256": "2f6f0748f1a46929bb1e74c05794950958fd3bcbd034277bc1c5873c3333f464",
+  "rtl_sha256": "9b33a512be0355d469804c46a5e7e2d4397d02a5f5afd36b6b9d1ed8659f7d39",
   "suite_sha256": "4adc7da757edd72117db7a297aa7900d5744361903b2b9d1aea339da5dcc7db1",
   "simulator": "Icarus Verilog version 12.0 (stable) ()",
   "tests": [
@@ -58,5 +58,5 @@
   "passed": 10,
   "total": 10,
   "status": "pass",
-  "seconds": 0.38
+  "seconds": 0.3
 }

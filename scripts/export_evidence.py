@@ -3,7 +3,8 @@
 For each named live run, copies the run and its most recent replay that was
 checked against the current pinned suite and sweep (so today's gates are shown
 next to what happened live), plus the mutation check, the weak-test demo, the
-requirement and interface files and a ledger summary. Absolute paths are
+requirement and interface files, a verification plan per run and for the
+reference RTL, and a ledger summary. Absolute paths are
 rewritten relative to the repo; no secrets are read. Ends with MANIFEST.sha256.
 
 usage: python scripts/export_evidence.py live01 live02-m1 live03-pdf [--out evidence]
@@ -12,9 +13,12 @@ import argparse
 import hashlib
 import json
 import shutil
+import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(ROOT / "verify"))
+import plan  # noqa: E402
 RUNS = ROOT / "runs"
 LIVE = {"meta", "baseten"}
 ATTEMPT_FILES = ["prompt.json", "response.md", "sync_fifo.v", "sim/verdict.json", "sweep/sweep.json"]
@@ -105,6 +109,19 @@ def main():
                       ("interface.json", ROOT / "spec" / "interface.json"),
                       ("mutants.json", ROOT / "verify" / "mutants.json")):
         copy_text(src, out / name)
+
+    # Verification plans, built from the same stored files (deterministic).
+    exported_ids = [x["run_id"] for e in index["runs"] for x in (e["live"], e["replay"]) if x]
+    for run_id in exported_ids:
+        p = plan.plan_for(RUNS / run_id)
+        plan.write(json.loads(scrub(json.dumps(p))), out / "runs" / run_id)
+    if (RUNS / "reference" / "verdict.json").exists():
+        (out / "reference").mkdir()
+        plan.write(json.loads(scrub(json.dumps(plan.plan_for(RUNS / "reference", reference=True)))), out / "reference")
+        index["reference_plan"] = True
+    else:
+        print("no runs/reference/verdict.json: run `make plan-ref` to include the reference plan")
+        index["reference_plan"] = False
 
     exported = {e["live"]["run_id"] for e in index["runs"]}
     index["ledger"] = {

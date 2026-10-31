@@ -1,0 +1,885 @@
+{
+  "label": "measured",
+  "title": "Verification plan · sync_fifo · live03-pdf-replay1",
+  "generator": "verify/plan.py",
+  "run": {
+    "run_id": "live03-pdf-replay1",
+    "status": "pass",
+    "started": "2026-10-31T16:50:43+0700",
+    "finished": "2026-10-31T16:50:48+0700",
+    "seed_bug": null,
+    "replayed_from": "live03-pdf",
+    "attempts_total": 1,
+    "attempts_to_green": 1,
+    "cost_usd": 0.0
+  },
+  "sources": {
+    "suite_sha256": "4adc7da757edd72117db7a297aa7900d5744361903b2b9d1aea339da5dcc7db1",
+    "sweep_sha256": "b73c1b823e400e72eaf76f91d72a90aa370f56711604f309f1037ed5710e16e2",
+    "requirements_sha256": "c7bdf104527e0183c374a59af5f7e70b7840f8b8f03f536ee39d569b3f8d22ec",
+    "requirements_match_run": true,
+    "mutants_sha256": "3e17913c1b2117f60c4e2a69a6b28775d8ab5e2e4116b16c8fa46957baf68da1",
+    "mutation_suite_matches": true,
+    "weak_demo_suite_matches": true,
+    "simulator": "Icarus Verilog version 12.0 (stable) ()",
+    "final_rtl_sha256": "466229822924bf013d4f9ca473df0c347c76a3d3e3cc825eb2e503d6678a863b",
+    "block": "sync_fifo",
+    "extraction": {
+      "extraction_id": "x-20261031-162122-f882",
+      "approved_by": "Claude (integration test, not a human review)",
+      "approved_at": "2026-10-31T16:22:28+0700"
+    },
+    "params": {
+      "WIDTH": 8,
+      "DEPTH": 16,
+      "AF_THRESH": 14
+    }
+  },
+  "gates": {
+    "G1_static_and_compile": {
+      "status": "pass"
+    },
+    "G2_frozen_suite": {
+      "status": "pass",
+      "passed": 10,
+      "total": 10
+    },
+    "G3_parameter_sweep": {
+      "status": "pass"
+    }
+  },
+  "requirements": [
+    {
+      "id": "EX-01",
+      "text": "All state changes occur on the rising edge of clk.",
+      "maps_to": null,
+      "directed_tests": [],
+      "random_regression": false,
+      "mutants": [],
+      "attempt_1": {
+        "status": "untested"
+      },
+      "final": {
+        "status": "untested"
+      }
+    },
+    {
+      "id": "EX-02",
+      "text": "rst is a synchronous reset, active high.",
+      "maps_to": null,
+      "directed_tests": [],
+      "random_regression": false,
+      "mutants": [],
+      "attempt_1": {
+        "status": "untested"
+      },
+      "final": {
+        "status": "untested"
+      }
+    },
+    {
+      "id": "EX-03",
+      "text": "dout is registered pop data, valid after the edge.",
+      "maps_to": null,
+      "directed_tests": [],
+      "random_regression": false,
+      "mutants": [],
+      "attempt_1": {
+        "status": "untested"
+      },
+      "final": {
+        "status": "untested"
+      }
+    },
+    {
+      "id": "EX-04",
+      "text": "full indicates occupancy is 16.",
+      "maps_to": "REQ-03",
+      "directed_tests": [
+        "test_full_flag",
+        "test_empty_flag"
+      ],
+      "random_regression": true,
+      "mutants": [
+        {
+          "id": "M2",
+          "desc": "full asserts one entry early",
+          "result": "killed",
+          "killed_by": [
+            "test_full_flag",
+            "test_wraparound_order",
+            "test_overflow",
+            "test_full_simultaneous_rw",
+            "test_almost_full",
+            "test_random_regression"
+          ]
+        }
+      ],
+      "attempt_1": {
+        "attempt": 1,
+        "status": "pass",
+        "failed_tests": []
+      },
+      "final": {
+        "attempt": 1,
+        "status": "pass",
+        "failed_tests": []
+      }
+    },
+    {
+      "id": "EX-05",
+      "text": "empty indicates occupancy is 0.",
+      "maps_to": "REQ-03",
+      "directed_tests": [
+        "test_full_flag",
+        "test_empty_flag"
+      ],
+      "random_regression": true,
+      "mutants": [
+        {
+          "id": "M2",
+          "desc": "full asserts one entry early",
+          "result": "killed",
+          "killed_by": [
+            "test_full_flag",
+            "test_wraparound_order",
+            "test_overflow",
+            "test_full_simultaneous_rw",
+            "test_almost_full",
+            "test_random_regression"
+          ]
+        }
+      ],
+      "attempt_1": {
+        "attempt": 1,
+        "status": "pass",
+        "failed_tests": []
+      },
+      "final": {
+        "attempt": 1,
+        "status": "pass",
+        "failed_tests": []
+      }
+    },
+    {
+      "id": "EX-06",
+      "text": "almost_full indicates occupancy at or above the almost-full level.",
+      "maps_to": "REQ-08",
+      "directed_tests": [
+        "test_almost_full"
+      ],
+      "random_regression": true,
+      "mutants": [
+        {
+          "id": "M3",
+          "desc": "almost_full threshold off by one",
+          "result": "killed",
+          "killed_by": [
+            "test_full_flag",
+            "test_wraparound_order",
+            "test_overflow",
+            "test_full_simultaneous_rw",
+            "test_almost_full",
+            "test_random_regression"
+          ]
+        }
+      ],
+      "attempt_1": {
+        "attempt": 1,
+        "status": "pass",
+        "failed_tests": []
+      },
+      "final": {
+        "attempt": 1,
+        "status": "pass",
+        "failed_tests": []
+      }
+    },
+    {
+      "id": "EX-07",
+      "text": "overflow indicates push refused, high for one clock.",
+      "maps_to": null,
+      "directed_tests": [],
+      "random_regression": false,
+      "mutants": [],
+      "attempt_1": {
+        "status": "untested"
+      },
+      "final": {
+        "status": "untested"
+      }
+    },
+    {
+      "id": "EX-08",
+      "text": "underflow indicates pop refused, high for one clock.",
+      "maps_to": null,
+      "directed_tests": [],
+      "random_regression": false,
+      "mutants": [],
+      "attempt_1": {
+        "status": "untested"
+      },
+      "final": {
+        "status": "untested"
+      }
+    },
+    {
+      "id": "EX-09",
+      "text": "count indicates words currently held.",
+      "maps_to": "REQ-09",
+      "directed_tests": [
+        "test_full_flag"
+      ],
+      "random_regression": true,
+      "mutants": [],
+      "attempt_1": {
+        "attempt": 1,
+        "status": "pass",
+        "failed_tests": []
+      },
+      "final": {
+        "attempt": 1,
+        "status": "pass",
+        "failed_tests": []
+      }
+    },
+    {
+      "id": "EX-10",
+      "text": "At a rising edge with rst = 1, storage is emptied.",
+      "maps_to": "REQ-01",
+      "directed_tests": [
+        "test_reset_state"
+      ],
+      "random_regression": true,
+      "mutants": [
+        {
+          "id": "M6",
+          "desc": "reset does not clear dout",
+          "result": "killed",
+          "killed_by": [
+            "test_reset_state",
+            "test_full_flag",
+            "test_empty_flag",
+            "test_wraparound_order",
+            "test_overflow",
+            "test_underflow",
+            "test_full_simultaneous_rw",
+            "test_empty_simultaneous_rw",
+            "test_almost_full",
+            "test_random_regression"
+          ]
+        }
+      ],
+      "attempt_1": {
+        "attempt": 1,
+        "status": "pass",
+        "failed_tests": []
+      },
+      "final": {
+        "attempt": 1,
+        "status": "pass",
+        "failed_tests": []
+      }
+    },
+    {
+      "id": "EX-11",
+      "text": "At a rising edge with rst = 1, count becomes 0.",
+      "maps_to": "REQ-01",
+      "directed_tests": [
+        "test_reset_state"
+      ],
+      "random_regression": true,
+      "mutants": [
+        {
+          "id": "M6",
+          "desc": "reset does not clear dout",
+          "result": "killed",
+          "killed_by": [
+            "test_reset_state",
+            "test_full_flag",
+            "test_empty_flag",
+            "test_wraparound_order",
+            "test_overflow",
+            "test_underflow",
+            "test_full_simultaneous_rw",
+            "test_empty_simultaneous_rw",
+            "test_almost_full",
+            "test_random_regression"
+          ]
+        }
+      ],
+      "attempt_1": {
+        "attempt": 1,
+        "status": "pass",
+        "failed_tests": []
+      },
+      "final": {
+        "attempt": 1,
+        "status": "pass",
+        "failed_tests": []
+      }
+    },
+    {
+      "id": "EX-12",
+      "text": "At a rising edge with rst = 1, empty becomes 1.",
+      "maps_to": "REQ-01",
+      "directed_tests": [
+        "test_reset_state"
+      ],
+      "random_regression": true,
+      "mutants": [
+        {
+          "id": "M6",
+          "desc": "reset does not clear dout",
+          "result": "killed",
+          "killed_by": [
+            "test_reset_state",
+            "test_full_flag",
+            "test_empty_flag",
+            "test_wraparound_order",
+            "test_overflow",
+            "test_underflow",
+            "test_full_simultaneous_rw",
+            "test_empty_simultaneous_rw",
+            "test_almost_full",
+            "test_random_regression"
+          ]
+        }
+      ],
+      "attempt_1": {
+        "attempt": 1,
+        "status": "pass",
+        "failed_tests": []
+      },
+      "final": {
+        "attempt": 1,
+        "status": "pass",
+        "failed_tests": []
+      }
+    },
+    {
+      "id": "EX-13",
+      "text": "At a rising edge with rst = 1, dout becomes 00h.",
+      "maps_to": "REQ-01",
+      "directed_tests": [
+        "test_reset_state"
+      ],
+      "random_regression": true,
+      "mutants": [
+        {
+          "id": "M6",
+          "desc": "reset does not clear dout",
+          "result": "killed",
+          "killed_by": [
+            "test_reset_state",
+            "test_full_flag",
+            "test_empty_flag",
+            "test_wraparound_order",
+            "test_overflow",
+            "test_underflow",
+            "test_full_simultaneous_rw",
+            "test_empty_simultaneous_rw",
+            "test_almost_full",
+            "test_random_regression"
+          ]
+        }
+      ],
+      "attempt_1": {
+        "attempt": 1,
+        "status": "pass",
+        "failed_tests": []
+      },
+      "final": {
+        "attempt": 1,
+        "status": "pass",
+        "failed_tests": []
+      }
+    },
+    {
+      "id": "EX-14",
+      "text": "At a rising edge with rst = 1, overflow becomes 0.",
+      "maps_to": "REQ-01",
+      "directed_tests": [
+        "test_reset_state"
+      ],
+      "random_regression": true,
+      "mutants": [
+        {
+          "id": "M6",
+          "desc": "reset does not clear dout",
+          "result": "killed",
+          "killed_by": [
+            "test_reset_state",
+            "test_full_flag",
+            "test_empty_flag",
+            "test_wraparound_order",
+            "test_overflow",
+            "test_underflow",
+            "test_full_simultaneous_rw",
+            "test_empty_simultaneous_rw",
+            "test_almost_full",
+            "test_random_regression"
+          ]
+        }
+      ],
+      "attempt_1": {
+        "attempt": 1,
+        "status": "pass",
+        "failed_tests": []
+      },
+      "final": {
+        "attempt": 1,
+        "status": "pass",
+        "failed_tests": []
+      }
+    },
+    {
+      "id": "EX-15",
+      "text": "At a rising edge with rst = 1, underflow becomes 0.",
+      "maps_to": "REQ-01",
+      "directed_tests": [
+        "test_reset_state"
+      ],
+      "random_regression": true,
+      "mutants": [
+        {
+          "id": "M6",
+          "desc": "reset does not clear dout",
+          "result": "killed",
+          "killed_by": [
+            "test_reset_state",
+            "test_full_flag",
+            "test_empty_flag",
+            "test_wraparound_order",
+            "test_overflow",
+            "test_underflow",
+            "test_full_simultaneous_rw",
+            "test_empty_simultaneous_rw",
+            "test_almost_full",
+            "test_random_regression"
+          ]
+        }
+      ],
+      "attempt_1": {
+        "attempt": 1,
+        "status": "pass",
+        "failed_tests": []
+      },
+      "final": {
+        "attempt": 1,
+        "status": "pass",
+        "failed_tests": []
+      }
+    },
+    {
+      "id": "EX-16",
+      "text": "A push when not full stores din and increments count by 1.",
+      "maps_to": null,
+      "directed_tests": [],
+      "random_regression": false,
+      "mutants": [],
+      "attempt_1": {
+        "status": "untested"
+      },
+      "final": {
+        "status": "untested"
+      }
+    },
+    {
+      "id": "EX-17",
+      "text": "A push while full with no pop is dropped and overflow pulses for one clock.",
+      "maps_to": "REQ-04",
+      "directed_tests": [
+        "test_overflow"
+      ],
+      "random_regression": true,
+      "mutants": [],
+      "attempt_1": {
+        "attempt": 1,
+        "status": "pass",
+        "failed_tests": []
+      },
+      "final": {
+        "attempt": 1,
+        "status": "pass",
+        "failed_tests": []
+      }
+    },
+    {
+      "id": "EX-18",
+      "text": "A pop when not empty makes the oldest word appear on dout and decrements count by 1.",
+      "maps_to": null,
+      "directed_tests": [],
+      "random_regression": false,
+      "mutants": [],
+      "attempt_1": {
+        "status": "untested"
+      },
+      "final": {
+        "status": "untested"
+      }
+    },
+    {
+      "id": "EX-19",
+      "text": "A pop while empty is ignored and dout keeps its old value.",
+      "maps_to": "REQ-05",
+      "directed_tests": [
+        "test_underflow"
+      ],
+      "random_regression": true,
+      "mutants": [
+        {
+          "id": "M5",
+          "desc": "underflow flag never raised",
+          "result": "killed",
+          "killed_by": [
+            "test_underflow",
+            "test_empty_simultaneous_rw",
+            "test_random_regression"
+          ]
+        }
+      ],
+      "attempt_1": {
+        "attempt": 1,
+        "status": "pass",
+        "failed_tests": []
+      },
+      "final": {
+        "attempt": 1,
+        "status": "pass",
+        "failed_tests": []
+      }
+    },
+    {
+      "id": "EX-20",
+      "text": "A pop while empty causes underflow to pulse for one clock.",
+      "maps_to": "REQ-05",
+      "directed_tests": [
+        "test_underflow"
+      ],
+      "random_regression": true,
+      "mutants": [
+        {
+          "id": "M5",
+          "desc": "underflow flag never raised",
+          "result": "killed",
+          "killed_by": [
+            "test_underflow",
+            "test_empty_simultaneous_rw",
+            "test_random_regression"
+          ]
+        }
+      ],
+      "attempt_1": {
+        "attempt": 1,
+        "status": "pass",
+        "failed_tests": []
+      },
+      "final": {
+        "attempt": 1,
+        "status": "pass",
+        "failed_tests": []
+      }
+    },
+    {
+      "id": "EX-21",
+      "text": "Push plus pop while full outputs the oldest word and stores the new word with count staying at 16.",
+      "maps_to": "REQ-06",
+      "directed_tests": [
+        "test_full_simultaneous_rw"
+      ],
+      "random_regression": true,
+      "mutants": [
+        {
+          "id": "M1",
+          "desc": "write blocked when full even with a same-cycle read",
+          "result": "killed",
+          "killed_by": [
+            "test_full_simultaneous_rw",
+            "test_random_regression"
+          ]
+        }
+      ],
+      "attempt_1": {
+        "attempt": 1,
+        "status": "pass",
+        "failed_tests": []
+      },
+      "final": {
+        "attempt": 1,
+        "status": "pass",
+        "failed_tests": []
+      }
+    },
+    {
+      "id": "EX-22",
+      "text": "Push plus pop while full causes no overflow.",
+      "maps_to": null,
+      "directed_tests": [],
+      "random_regression": false,
+      "mutants": [],
+      "attempt_1": {
+        "status": "untested"
+      },
+      "final": {
+        "status": "untested"
+      }
+    },
+    {
+      "id": "EX-23",
+      "text": "Push plus pop while empty stores the word and the pop is ignored.",
+      "maps_to": "REQ-07",
+      "directed_tests": [
+        "test_empty_simultaneous_rw"
+      ],
+      "random_regression": true,
+      "mutants": [
+        {
+          "id": "M7",
+          "desc": "read when empty treated as a real read",
+          "result": "killed",
+          "killed_by": [
+            "test_underflow",
+            "test_empty_simultaneous_rw",
+            "test_random_regression"
+          ]
+        }
+      ],
+      "attempt_1": {
+        "attempt": 1,
+        "status": "pass",
+        "failed_tests": []
+      },
+      "final": {
+        "attempt": 1,
+        "status": "pass",
+        "failed_tests": []
+      }
+    },
+    {
+      "id": "EX-24",
+      "text": "Push plus pop while empty causes underflow to pulse.",
+      "maps_to": "REQ-07",
+      "directed_tests": [
+        "test_empty_simultaneous_rw"
+      ],
+      "random_regression": true,
+      "mutants": [
+        {
+          "id": "M7",
+          "desc": "read when empty treated as a real read",
+          "result": "killed",
+          "killed_by": [
+            "test_underflow",
+            "test_empty_simultaneous_rw",
+            "test_random_regression"
+          ]
+        }
+      ],
+      "attempt_1": {
+        "attempt": 1,
+        "status": "pass",
+        "failed_tests": []
+      },
+      "final": {
+        "attempt": 1,
+        "status": "pass",
+        "failed_tests": []
+      }
+    },
+    {
+      "id": "EX-25",
+      "text": "When holding 16 words with push and pop both high, each edge returns the oldest word on dout and stores din with count staying 16 and full staying 1.",
+      "maps_to": "REQ-06",
+      "directed_tests": [
+        "test_full_simultaneous_rw"
+      ],
+      "random_regression": true,
+      "mutants": [
+        {
+          "id": "M1",
+          "desc": "write blocked when full even with a same-cycle read",
+          "result": "killed",
+          "killed_by": [
+            "test_full_simultaneous_rw",
+            "test_random_regression"
+          ]
+        }
+      ],
+      "attempt_1": {
+        "attempt": 1,
+        "status": "pass",
+        "failed_tests": []
+      },
+      "final": {
+        "attempt": 1,
+        "status": "pass",
+        "failed_tests": []
+      }
+    },
+    {
+      "id": "EX-26",
+      "text": "When push and pop are both high while full, overflow stays 0 because a pop frees the slot in the same cycle.",
+      "maps_to": null,
+      "directed_tests": [],
+      "random_regression": false,
+      "mutants": [],
+      "attempt_1": {
+        "status": "untested"
+      },
+      "final": {
+        "status": "untested"
+      }
+    },
+    {
+      "id": "EX-27",
+      "text": "Pop only causes count to fall to 15 and full to drop.",
+      "maps_to": null,
+      "directed_tests": [],
+      "random_regression": false,
+      "mutants": [],
+      "attempt_1": {
+        "status": "untested"
+      },
+      "final": {
+        "status": "untested"
+      }
+    },
+    {
+      "id": "EX-28",
+      "text": "Words leave in the order they were pushed, including when the internal address wraps from entry 15 back to entry 0.",
+      "maps_to": "REQ-02",
+      "directed_tests": [
+        "test_wraparound_order"
+      ],
+      "random_regression": true,
+      "mutants": [
+        {
+          "id": "M4",
+          "desc": "read pointer wraps one slot early",
+          "result": "killed",
+          "killed_by": [
+            "test_wraparound_order",
+            "test_overflow",
+            "test_full_simultaneous_rw",
+            "test_almost_full",
+            "test_random_regression"
+          ]
+        }
+      ],
+      "attempt_1": {
+        "attempt": 1,
+        "status": "pass",
+        "failed_tests": []
+      },
+      "final": {
+        "attempt": 1,
+        "status": "pass",
+        "failed_tests": []
+      }
+    },
+    {
+      "id": "EX-29",
+      "text": "almost_full is high whenever count is 14 or more.",
+      "maps_to": "REQ-08",
+      "directed_tests": [
+        "test_almost_full"
+      ],
+      "random_regression": true,
+      "mutants": [
+        {
+          "id": "M3",
+          "desc": "almost_full threshold off by one",
+          "result": "killed",
+          "killed_by": [
+            "test_full_flag",
+            "test_wraparound_order",
+            "test_overflow",
+            "test_full_simultaneous_rw",
+            "test_almost_full",
+            "test_random_regression"
+          ]
+        }
+      ],
+      "attempt_1": {
+        "attempt": 1,
+        "status": "pass",
+        "failed_tests": []
+      },
+      "final": {
+        "attempt": 1,
+        "status": "pass",
+        "failed_tests": []
+      }
+    }
+  ],
+  "random_regression": {
+    "test": "test_random_regression",
+    "covers": [
+      "EX-04",
+      "EX-05",
+      "EX-06",
+      "EX-09",
+      "EX-10",
+      "EX-11",
+      "EX-12",
+      "EX-13",
+      "EX-14",
+      "EX-15",
+      "EX-17",
+      "EX-19",
+      "EX-20",
+      "EX-21",
+      "EX-23",
+      "EX-24",
+      "EX-25",
+      "EX-28",
+      "EX-29"
+    ],
+    "attempt_1": {
+      "attempt": 1,
+      "status": "pass",
+      "failed_tests": []
+    },
+    "final": {
+      "attempt": 1,
+      "status": "pass",
+      "failed_tests": []
+    }
+  },
+  "mutation": {
+    "killed": 8,
+    "injected": 8,
+    "survivors": [],
+    "measured_against": "reference RTL",
+    "ref_rtl_sha256": "6034c49a727be76474d3ec227252b8038d6122e788fc3c3c374c3741dc56313d"
+  },
+  "weak_test_check": {
+    "tests_dropped": [
+      "test_full_simultaneous_rw",
+      "test_random_regression"
+    ],
+    "weak": {
+      "killed": 6,
+      "injected": 8,
+      "survivors": [
+        "M1",
+        "M8"
+      ]
+    },
+    "restored": {
+      "killed": 8,
+      "injected": 8,
+      "survivors": []
+    }
+  },
+  "attempts": [
+    {
+      "n": 1,
+      "source": "model",
+      "status": "pass",
+      "result": "10/10"
+    }
+  ],
+  "not_verifiable": null
+}

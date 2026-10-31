@@ -1,0 +1,411 @@
+{
+  "label": "measured",
+  "title": "Verification plan · sync_fifo · reference",
+  "generator": "verify/plan.py",
+  "run": {
+    "run_id": "reference",
+    "status": "pass",
+    "started": null,
+    "finished": null,
+    "seed_bug": null,
+    "replayed_from": null,
+    "attempts_total": 1,
+    "attempts_to_green": 1,
+    "cost_usd": null
+  },
+  "sources": {
+    "suite_sha256": "4adc7da757edd72117db7a297aa7900d5744361903b2b9d1aea339da5dcc7db1",
+    "sweep_sha256": "b73c1b823e400e72eaf76f91d72a90aa370f56711604f309f1037ed5710e16e2",
+    "requirements_sha256": "7ba5f39c3e28a36b9c9248e13a07dbe5944ce2e5da36589997e7d471140850da",
+    "requirements_match_run": true,
+    "mutants_sha256": "3e17913c1b2117f60c4e2a69a6b28775d8ab5e2e4116b16c8fa46957baf68da1",
+    "mutation_suite_matches": true,
+    "weak_demo_suite_matches": true,
+    "simulator": "Icarus Verilog version 13.0 (stable) (v13_0)",
+    "final_rtl_sha256": "6034c49a727be76474d3ec227252b8038d6122e788fc3c3c374c3741dc56313d",
+    "block": "sync_fifo",
+    "extraction": null,
+    "params": {
+      "WIDTH": 8,
+      "DEPTH": 16,
+      "AF_THRESH": 14
+    }
+  },
+  "gates": {
+    "G1_static_and_compile": {
+      "status": "not_recorded"
+    },
+    "G2_frozen_suite": {
+      "status": "pass",
+      "passed": 10,
+      "total": 10
+    },
+    "G3_parameter_sweep": {
+      "status": "pass"
+    }
+  },
+  "requirements": [
+    {
+      "id": "REQ-01",
+      "text": "Synchronous reset empties the FIFO: count 0, empty 1, dout 0, overflow and underflow 0.",
+      "maps_to": null,
+      "directed_tests": [
+        "test_reset_state"
+      ],
+      "random_regression": true,
+      "mutants": [
+        {
+          "id": "M6",
+          "desc": "reset does not clear dout",
+          "result": "killed",
+          "killed_by": [
+            "test_reset_state",
+            "test_full_flag",
+            "test_empty_flag",
+            "test_wraparound_order",
+            "test_overflow",
+            "test_underflow",
+            "test_full_simultaneous_rw",
+            "test_empty_simultaneous_rw",
+            "test_almost_full",
+            "test_random_regression"
+          ]
+        }
+      ],
+      "attempt_1": {
+        "attempt": 1,
+        "status": "pass",
+        "failed_tests": []
+      },
+      "final": {
+        "attempt": 1,
+        "status": "pass",
+        "failed_tests": []
+      }
+    },
+    {
+      "id": "REQ-02",
+      "text": "Data is read out in the order it was written, including across pointer wraparound.",
+      "maps_to": null,
+      "directed_tests": [
+        "test_wraparound_order"
+      ],
+      "random_regression": true,
+      "mutants": [
+        {
+          "id": "M4",
+          "desc": "read pointer wraps one slot early",
+          "result": "killed",
+          "killed_by": [
+            "test_wraparound_order",
+            "test_overflow",
+            "test_full_simultaneous_rw",
+            "test_almost_full",
+            "test_random_regression"
+          ]
+        }
+      ],
+      "attempt_1": {
+        "attempt": 1,
+        "status": "pass",
+        "failed_tests": []
+      },
+      "final": {
+        "attempt": 1,
+        "status": "pass",
+        "failed_tests": []
+      }
+    },
+    {
+      "id": "REQ-03",
+      "text": "full is 1 exactly when DEPTH entries are stored; empty is 1 exactly when none are.",
+      "maps_to": null,
+      "directed_tests": [
+        "test_full_flag",
+        "test_empty_flag"
+      ],
+      "random_regression": true,
+      "mutants": [
+        {
+          "id": "M2",
+          "desc": "full asserts one entry early",
+          "result": "killed",
+          "killed_by": [
+            "test_full_flag",
+            "test_wraparound_order",
+            "test_overflow",
+            "test_full_simultaneous_rw",
+            "test_almost_full",
+            "test_random_regression"
+          ]
+        }
+      ],
+      "attempt_1": {
+        "attempt": 1,
+        "status": "pass",
+        "failed_tests": []
+      },
+      "final": {
+        "attempt": 1,
+        "status": "pass",
+        "failed_tests": []
+      }
+    },
+    {
+      "id": "REQ-04",
+      "text": "A write when full with no read is ignored and pulses overflow for one cycle.",
+      "maps_to": null,
+      "directed_tests": [
+        "test_overflow"
+      ],
+      "random_regression": true,
+      "mutants": [],
+      "attempt_1": {
+        "attempt": 1,
+        "status": "pass",
+        "failed_tests": []
+      },
+      "final": {
+        "attempt": 1,
+        "status": "pass",
+        "failed_tests": []
+      }
+    },
+    {
+      "id": "REQ-05",
+      "text": "A read when empty is ignored, pulses underflow for one cycle, and dout holds its value.",
+      "maps_to": null,
+      "directed_tests": [
+        "test_underflow"
+      ],
+      "random_regression": true,
+      "mutants": [
+        {
+          "id": "M5",
+          "desc": "underflow flag never raised",
+          "result": "killed",
+          "killed_by": [
+            "test_underflow",
+            "test_empty_simultaneous_rw",
+            "test_random_regression"
+          ]
+        }
+      ],
+      "attempt_1": {
+        "attempt": 1,
+        "status": "pass",
+        "failed_tests": []
+      },
+      "final": {
+        "attempt": 1,
+        "status": "pass",
+        "failed_tests": []
+      }
+    },
+    {
+      "id": "REQ-06",
+      "text": "Read and write in the same cycle when full: the oldest word is read, the new word is stored, count stays DEPTH.",
+      "maps_to": null,
+      "directed_tests": [
+        "test_full_simultaneous_rw"
+      ],
+      "random_regression": true,
+      "mutants": [
+        {
+          "id": "M1",
+          "desc": "write blocked when full even with a same-cycle read",
+          "result": "killed",
+          "killed_by": [
+            "test_full_simultaneous_rw",
+            "test_random_regression"
+          ]
+        }
+      ],
+      "attempt_1": {
+        "attempt": 1,
+        "status": "pass",
+        "failed_tests": []
+      },
+      "final": {
+        "attempt": 1,
+        "status": "pass",
+        "failed_tests": []
+      }
+    },
+    {
+      "id": "REQ-07",
+      "text": "Read and write in the same cycle when empty: the word is stored, the read is ignored, underflow pulses.",
+      "maps_to": null,
+      "directed_tests": [
+        "test_empty_simultaneous_rw"
+      ],
+      "random_regression": true,
+      "mutants": [
+        {
+          "id": "M7",
+          "desc": "read when empty treated as a real read",
+          "result": "killed",
+          "killed_by": [
+            "test_underflow",
+            "test_empty_simultaneous_rw",
+            "test_random_regression"
+          ]
+        }
+      ],
+      "attempt_1": {
+        "attempt": 1,
+        "status": "pass",
+        "failed_tests": []
+      },
+      "final": {
+        "attempt": 1,
+        "status": "pass",
+        "failed_tests": []
+      }
+    },
+    {
+      "id": "REQ-08",
+      "text": "almost_full is 1 exactly when count >= AF_THRESH.",
+      "maps_to": null,
+      "directed_tests": [
+        "test_almost_full"
+      ],
+      "random_regression": true,
+      "mutants": [
+        {
+          "id": "M3",
+          "desc": "almost_full threshold off by one",
+          "result": "killed",
+          "killed_by": [
+            "test_full_flag",
+            "test_wraparound_order",
+            "test_overflow",
+            "test_full_simultaneous_rw",
+            "test_almost_full",
+            "test_random_regression"
+          ]
+        }
+      ],
+      "attempt_1": {
+        "attempt": 1,
+        "status": "pass",
+        "failed_tests": []
+      },
+      "final": {
+        "attempt": 1,
+        "status": "pass",
+        "failed_tests": []
+      }
+    },
+    {
+      "id": "REQ-09",
+      "text": "count equals the number of stored entries after every cycle.",
+      "maps_to": null,
+      "directed_tests": [
+        "test_full_flag"
+      ],
+      "random_regression": true,
+      "mutants": [],
+      "attempt_1": {
+        "attempt": 1,
+        "status": "pass",
+        "failed_tests": []
+      },
+      "final": {
+        "attempt": 1,
+        "status": "pass",
+        "failed_tests": []
+      }
+    },
+    {
+      "id": "REQ-10",
+      "text": "A write when full together with a read in the same cycle is accepted: overflow stays 0.",
+      "maps_to": null,
+      "directed_tests": [
+        "test_full_simultaneous_rw"
+      ],
+      "random_regression": true,
+      "mutants": [
+        {
+          "id": "M8",
+          "desc": "overflow pulses even when a read frees a slot",
+          "result": "killed",
+          "killed_by": [
+            "test_full_simultaneous_rw",
+            "test_random_regression"
+          ]
+        }
+      ],
+      "attempt_1": {
+        "attempt": 1,
+        "status": "pass",
+        "failed_tests": []
+      },
+      "final": {
+        "attempt": 1,
+        "status": "pass",
+        "failed_tests": []
+      }
+    }
+  ],
+  "random_regression": {
+    "test": "test_random_regression",
+    "covers": [
+      "REQ-01",
+      "REQ-02",
+      "REQ-03",
+      "REQ-04",
+      "REQ-05",
+      "REQ-06",
+      "REQ-07",
+      "REQ-08",
+      "REQ-09",
+      "REQ-10"
+    ],
+    "attempt_1": {
+      "attempt": 1,
+      "status": "pass",
+      "failed_tests": []
+    },
+    "final": {
+      "attempt": 1,
+      "status": "pass",
+      "failed_tests": []
+    }
+  },
+  "mutation": {
+    "killed": 8,
+    "injected": 8,
+    "survivors": [],
+    "measured_against": "reference RTL",
+    "ref_rtl_sha256": "6034c49a727be76474d3ec227252b8038d6122e788fc3c3c374c3741dc56313d"
+  },
+  "weak_test_check": {
+    "tests_dropped": [
+      "test_full_simultaneous_rw",
+      "test_random_regression"
+    ],
+    "weak": {
+      "killed": 6,
+      "injected": 8,
+      "survivors": [
+        "M1",
+        "M8"
+      ]
+    },
+    "restored": {
+      "killed": 8,
+      "injected": 8,
+      "survivors": []
+    }
+  },
+  "attempts": [
+    {
+      "n": 1,
+      "source": "reference",
+      "status": "pass",
+      "result": "10/10"
+    }
+  ],
+  "not_verifiable": null
+}

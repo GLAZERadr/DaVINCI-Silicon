@@ -116,6 +116,8 @@ export type Board = {
   pinnedSuite: string;
   pinnedSweep: string;
   ledger: { liveCallsTotal: number; liveCallsOk: number; liveSpendUsd: number };
+  planId: string | null; // run whose verification plan is linked (the replay when there is one)
+  referencePlan: boolean;
 };
 
 export type RunSummary = { id: string; status: string; seedBug: string | null; fromExtraction: boolean };
@@ -152,6 +154,8 @@ export function board(id: string): Board {
       mutants: m.mutants,
     },
     weakDemo: read("weak_demo.json"),
+    referencePlan: fs.existsSync(path.join(ROOT, "reference", "verification_plan.md")),
+    planId: [entry.replay?.run_id, id].find((r) => r && fs.existsSync(path.join(ROOT, "runs", r, "verification_plan.md"))) ?? null,
     pinnedSuite: idx.pinned_suite_sha256,
     pinnedSweep: idx.pinned_sweep_sha256,
     ledger: {
@@ -160,6 +164,24 @@ export function board(id: string): Board {
       liveSpendUsd: idx.ledger.live_spend_usd_total,
     },
   };
+}
+
+// Verification plans (made by verify/plan.py at export), served as /plans/<id>.md and .json.
+function planDir(id: string) {
+  return id === "reference" ? path.join(ROOT, "reference") : path.join(ROOT, "runs", id);
+}
+
+export function planFiles(): string[] {
+  const idx = index();
+  const ids = ["reference", ...idx.runs.flatMap((e: Json) => [e.live.run_id, e.replay?.run_id].filter(Boolean))];
+  return ids.filter((id) => fs.existsSync(path.join(planDir(id), "verification_plan.md")))
+    .flatMap((id) => [`${id}.md`, `${id}.json`]);
+}
+
+export function planText(file: string): string {
+  if (!planFiles().includes(file)) throw new Error(`no plan ${file}`);
+  const id = file.replace(/\.(md|json)$/, "");
+  return fs.readFileSync(path.join(planDir(id), `verification_plan.${file.endsWith(".md") ? "md" : "json"}`), "utf8");
 }
 
 // Status words and symbols. Colour is never the only signal.

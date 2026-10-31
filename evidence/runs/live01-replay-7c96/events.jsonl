@@ -1,0 +1,7 @@
+{"t": 0.0, "type": "run_started", "run_id": "live01-replay-7c96", "generate": "replay", "repair": "replay", "seed_bug": "-"}
+{"t": 0.0, "type": "model_call", "attempt": 1, "step": "generate", "provider": "replay"}
+{"t": 1.7, "type": "simulating", "attempt": 1}
+{"t": 2.54, "type": "verdict", "attempt": 1, "status": "pass", "passed": 10, "total": 10}
+{"t": 2.54, "type": "sweeping", "attempt": 1}
+{"t": 3.57, "type": "sweep", "attempt": 1, "status": "pass"}
+{"t": 3.57, "type": "run_finished", "status": "pass", "attempts": 1, "cost_usd": 0.0}

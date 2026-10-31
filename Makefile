@@ -2,7 +2,7 @@ RTL ?= rtl/sync_fifo.v
 RUN ?= manual
 IMAGE = davinci-sim:latest
 
-.PHONY: sim mutate weak-demo image sandbox api evidence board
+.PHONY: sim mutate weak-demo image sandbox api evidence board plan plan-ref
 
 # Local run (needs iverilog + cocotb installed)
 sim:
@@ -29,6 +29,17 @@ sandbox:
 # restore the full suite and watch it die.
 weak-demo:
 	python3 verify/mutate.py $(RTL) --weak-demo --out runs/weak_demo
+
+# Verification plan for a stored run: runs/$(RUN)/verification_plan.{md,json}.
+# Reads stored files only (no simulation, no model call); output is reproducible.
+plan:
+	python3 verify/plan.py runs/$(RUN)
+
+# Verification plan for the reference RTL (simulates it locally first).
+plan-ref:
+	python3 verify/run_suite.py $(RTL) --out runs/reference
+	python3 verify/run_sweep.py $(RTL) --out runs/reference/sweep
+	python3 verify/plan.py --reference runs/reference
 
 # HTTP API for the UI (runs execute one at a time in a background worker).
 api:
