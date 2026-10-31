@@ -19,9 +19,11 @@ usage: uvicorn api.server:app --port 8000
   POST /extractions/{xid}/approve     human approval (may edit the list)
   POST /runs {extraction_id}     run from an approved list
 
-Live providers (meta, baseten) cost money. When DAVINCI_API_TOKEN is set, a
-run or extraction that uses one needs `Authorization: Bearer <token>`, and so
-does approving an extraction; replay and fake runs are open.
+Live providers (meta, baseten) cost money. A run or extraction that uses one,
+and approving an extraction, needs `Authorization: Bearer <DAVINCI_API_TOKEN>`.
+If DAVINCI_API_TOKEN is not set, those requests are refused (fail closed);
+replay and fake runs stay open. The server, not the client, decides where a
+simulation runs: model-written RTL only ever runs in the Docker sandbox.
 """
 import asyncio
 import json
@@ -38,7 +40,7 @@ from pathlib import Path
 from fastapi import FastAPI, File, Form, Header, HTTPException, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, PlainTextResponse, StreamingResponse
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 from agent import extract as ex
 from agent import llm
@@ -62,11 +64,13 @@ app.add_middleware(
 
 
 class RunRequest(BaseModel):
+    # Unknown fields (e.g. a client-chosen "sandbox") are rejected, not ignored.
+    model_config = ConfigDict(extra="forbid")
+
     provider: str = Field(default_factory=lambda: os.environ.get("DAVINCI_PROVIDER", "meta"))
     gen_provider: str | None = None
     repair_provider: str | None = None
     seed_bug: str | None = None
-    sandbox: str = Field(default_factory=lambda: os.environ.get("DAVINCI_SANDBOX", "local"))
     max_repairs: int = Field(3, ge=0, le=3)
     spec: str | None = Field(None, description="spec markdown; default spec/fifo_spec.md", max_length=100_000)
     requirements: dict | None = Field(None, description="approved requirements; default spec/requirements.json")
@@ -143,8 +147,12 @@ def _check_id(run_id: str):
 
 
 def _require_token(providers: set, authorization: str | None):
+    if not providers & set(llm.LIVE):
+        return
     token = os.environ.get("DAVINCI_API_TOKEN")
-    if token and providers & set(llm.LIVE) and authorization != f"Bearer {token}":
+    if not token:
+        raise HTTPException(403, "live model calls are disabled: DAVINCI_API_TOKEN is not set on the server")
+    if not secrets.compare_digest((authorization or "").encode(), f"Bearer {token}".encode()):
         raise HTTPException(401, "live model runs need the API token; replay and fake runs are open")
 
 
@@ -158,13 +166,11 @@ def create_run(req: RunRequest, authorization: str | None = Header(None)):
         raise HTTPException(422, f"provider must be one of {allowed} (use POST /runs/{{id}}/replay to replay)")
     if req.seed_bug and req.seed_bug not in MUTANTS:
         raise HTTPException(422, f"seed_bug must be one of {sorted(MUTANTS)}")
-    if req.sandbox not in ("local", "docker"):
-        raise HTTPException(422, "sandbox must be local or docker")
     _require_token(providers, authorization)
 
     run_id = _new_id("run")
-    argv = ["--run-id", run_id, "--provider", req.provider, "--sandbox", req.sandbox,
-            "--max-repairs", str(req.max_repairs)]
+    # No --sandbox: the pipeline puts any model-written RTL in the Docker sandbox.
+    argv = ["--run-id", run_id, "--provider", req.provider, "--max-repairs", str(req.max_repairs)]
     if req.gen_provider:
         argv += ["--gen-provider", req.gen_provider]
     if req.repair_provider:
@@ -197,10 +203,8 @@ def replay_run(run_id: str):
     src = RUNS / run_id
     if not (src / "run.json").exists() or not (src / "calls.jsonl").exists():
         raise HTTPException(404, f"no finished run {run_id} with recorded model calls")
-    sandbox = json.loads((src / "run.json").read_text()).get("sandbox", {}).get("backend", "local")
     new_id = f"{run_id[:40]}-replay-{secrets.token_hex(2)}"
-    return _enqueue(new_id, ["--run-id", new_id, "--provider", "replay", "--replay-from", run_id,
-                             "--sandbox", sandbox], "replay")
+    return _enqueue(new_id, ["--run-id", new_id, "--provider", "replay", "--replay-from", run_id], "replay")
 
 
 def _summary(d: Path) -> dict:
