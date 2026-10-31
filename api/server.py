@@ -394,6 +394,11 @@ def list_extractions():
 def get_extraction(xid: str):
     rec = _extraction(xid)
     rec["reference"] = json.loads(ex.REFERENCE.read_text())
+    # The newest re-run of the map step (python -m agent.extract --remap), if any:
+    # AI interpretation like the original mapping, shown in its place by the UI.
+    d = ex.EXTRACT_DIR / xid
+    remaps = sorted(d.glob("remap_*.json")) if d.exists() else []
+    rec["latest_remap"] = json.loads(remaps[-1].read_text()) if remaps else None
     return rec
 
 

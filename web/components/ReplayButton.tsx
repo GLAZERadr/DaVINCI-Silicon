@@ -1,17 +1,20 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
+import { apiBase } from "@/lib/api";
 
-// With NEXT_PUBLIC_DAVINCI_API set, asks the API to replay the run ($0: recorded
-// model output, real simulation) and reports the measured result. Without it,
-// the static board jumps to the recorded replay in "Reproduce it".
-const API = process.env.NEXT_PUBLIC_DAVINCI_API;
+// With an API configured (NEXT_PUBLIC_DAVINCI_API or Connection settings), asks it
+// to replay the run ($0: recorded model output, real simulation) and reports the
+// measured result. Without one, the static board jumps to the recorded replay.
 
 export default function ReplayButton({ runId }: { runId: string }) {
   const [state, setState] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [done, setDone] = useState<string | null>(null);
 
   async function replay() {
+    const API = apiBase();
     if (!API) {
       document.getElementById("reproduce")?.scrollIntoView({ behavior: "smooth" });
       setState("Showing the recorded replay. Run the command there to replay it yourself.");
@@ -29,6 +32,7 @@ export default function ReplayButton({ runId }: { runId: string }) {
         if (r.status && r.attempts) {
           const reproduced = r.replay_check?.reproduced ? "reproduced" : "did not reproduce";
           setState(`Replay ${run_id}: ${r.status} (measured), ${reproduced} the recorded run.`);
+          setDone(run_id);
           return;
         }
         if (r.state === "done" && r.status === "error") throw new Error(`replay failed: ${r.error ?? "see API logs"}`);
@@ -44,10 +48,10 @@ export default function ReplayButton({ runId }: { runId: string }) {
 
   return (
     <div>
-      <button type="button" className="btn" onClick={replay} disabled={busy}>
+      <button type="button" className="btn btn-sm" onClick={replay} disabled={busy}>
         {busy ? "Replaying…" : "Replay this run"}
       </button>
-      {state && <p className="replay-status" role="status">{state}</p>}
+      {state && <p className="replay-status" role="status">{state}{done && <> <Link href={`/console/?run=${encodeURIComponent(done)}`}>Open in Run Console</Link></>}</p>}
     </div>
   );
 }

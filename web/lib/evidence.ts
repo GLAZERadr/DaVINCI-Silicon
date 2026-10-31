@@ -2,109 +2,35 @@
 // shows comes from these files; nothing is computed from model text.
 import fs from "node:fs";
 import path from "node:path";
+import { type Json, type Requirement, type Run, toRun } from "./run";
+
+export * from "./run";
 
 const ROOT = path.resolve(process.cwd(), "..", "evidence");
-
-type Json = Record<string, any>;
 
 function read(rel: string): Json | null {
   const f = path.join(ROOT, rel);
   return fs.existsSync(f) ? JSON.parse(fs.readFileSync(f, "utf8")) : null;
 }
 
-export type TestResult = { name: string; passed: boolean; message: string };
-
-export type Attempt = {
-  n: number;
-  source: "model" | "seeded";
-  status: string;
-  model?: string;
-  tokensIn?: number;
-  tokensOut?: number;
-  costUsd?: number;
-  modelSeconds?: number;
-  seeded?: { mutant: string; req: string; desc: string };
-  passed?: number;
-  total?: number;
-  tests: TestResult[]; // per-test results from the attempt's verdict.json
-  simulator?: string;
-  suiteSha?: string;
-  rejection?: string;
-  diagnosis?: string; // AI interpretation, never a verdict
-  diff?: string;
-  compileOk?: boolean;
-  sweep?: { status: string; sets: { params: Json; status: string; passed: number; total: number }[] };
-};
-
-export type Run = {
-  id: string;
-  status: string;
-  started: string;
-  providers: { generate: string; repair: string };
-  seedBug: string | null;
-  replayedFrom: string | null;
-  attemptsTotal: number;
-  attemptsToGreen: number | null;
-  timeToGreenS: number | null;
-  costUsd: number;
-  tokens: { in: number; out: number };
-  suiteSha: string;
-  sweepSha?: string;
-  sandbox?: { backend: string; image_id: string | null };
-  extraction?: Json;
-  replayCheck?: { reproduced: boolean; attempts: Json[] };
-  attempts: Attempt[];
-};
-
 function loadRun(id: string): Run {
   const r = read(`runs/${id}/run.json`);
   if (!r) throw new Error(`evidence missing run ${id}`);
-  const attempts: Attempt[] = r.attempts.map((a: Json) => {
-    const v = read(`runs/${id}/attempt_${a.n}/sim/verdict.json`);
-    return {
-      n: a.n,
-      source: a.source,
-      status: a.status,
-      model: a.model,
-      tokensIn: a.tokens_in,
-      tokensOut: a.tokens_out,
-      costUsd: a.cost_usd,
-      modelSeconds: a.model_seconds,
-      seeded: a.seeded,
-      passed: a.measured?.passed,
-      total: a.measured?.total,
-      tests: (v?.tests ?? []) as TestResult[],
-      simulator: a.measured?.simulator,
-      suiteSha: a.measured?.suite_sha256,
-      rejection: a.measured?.rejection,
-      diagnosis: a.ai_interpretation?.diagnosis,
-      diff: a.diff_vs_prev,
-      compileOk: a.measured_compile?.ok,
-      sweep: a.sweep,
-    };
-  });
-  return {
-    id: r.run_id,
-    status: r.status,
-    started: r.started,
-    providers: r.providers,
-    seedBug: r.seed_bug,
-    replayedFrom: r.replayed_from,
-    attemptsTotal: r.attempts_total,
-    attemptsToGreen: r.attempts_to_green,
-    timeToGreenS: r.time_to_green_s,
-    costUsd: r.cost_usd,
-    tokens: r.tokens,
-    suiteSha: r.suite_sha256,
-    sweepSha: r.sweep_sha256,
-    sandbox: r.sandbox,
-    extraction: r.extraction,
-    replayCheck: r.replay_check,
-    attempts,
+  const text = (rel: string) => {
+    const f = path.join(ROOT, rel);
+    return fs.existsSync(f) ? fs.readFileSync(f, "utf8") : null;
   };
+  return toRun(r, {
+    verdict: (n) => read(`runs/${id}/attempt_${n}/sim/verdict.json`),
+    rtl: (n) => text(`runs/${id}/attempt_${n}/sync_fifo.v`),
+    prompt: (n) => read(`runs/${id}/attempt_${n}/prompt.json`) as Json[] | null,
+  });
 }
 
-export type Requirement = { id: string; text: string; tests: string[] };
+export function run(id: string): Run {
+  return loadRun(id);
+}
+
 export type Mutant = { id: string; req: string; desc: string; result: string; killed_by: string[] };
 
 export type Board = {
@@ -171,6 +97,30 @@ export function board(id: string): Board {
   };
 }
 
+// The requirements a run was generated against: its approved extraction, or the default list.
+export function requirementsFor(r: Run): Requirement[] {
+  const xid = r.extraction?.extraction_id;
+  const approved = xid ? read(`extractions/${xid}/approved.json`) : null;
+  return (approved ?? read("requirements.json")!).requirements;
+}
+
+export function mutants(): { id: string; req: string; desc: string }[] {
+  return (read("mutants.json") as unknown as Json[]).map((m) => ({ id: m.id, req: m.req, desc: m.desc }));
+}
+
+export function defaultRequirements(): Requirement[] {
+  return read("requirements.json")!.requirements;
+}
+
+// The live run and its current-gates replay, for the Run Console.
+export function consoleRuns(id: string): { label: string; run: Run }[] {
+  const entry = index().runs.find((e: Json) => e.live.run_id === id);
+  if (!entry) throw new Error(`run ${id} is not in the evidence bundle`);
+  const out = [{ label: "Live run", run: loadRun(id) }];
+  if (entry.replay) out.push({ label: "Replay · today's gates", run: loadRun(entry.replay.run_id) });
+  return out;
+}
+
 // Verification plans (made by verify/plan.py at export), served as /plans/<id>.md and .json.
 function planDir(id: string) {
   return id === "reference" ? path.join(ROOT, "reference") : path.join(ROOT, "runs", id);
@@ -189,20 +139,3 @@ export function planText(file: string): string {
   return fs.readFileSync(path.join(planDir(id), `verification_plan.${file.endsWith(".md") ? "md" : "json"}`), "utf8");
 }
 
-// Status words and symbols. Colour is never the only signal.
-export const STATUS: Record<string, { word: string; mark: string; tone: "pass" | "fail" | "neutral" }> = {
-  pass: { word: "Pass", mark: "✓", tone: "pass" },
-  fail: { word: "Fail", mark: "✕", tone: "fail" },
-  escaped: { word: "Escaped", mark: "✕", tone: "fail" },
-  needs_engineer: { word: "Needs engineer", mark: "✕", tone: "fail" },
-  no_progress: { word: "No progress", mark: "✕", tone: "fail" },
-  aborted: { word: "Aborted", mark: "○", tone: "neutral" },
-  not_verifiable: { word: "Not verifiable", mark: "○", tone: "neutral" },
-  rejected: { word: "Rejected", mark: "✕", tone: "fail" },
-  truncated: { word: "Truncated", mark: "○", tone: "neutral" },
-  compile_error: { word: "Compile error", mark: "✕", tone: "fail" },
-  timeout: { word: "Timeout", mark: "✕", tone: "fail" },
-  sim_error: { word: "Simulator error", mark: "✕", tone: "fail" },
-};
-
-export const status = (s: string) => STATUS[s] ?? { word: s, mark: "○", tone: "neutral" as const };

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import Logo from "./Logo";
+import SiteHeader from "./SiteHeader";
 import ReplayButton from "./ReplayButton";
 import { type Attempt, type Board as BoardData, type RunSummary, status } from "@/lib/evidence";
 
@@ -74,23 +74,18 @@ export default function Board({ data, runs }: { data: BoardData; runs: RunSummar
 
   return (
     <>
-      <header className="header">
-        <div className="header-row">
-          <Link href="/" className="wordmark" aria-label="DaVINCI home"><Logo /></Link>
-          <nav className="runs-nav" aria-label="Recorded runs">
-            {runs.map((r) => (
-              <Link key={r.id} href={`/runs/${r.id}/`} aria-current={r.id === live.id ? "page" : undefined}>
-                {r.id}
-              </Link>
-            ))}
-          </nav>
-          <div style={{ display: "flex", gap: 8, alignItems: "flex-start", flexWrap: "wrap" }}>
-            <a className="btn btn-quiet" href="https://github.com/GLAZERadr/DaVINCI-Silicon/tree/main/evidence">Raw evidence</a>
-            <ReplayButton runId={live.id} />
-          </div>
-        </div>
-        <div className="rule" aria-hidden="true"><span /><span /><span /></div>
-      </header>
+      <SiteHeader active="evidence">
+        <a className="btn btn-quiet" href="https://github.com/GLAZERadr/DaVINCI-Silicon/tree/main/evidence">Raw evidence</a>
+      </SiteHeader>
+      <nav className="subbar" aria-label="Recorded runs">
+        {runs.map((r) => (
+          <Link key={r.id} href={`/runs/${r.id}/`} aria-current={r.id === live.id ? "page" : undefined}>{r.id}</Link>
+        ))}
+        <span className="subbar-end">
+          <Link className="btn btn-quiet btn-sm" href={`/runs/${live.id}/console/`}>Open in Run Console</Link>
+          <ReplayButton runId={live.id} />
+        </span>
+      </nav>
 
       <main className="board">
         <section className="hero" aria-labelledby="verdict">
