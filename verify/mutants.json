@@ -13,6 +13,6 @@
    "find": "            dout      <= 0;\n", "replace": ""},
   {"id": "M7", "req": "REQ-07", "desc": "read when empty treated as a real read",
    "find": "wire do_read  = rd_en && !empty;", "replace": "wire do_read  = rd_en;"},
-  {"id": "M8", "req": "REQ-04", "desc": "overflow pulses even when a read frees a slot",
+  {"id": "M8", "req": "REQ-10", "desc": "overflow pulses even when a read frees a slot",
    "find": "overflow  <= wr_en && full && !rd_en;", "replace": "overflow  <= wr_en && full;"}
 ]
