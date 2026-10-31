@@ -77,6 +77,7 @@ def load_env(path: Path = ROOT / ".env"):
         os.environ.setdefault(k.strip(), v.strip().strip('"').strip("'"))
 
 
+load_env(ROOT / ".env.local")
 load_env()
 
 
