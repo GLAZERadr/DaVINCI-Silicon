@@ -27,6 +27,7 @@ ROOT = llm.ROOT
 RUNS = llm.RUNS
 TESTS = ROOT / "tests"
 SUITE_LOCK = ROOT / "verify" / "suite.sha256"
+SWEEP_LOCK = ROOT / "verify" / "sweep.sha256"
 AI_LABEL = "AI interpretation · not verified"
 
 # Generated RTL must not reach outside the simulator. A list of banned system
@@ -36,6 +37,14 @@ AI_LABEL = "AI interpretation · not verified"
 # neither. The sandbox, not this check, is the security boundary.
 DOLLAR = re.compile(r"\$")
 DIRECTIVE = re.compile(r"`(?!timescale\b)")
+# Simulation-only constructs that synthesis ignores or rejects; checked with
+# comments removed. `#(` stays legal: it opens the parameter list.
+SIM_ONLY = [(re.compile(r"\binitial\b"), "initial block"),
+            (re.compile(r"#\s*[\d.A-Za-z_]"), "# delay")]
+COMMENTS = re.compile(r"//[^\n]*|/\*.*?\*/", re.S)
+INTERFACE = json.loads((ROOT / "spec" / "interface.json").read_text())
+PORT_DECL = re.compile(r"\b(input|output|inout)\b(?:\s+(?:wire|reg|signed))*\s*(?:\[[^\]]*\]\s*)?"
+                       r"((?:(?!input\b|output\b|inout\b|wire\b|reg\b)[A-Za-z_]\w*\s*(?:,\s*)?)+)")
 MAX_RTL_BYTES = 64_000
 SIM_TIMEOUT_S = 180
 SANDBOX_IMAGE = os.environ.get("DAVINCI_SANDBOX_IMAGE", "davinci-sim:latest")
@@ -65,6 +74,14 @@ def check_suite(expected: str, when: str):
     got = suite_hash()
     if got != expected:
         raise SystemExit(f"ABORT: frozen suite changed ({when}): {got} != {expected}")
+
+
+def check_sweep(expected: str, when: str):
+    sys.path.insert(0, str(ROOT / "verify"))
+    from run_sweep import sweep_hash
+    got = sweep_hash()
+    if got != expected:
+        raise SystemExit(f"ABORT: parameter sweep changed ({when}): {got} != {expected}")
 
 
 def apply_mutant(src: str, mutant_id: str) -> tuple[str, dict]:
@@ -101,7 +118,47 @@ def validate(rtl: str | None) -> str | None:
             line = rtl.count("\n", 0, m.start()) + 1
             snippet = rtl.splitlines()[line - 1].strip()[:80]
             return f"forbidden {what} on line {line}: {snippet!r}"
+    code = COMMENTS.sub(" ", rtl)
+    for rule, what in SIM_ONLY:
+        if rule.search(code):
+            return f"simulation-only construct not allowed in synthesisable RTL: {what}"
+    got = ports(code)
+    want = {p["name"]: p["dir"] for p in INTERFACE["ports"]}
+    if got != want:
+        missing = sorted(set(want) - set(got))
+        extra = sorted(set(got) - set(want))
+        wrong = sorted(k for k in set(got) & set(want) if got[k] != want[k])
+        return f"port list does not match the spec interface (missing {missing}, extra {extra}, wrong direction {wrong})"
     return None
+
+
+def ports(code: str) -> dict:
+    """{port name: direction} declared in the module, ANSI header or body."""
+    found = {}
+    for direction, names in PORT_DECL.findall(code):
+        for name in re.split(r"\s*,\s*", names.strip().rstrip(",")):
+            if name:
+                found[name] = direction
+    return found
+
+
+def compile_check(rtl_path: Path, backend: str) -> tuple[bool, str]:
+    """Measured: does the RTL compile as plain Verilog-2001 (no SystemVerilog)?
+    Runs where the simulation would run. Returns (ok, compiler output)."""
+    cmd = ["iverilog", "-g2001", "-Wall", "-o", "/dev/null"]
+    if backend == "docker":
+        cmd = ["docker", "run", "--rm", *DOCKER_LIMITS, "--entrypoint", "timeout",
+               "-v", f"{rtl_path.resolve()}:/work/in/dut.v:ro", SANDBOX_IMAGE, "60", *cmd, "/work/in/dut.v"]
+        env = None
+    else:
+        cmd = [*cmd, str(rtl_path)]
+        env = local_env()
+    try:
+        p = subprocess.run(cmd, capture_output=True, text=True, timeout=120, env=env)
+    except subprocess.TimeoutExpired:
+        return False, "compile check exceeded 120 s"
+    out = (p.stdout + p.stderr).replace(str(rtl_path.resolve()), "dut.v").replace("/work/in/dut.v", "dut.v")
+    return p.returncode == 0, out.strip()[-2000:]
 
 
 # Model-written RTL is untrusted: it may only be simulated inside the sandbox.
@@ -162,6 +219,53 @@ def simulate(rtl_path: Path, out: Path, backend: str = "local") -> dict:
     return json.loads(vf.read_text()) | {"sandbox": backend}
 
 
+def sweep(rtl_path: Path, out: Path, backend: str) -> dict:
+    """G3: run the parameter sweep (verify/run_sweep.py) where the simulation ran.
+    Measured; its output never goes into a prompt."""
+    out.mkdir(parents=True, exist_ok=True)
+    if backend == "docker":
+        cmd = ["docker", "run", "--rm", *DOCKER_LIMITS, "--entrypoint", "timeout",
+               "-v", f"{rtl_path.resolve()}:/work/in/dut.v:ro", "-v", f"{out.resolve()}:/work/out",
+               SANDBOX_IMAGE, "120", "python", "verify/run_sweep.py", "/work/in/dut.v", "--out", "/work/out"]
+        env = None
+    else:
+        cmd = [sys.executable, str(ROOT / "verify" / "run_sweep.py"), str(rtl_path), "--out", str(out)]
+        env = local_env()
+    try:
+        p = subprocess.run(cmd, capture_output=True, text=True, timeout=SIM_TIMEOUT_S, cwd=ROOT, env=env)
+    except subprocess.TimeoutExpired:
+        return {"status": "timeout", "sets": [], "error": f"sweep exceeded {SIM_TIMEOUT_S}s"}
+    f = out / "sweep.json"
+    if not f.exists():
+        return {"status": "sim_error", "sets": [], "error": f"sweep wrote no result (exit {p.returncode}): "
+                                                           f"{p.stderr[-1000:]}"}
+    return json.loads(f.read_text())
+
+
+def interface_problems(spec: str, reqs: dict) -> list[str]:
+    """Can the frozen suite verify a design built from this spec and requirement
+    list at all? A syntactic guard: block, parameters, port names, test names.
+    It cannot judge whether the requirement text matches what the tests check."""
+    sys.path.insert(0, str(ROOT / "verify"))
+    from run_suite import all_tests
+    problems = []
+    if reqs.get("block") != INTERFACE["block"]:
+        problems.append(f"block is {reqs.get('block')!r}, the suite verifies {INTERFACE['block']!r}")
+    params = {k: v for k, v in (reqs.get("params") or {}).items() if k in INTERFACE["params"]}
+    if params != INTERFACE["params"]:
+        problems.append(f"params {reqs.get('params')} differ from the suite's {INTERFACE['params']}")
+    known = set(all_tests())
+    unknown = sorted({t for r in reqs.get("requirements", []) for t in r.get("tests", [])} - known)
+    if unknown:
+        problems.append(f"requirements name tests the suite does not have: {unknown}")
+    if not re.search(r"\bmodule\s+sync_fifo\b", spec):
+        problems.append("spec does not define module sync_fifo")
+    missing = [p["name"] for p in INTERFACE["ports"] if not re.search(rf"\b{p['name']}\b", spec)]
+    if missing:
+        problems.append(f"spec does not mention ports {missing}")
+    return problems
+
+
 def measured_feedback(verdict: dict | None, rejection: str | None) -> str:
     """What the simulator (or the pre-check) actually reported, for the repair prompt."""
     if rejection:
@@ -188,10 +292,11 @@ def gen_messages(ctx: str) -> list:
 
 
 def repair_messages(ctx: str, rtl: str | None, feedback: str) -> list:
-    prev = f"```verilog\n{rtl}```" if rtl else "(no usable RTL)"
+    # rtl is the last version that was simulated, even if a later answer was rejected.
+    prev = f"```verilog\n{rtl}```" if rtl else "(no RTL has been simulated yet)"
     return [{"role": "system", "content": SYSTEM},
             {"role": "user", "content":
-                f"{ctx}\n\n## Current RTL\n\n{prev}\n\n## Measured result\n\n{feedback}\n\n"
+                f"{ctx}\n\n## Last simulated RTL\n\n{prev}\n\n## Measured result\n\n{feedback}\n\n"
                 "Start with one line `DIAGNOSIS:` explaining the root cause in one or two sentences, "
                 "then give the complete corrected module in one ```verilog block."}]
 
@@ -251,6 +356,8 @@ def main(argv=None):
     a.sandbox = choose_sandbox(a.sandbox, {gen_p, rep_p}, source)
     locked = SUITE_LOCK.read_text().strip()
     check_suite(locked, "before run")
+    sweep_locked = SWEEP_LOCK.read_text().strip()
+    check_sweep(sweep_locked, "before run")
     image_id = None
     if a.sandbox == "docker":
         image_id = sandbox_image_id()
@@ -278,9 +385,21 @@ def main(argv=None):
                                 "approved_by": approved.get("approved_by"), "approved_at": approved.get("approved_at"),
                                 "source": approved.get("source", {}).get("name"), "untested": approved.get("untested")}
     record["spec_file"], record["requirements_file"] = str(a.spec), str(a.requirements)
+    record["sweep_sha256"] = sweep_locked
     run.event("run_started", run_id=run.id, generate=gen_p, repair=rep_p, seed_bug=a.seed_bug or "-")
 
-    prev_rtl, verdict, rejection, final = None, None, None, "fail"
+    problems = interface_problems(spec, approved)
+    if problems:  # the frozen suite cannot judge this design: no model call, no verdict
+        record.update(finished=time.strftime("%Y-%m-%dT%H:%M:%S%z"), status="not_verifiable",
+                      not_verifiable=problems, attempts_total=0, attempts_to_green=None, first_pass=False,
+                      time_to_green_s=None, wall_seconds=round(time.time() - run.t0, 2), cost_usd=0.0,
+                      tokens={"in": 0, "out": 0})
+        (run.dir / "run.json").write_text(json.dumps(record, indent=2))
+        run.event("run_finished", status="not_verifiable", attempts=0, cost_usd=0.0)
+        return 3
+
+    # last_rtl is the last version that was simulated; a rejected answer never replaces it.
+    last_rtl, verdict, rejection, final, simulated = None, None, None, "fail", {}
     for n in range(1, a.max_repairs + 2):
         adir = run.dir / f"attempt_{n}"
         adir.mkdir()
@@ -295,7 +414,7 @@ def main(argv=None):
         else:
             provider = gen_p if step == "generate" else rep_p
             msgs = gen_messages(ctx) if step == "generate" else \
-                repair_messages(ctx, prev_rtl, measured_feedback(verdict, rejection))
+                repair_messages(ctx, last_rtl, measured_feedback(verdict, rejection))
             (adir / "prompt.json").write_text(json.dumps(msgs, indent=1))
             run.event("model_call", attempt=n, step=step, provider=provider)
             h = llm.request_hash(msgs, opts)
@@ -320,22 +439,39 @@ def main(argv=None):
             run.event("diagnosis", attempt=n, label=AI_LABEL, text=diagnosis[:300])
 
         rejection = validate(rtl)
+        status = "rejected"
         if rejection and reply is not None and reply.extra.get("finish_reason") == "length":
+            # A configuration limit, not a model mistake: counted, but under its own status.
+            status = "truncated"
             rejection = f"reply cut off at the output token limit ({opts['max_tokens']} tokens); {rejection}"
+        rtl_path = adir / "sync_fifo.v"
+        if not rejection:
+            assert TESTS not in rtl_path.parents
+            rtl_path.write_text(rtl)
+            ok, compiler = compile_check(rtl_path, a.sandbox)
+            att["measured_compile"] = {"label": "measured", "ok": ok, "tool": "iverilog -g2001 -Wall",
+                                       "output": compiler}
+            if not ok:
+                rejection = f"does not compile as Verilog-2001 (iverilog -g2001 -Wall):\n{compiler}"
         if rejection:
-            att.update(status="rejected", measured={"rejection": rejection})
+            att.update(status=status, measured={"label": "measured", "rejection": rejection})
             record["attempts"].append(att)
-            run.event("rejected", attempt=n, reason=rejection)
-            prev_rtl, verdict = rtl, None
+            run.event(status, attempt=n, reason=rejection[:300])
+            verdict = None
             continue
 
-        rtl_path = adir / "sync_fifo.v"
-        assert TESTS not in rtl_path.parents
-        rtl_path.write_text(rtl)
         att["rtl_sha256"] = sha256(rtl.encode())
-        if prev_rtl:
+        if last_rtl:
             att["diff_vs_prev"] = "".join(difflib.unified_diff(
-                prev_rtl.splitlines(True), rtl.splitlines(True), f"attempt_{n - 1}", f"attempt_{n}"))
+                last_rtl.splitlines(True), rtl.splitlines(True), "last_simulated", f"attempt_{n}"))
+        if att["rtl_sha256"] in simulated:  # the same design again: repair has stalled
+            att.update(status="no_progress", measured={"label": "measured",
+                                                       "same_as_attempt": simulated[att["rtl_sha256"]]})
+            record["attempts"].append(att)
+            run.event("no_progress", attempt=n, same_as=simulated[att["rtl_sha256"]])
+            final = "no_progress"
+            break
+        simulated[att["rtl_sha256"]] = n
         run.event("simulating", attempt=n)
         verdict = simulate(rtl_path, adir / "sim", a.sandbox)
         check_suite(locked, f"after attempt {n}")
@@ -352,16 +488,45 @@ def main(argv=None):
         }
         if verdict.get("error"):
             att["measured"]["error"] = verdict["error"][-1500:]
-        att["finished_s"] = round(time.time() - run.t0, 2)
-        record["attempts"].append(att)
         run.event("verdict", attempt=n, status=verdict["status"],
                   passed=verdict.get("passed", 0), total=verdict.get("total", 0))
-        prev_rtl = rtl
+        last_rtl = rtl
         if verdict["status"] == "pass":
-            final = "pass"
+            # G3: same design at other parameter sets. Never shown to the model;
+            # a visible pass that fails here is an escape, not a pass.
+            run.event("sweeping", attempt=n)
+            sw = sweep(rtl_path, adir / "sweep", a.sandbox)
+            check_sweep(sweep_locked, f"after attempt {n}")
+            if sw.get("sweep_sha256") not in (None, sweep_locked):
+                raise SystemExit(f"ABORT: sandbox ran a different sweep ({sw['sweep_sha256']}); "
+                                 "rebuild the sandbox image with `make image`")
+            att["sweep"] = {"label": "measured", "status": sw["status"], "seconds": sw.get("seconds"),
+                            "sets": [{"params": s["params"], "status": s["status"], "passed": s["passed"],
+                                      "total": s["total"]} for s in sw.get("sets", [])]}
+            if sw.get("error"):
+                att["sweep"]["error"] = sw["error"][-500:]
+            run.event("sweep", attempt=n, status=sw["status"])
+            if sw["status"] != "pass":
+                att["status"] = "escaped"
+                final = "escaped"
+        att["finished_s"] = round(time.time() - run.t0, 2)
+        record["attempts"].append(att)
+        if verdict["status"] == "pass":
+            final = "pass" if final != "escaped" else final
             break
 
+    if final == "fail":  # repairs exhausted: hand over to a person with what was measured
+        final = "needs_engineer"
+        diag = next((x["ai_interpretation"]["diagnosis"] for x in reversed(record["attempts"])
+                     if "ai_interpretation" in x), None)
+        record["handoff"] = {
+            "failing_tests": [t["name"] for t in (verdict or {}).get("tests", []) if not t["passed"]],
+            "last_rejection": rejection,
+            "last_simulated_attempt": max(simulated.values()) if simulated else None,
+            "last_diagnosis": {"label": AI_LABEL, "text": diag} if diag else None,
+        }
     check_suite(locked, "after run")
+    check_sweep(sweep_locked, "after run")
     atts = record["attempts"]
     record.update(
         finished=time.strftime("%Y-%m-%dT%H:%M:%S%z"),

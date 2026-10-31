@@ -1,0 +1,19 @@
+{
+  "block": "sync_fifo",
+  "note": "What the frozen testbench fixes: module name, parameters it instantiates, and port names/directions. A spec or requirements list that disagrees cannot be verified by this suite.",
+  "params": {"WIDTH": 8, "DEPTH": 16, "AF_THRESH": 14},
+  "ports": [
+    {"name": "clk", "dir": "input"},
+    {"name": "rst", "dir": "input"},
+    {"name": "wr_en", "dir": "input"},
+    {"name": "din", "dir": "input"},
+    {"name": "rd_en", "dir": "input"},
+    {"name": "dout", "dir": "output"},
+    {"name": "full", "dir": "output"},
+    {"name": "empty", "dir": "output"},
+    {"name": "almost_full", "dir": "output"},
+    {"name": "overflow", "dir": "output"},
+    {"name": "underflow", "dir": "output"},
+    {"name": "count", "dir": "output"}
+  ]
+}
