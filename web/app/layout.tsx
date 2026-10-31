@@ -3,8 +3,10 @@ import "./globals.css";
 
 // Fonts come from Google Fonts at view time (next/font/google failed in a clean
 // Turbopack build). Families are named in globals.css.
-const FONTS = "https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600"
-  + "&family=JetBrains+Mono:wght@400;500&family=Orbitron:wght@600;700&display=swap";
+const FONTS = "https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800"
+  + "&family=JetBrains+Mono:wght@400;500&display=swap";
+
+export const viewport = { themeColor: "#0B0F17" };
 
 export const metadata: Metadata = {
   title: "DaVINCI Evidence Board",
@@ -13,7 +15,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" style={{ background: "#0B0F17" }}>
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />

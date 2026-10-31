@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Logo from "./Logo";
 import ReplayButton from "./ReplayButton";
 import { type Attempt, type Board as BoardData, type RunSummary, status } from "@/lib/evidence";
 
@@ -75,7 +76,7 @@ export default function Board({ data, runs }: { data: BoardData; runs: RunSummar
     <>
       <header className="header">
         <div className="header-row">
-          <Link href="/" className="wordmark">DAVINCI</Link>
+          <Link href="/" className="wordmark" aria-label="DaVINCI home"><Logo /></Link>
           <nav className="runs-nav" aria-label="Recorded runs">
             {runs.map((r) => (
               <Link key={r.id} href={`/runs/${r.id}/`} aria-current={r.id === live.id ? "page" : undefined}>
