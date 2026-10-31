@@ -19,8 +19,10 @@ RUN useradd --create-home --uid 1000 sim
 WORKDIR /work
 COPY tests/  /work/tests/
 COPY verify/ /work/verify/
-RUN chmod -R a-w /work/tests /work/verify
+COPY tests_sweep/ /work/tests_sweep/
+RUN chmod -R a-w /work/tests /work/verify /work/tests_sweep
 USER sim
 
 # The RTL under test is mounted at /work/in/dut.v, results go to /work/out.
+# The parameter sweep runs with --entrypoint timeout ... python verify/run_sweep.py.
 ENTRYPOINT ["timeout", "120", "python", "verify/run_suite.py", "/work/in/dut.v", "--out", "/work/out"]
