@@ -1,4 +1,5 @@
 import Link from "next/link";
+import ModelAvatar from "./ModelAvatar";
 import SiteHeader from "./SiteHeader";
 import ReplayButton from "./ReplayButton";
 import { type Attempt, type Board as BoardData, type RunSummary, status } from "@/lib/evidence";
@@ -116,7 +117,7 @@ export default function Board({ data, runs }: { data: BoardData; runs: RunSummar
                     {a.diagnosis && (
                       <div className="tl-comment">
                         <div className="tl-comment-head">
-                          <span className="tl-avatar" aria-hidden="true">AI</span>
+                          <ModelAvatar model={a.model} size={26} />
                           <strong>{a.model ?? "model"}</strong>
                           <span className="tag-ai">AI interpretation · not verified</span>
                           <span className="meta-text">diagnosis sent with attempt {a.n}</span>

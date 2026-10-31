@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import FifoView from "./FifoView";
+import ModelAvatar from "./ModelAvatar";
 import Waveform, { pickTest } from "./Waveform";
 import { apiBase } from "@/lib/api";
 import { type Attempt, type Requirement, type Run, type Trace, status } from "@/lib/run";
@@ -301,12 +302,14 @@ export default function Console({ runs, requirements, traceSource = "static" }:
       <aside className="c-right" aria-label="Diagnosis and attempt details">
         {next?.diagnosis && a?.status !== "pass" ? (
           <div className="ai">
+            <p className="ai-head"><ModelAvatar model={next.model} size={20} /><strong>{next.model ?? "model"}</strong></p>
             <p className="label">AI interpretation · not verified · diagnosis of this failure (sent with attempt {next.n})</p>
             <p>{next.diagnosis}</p>
           </div>
         ) : null}
         {a?.diagnosis ? (
           <div className="ai">
+            <p className="ai-head"><ModelAvatar model={a.model} size={20} /><strong>{a.model ?? "model"}</strong></p>
             <p className="label">AI interpretation · not verified · diagnosis that produced this attempt</p>
             <p>{a.diagnosis}</p>
           </div>

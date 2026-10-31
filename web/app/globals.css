@@ -153,7 +153,6 @@ main.board { max-width: 1120px; margin: 0 auto; padding: 28px 32px 48px; display
 .tl-comment { margin: 8px 0 8px 44px; border: 1px dashed var(--muted); border-radius: var(--radius-sm); background: var(--surface); position: relative; z-index: 1; }
 .tl-comment-head { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 8px 12px; border-bottom: 1px dashed var(--border-strong); background: var(--surface-2); border-radius: var(--radius-sm) var(--radius-sm) 0 0; font-size: 13px; }
 .tl-comment p { margin: 0; padding: 10px 12px; line-height: 1.6; }
-.tl-avatar { width: 22px; height: 22px; border-radius: 50%; background: var(--brand); color: #fff; font-size: 10px; font-weight: 800; display: grid; place-items: center; }
 .tag-ai, .tag-measured { font-size: 11px; font-weight: 700; padding: 1px 8px; border-radius: 999px; white-space: nowrap; }
 .tag-ai { border: 1px dashed var(--muted); color: var(--secondary); }
 .tag-measured { border: 1px solid var(--border-strong); color: var(--secondary); background: var(--surface-2); }
@@ -481,3 +480,8 @@ tr.row-muted td { color: var(--muted); }
 .run-name { font-weight: 700; font-size: 13.5px; letter-spacing: -0.005em; overflow: hidden; text-overflow: ellipsis; }
 .run-state { font-size: 12px; font-weight: 600; }
 .run-desc { grid-column: 2 / 4; font-size: 12px; color: var(--muted); }
+
+/* ---- model avatar ---- */
+.model-avatar { border-radius: 50%; flex: none; display: block; object-fit: cover; background: #F3EEE6; box-shadow: 0 0 0 1px var(--border-strong); }
+.model-avatar-ai { display: grid; place-items: center; background: var(--surface-3); color: var(--secondary); font-size: 9px; font-weight: 800; letter-spacing: 0.02em; }
+.ai-head { display: flex; align-items: center; gap: 8px; margin: 0 0 6px !important; font-size: 13px; }
