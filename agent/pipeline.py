@@ -344,7 +344,12 @@ def main(argv=None):
         # --replay-from X --run-id Y replays X into Y; --run-id X alone replays X into X-replayN.
         source = a.replay_from or a.run_id
         replayer = llm.Replayer(source)
-        a.seed_bug = json.loads((RUNS / source / "run.json").read_text()).get("seed_bug")
+        src_run = json.loads((RUNS / source / "run.json").read_text())
+        a.seed_bug = src_run.get("seed_bug")
+        # Replay against the inputs the source run used, unless overridden.
+        for opt, key in (("spec", "spec_file"), ("requirements", "requirements_file")):
+            if getattr(a, opt) == ap.get_default(opt) and src_run.get(key) and Path(src_run[key]).exists():
+                setattr(a, opt, Path(src_run[key]))
         if not a.replay_from:
             n = 1
             while (RUNS / f"{source}-replay{n}").exists():
