@@ -50,6 +50,30 @@ Results are per test: a test shared by two requirements marks both rows.
 
 Weak-test check: with `test_full_simultaneous_rw`, `test_random_regression` left out, 6/8 killed (survivors: M1, M8); restored suite 8/8.
 
+## Plan gaps (measured against the reference RTL)
+
+- Mutants caught by only one directed test: M1, M8
+- Mutants caught only by the random regression: none
+- Requirements no mutant targets (nothing shows their tests would catch a bug): REQ-04, REQ-09
+- Re-simulated with tests left out: 19 suites; prediction from the full run's killers matched every one.
+
+| Mutant | Targets | Directed tests that kill it | Killed by its own requirement's tests |
+| --- | --- | --- | --- |
+| M1 | REQ-06 | `test_full_simultaneous_rw` ○ only one | `test_full_simultaneous_rw` |
+| M2 | REQ-03 | `test_almost_full`, `test_full_flag`, `test_full_simultaneous_rw`, `test_overflow`, `test_wraparound_order` | `test_full_flag` |
+| M3 | REQ-08 | `test_almost_full`, `test_full_flag`, `test_full_simultaneous_rw`, `test_overflow`, `test_wraparound_order` | `test_almost_full` |
+| M4 | REQ-02 | `test_almost_full`, `test_full_simultaneous_rw`, `test_overflow`, `test_wraparound_order` | `test_wraparound_order` |
+| M5 | REQ-05 | `test_empty_simultaneous_rw`, `test_underflow` | `test_underflow` |
+| M6 | REQ-01 | `test_almost_full`, `test_empty_flag`, `test_empty_simultaneous_rw`, `test_full_flag`, `test_full_simultaneous_rw`, `test_overflow`, `test_reset_state`, `test_underflow`, `test_wraparound_order` | `test_reset_state` |
+| M7 | REQ-07 | `test_empty_simultaneous_rw`, `test_underflow` | `test_empty_simultaneous_rw` |
+| M8 | REQ-10 | `test_full_simultaneous_rw` ○ only one | `test_full_simultaneous_rw` |
+
+Suites that let a mutant survive:
+
+| Left out | Killed | Survivors |
+| --- | --- | --- |
+| `test_full_simultaneous_rw`, `test_random_regression` | 6/8 | ✕ M1, M8 |
+
 ## Every attempt
 
 | # | Source | Status | Frozen suite |

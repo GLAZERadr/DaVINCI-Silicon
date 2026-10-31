@@ -178,6 +178,57 @@ export default function Board({ data, runs }: { data: BoardData; runs: RunSummar
           </div>
         </section>
 
+        {data.gaps && (
+          <section className="card" aria-labelledby="gaps">
+            <p id="gaps" className="label">Plan gaps</p>
+            <p className="lede">
+              Where the test plan is thin, measured against the reference RTL: the mutation check re-simulated
+              with each test left out ({data.gaps.drops.length} suites), and with each directed test left out
+              together with the random regression.
+              {data.gaps.summary.all_predictions_match
+                ? " Every result matched the prediction from the full run's killers, so the tests do not depend on each other."
+                : " Some results did not match the prediction from the full run's killers."}
+            </p>
+            <ul className="gates gaps">
+              <li>
+                <span className="gate">One</span>
+                <span>Mutants caught by only one directed test</span>
+                <span className="mono">{data.gaps.summary.fragile.join(", ") || "none"}</span>
+              </li>
+              <li>
+                <span className="gate">Random</span>
+                <span>Mutants caught only by the random regression</span>
+                <span className="mono">{data.gaps.summary.random_only.join(", ") || "none"}</span>
+              </li>
+              <li>
+                <span className="gate">Untargeted</span>
+                <span>Requirements no mutant targets: nothing shows their tests would catch a bug</span>
+                <span className="mono">{data.gaps.summary.requirements_without_mutant.join(", ") || "none"}</span>
+              </li>
+            </ul>
+            <div className="table-wrap" style={{ marginTop: 16 }}>
+              <table>
+                <thead><tr><th>Left out</th><th>Mutants killed</th><th>Survivors</th></tr></thead>
+                <tbody>
+                  {data.gaps.drops.filter((d: { survivors: string[] }) => d.survivors.length > 0).map((d: { dropped: string[]; killed: number; injected: number; survivors: string[] }) => (
+                    <tr key={d.dropped.join("+")}>
+                      <td className="mono">{d.dropped.join(" + ")}</td>
+                      <td>{d.killed}/{d.injected}</td>
+                      <td><span className="mark-fail">✕ {d.survivors.join(", ")} survive</span></td>
+                    </tr>
+                  ))}
+                  <tr>
+                    <td>Any single test</td>
+                    <td colSpan={2}>{data.gaps.summary.single_drops_with_survivors.length === 0
+                      ? <span className="mark-pass">✓ no survivors: the random regression still catches every mutant</span>
+                      : <span className="mark-fail">✕ survivors when leaving out {data.gaps.summary.single_drops_with_survivors.join(", ")}</span>}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+        )}
+
         <section className="grid-2">
           <div className="card" aria-labelledby="why">
             <p id="why" className="label" style={{ marginBottom: 16 }}>What changed and why</p>

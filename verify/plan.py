@@ -82,7 +82,7 @@ def column(run: dict, att: dict | None, tests: list[str], all_tests: list[str]) 
 
 
 def build(run: dict, reqs: dict, suite_tests: list[str], mutants: list, mutation: dict | None,
-          weak: dict | None, requirements_sha256: str) -> dict:
+          weak: dict | None, requirements_sha256: str, gaps: dict | None = None) -> dict:
     """suite_tests is the frozen suite's full test list (from spec/requirements.json),
     which a run's own requirements, e.g. an approved extraction, may not cover."""
     all_tests = sorted(suite_tests)
@@ -94,6 +94,7 @@ def build(run: dict, reqs: dict, suite_tests: list[str], mutants: list, mutation
     suite = run.get("suite_sha256")
     mut_ok = bool(mutation) and mutation.get("suite_sha256") == suite
     weak_ok = bool(weak) and weak.get("suite_sha256") == suite
+    gaps_ok = bool(gaps) and gaps.get("suite_sha256") == suite
     by_id = {m["id"]: m for m in (mutation or {}).get("mutants", [])}
 
     rows = []
@@ -132,6 +133,7 @@ def build(run: dict, reqs: dict, suite_tests: list[str], mutants: list, mutation
             "mutants_sha256": (mutation or {}).get("mutants_sha256"),
             "mutation_suite_matches": mut_ok,
             "weak_demo_suite_matches": weak_ok,
+            "gaps_suite_matches": gaps_ok,
             "simulator": (fm or {}).get("simulator"),
             "final_rtl_sha256": (final or {}).get("rtl_sha256"),
             "block": reqs.get("block"),
@@ -158,6 +160,12 @@ def build(run: dict, reqs: dict, suite_tests: list[str], mutants: list, mutation
                       "ref_rtl_sha256": mutation.get("ref_rtl_sha256")} if mut_ok else None),
         "weak_test_check": ({"tests_dropped": weak["tests_dropped"], "weak": weak["weak"],
                              "restored": weak["restored"]} if weak_ok else None),
+        "gaps": ({"summary": gaps["summary"],
+                  "mutants": [{k: m[k] for k in ("id", "req", "directed_killers", "killed_by_own_req_tests",
+                                                 "fragile", "random_only")} for m in gaps["mutants"]],
+                  "drops_with_survivors": [{k: d[k] for k in ("dropped", "killed", "injected", "survivors")}
+                                           for d in gaps["drops"] if d["survivors"]],
+                  "drops_total": len(gaps["drops"])} if gaps_ok else None),
         "attempts": [{"n": a["n"], "source": a.get("source"), "status": a["status"],
                       "result": (lambda m: f"{m['passed']}/{m['total']}" if m else not_simulated(a))(resolve(run, a))}
                      for a in attempts],
@@ -251,6 +259,30 @@ def markdown(p: dict) -> str:
                 f"{w['weak']['killed']}/{w['weak']['injected']} killed (survivors: {', '.join(w['weak']['survivors']) or 'none'}); "
                 f"restored suite {w['restored']['killed']}/{w['restored']['injected']}."]
 
+    out += ["", "## Plan gaps (measured against the reference RTL)", ""]
+    gp = p["gaps"]
+    if gp:
+        sm = gp["summary"]
+        out += [f"- Mutants caught by only one directed test: {', '.join(sm['fragile']) or 'none'}",
+                f"- Mutants caught only by the random regression: {', '.join(sm['random_only']) or 'none'}",
+                f"- Requirements no mutant targets (nothing shows their tests would catch a bug): "
+                f"{', '.join(sm['requirements_without_mutant']) or 'none'}",
+                f"- Re-simulated with tests left out: {gp['drops_total']} suites; "
+                f"prediction from the full run's killers {'matched every one' if sm['all_predictions_match'] else 'did NOT match'}.",
+                "", "| Mutant | Targets | Directed tests that kill it | Killed by its own requirement's tests |",
+                "| --- | --- | --- | --- |"]
+        for m in gp["mutants"]:
+            flag = " ○ only one" if m["fragile"] else " ○ none (random only)" if m["random_only"] else ""
+            own = ", ".join(f"`{t}`" for t in m["killed_by_own_req_tests"]) or "✕ no"
+            out.append(f"| {m['id']} | {m['req']} | {', '.join(f'`{t}`' for t in m['directed_killers']) or '—'}{flag} | {own} |")
+        out += ["", "Suites that let a mutant survive:", "", "| Left out | Killed | Survivors |", "| --- | --- | --- |"]
+        for d in gp["drops_with_survivors"]:
+            out.append(f"| {', '.join(f'`{t}`' for t in d['dropped'])} | {d['killed']}/{d['injected']} | ✕ {', '.join(d['survivors'])} |")
+        if not gp["drops_with_survivors"]:
+            out.append("| — | — | none |")
+    else:
+        out.append("○ No coverage-gap check for this suite hash (`make gaps`).")
+
     out += ["", "## Every attempt", "", "| # | Source | Status | Frozen suite |", "| --- | --- | --- | --- |"]
     for a in p["attempts"]:
         out.append(f"| {a['n']} | {a['source']} | {a['status']} | {a['result']} |")
@@ -286,7 +318,8 @@ def plan_for(run_dir: Path, reference: bool = False) -> dict:
     return build(run, json.loads(raw), suite_tests(canonical),
                  json.loads((ROOT / "verify" / "mutants.json").read_text()),
                  load(ROOT / "runs" / "mutation" / "mutation.json"),
-                 load(ROOT / "runs" / "weak_demo" / "weak_demo.json"), sha256(raw))
+                 load(ROOT / "runs" / "weak_demo" / "weak_demo.json"), sha256(raw),
+                 load(ROOT / "runs" / "coverage_gap" / "gaps.json"))
 
 
 def main():

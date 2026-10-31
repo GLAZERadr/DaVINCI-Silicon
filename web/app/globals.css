@@ -122,6 +122,7 @@ code.cmd { display: inline-block; font-size: 13px; background: var(--ink); color
 ul.gates { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; font-size: 14px; }
 ul.gates li { display: grid; grid-template-columns: 56px minmax(0, 1fr) auto; gap: 12px; align-items: baseline; }
 ul.gates .gate { font-size: 13px; color: var(--secondary); }
+ul.gates.gaps li { grid-template-columns: 96px minmax(0, 1fr) auto; }
 
 .foot { font-size: 13px; color: var(--secondary); line-height: 1.6; }
 .replay-status { font-size: 13px; color: var(--border); margin: 6px 0 0; max-width: 360px; }
@@ -139,6 +140,6 @@ ul.gates .gate { font-size: 13px; color: var(--secondary); }
   .grid-4 { grid-template-columns: minmax(0, 1fr); }
   dl.facts { grid-template-columns: minmax(0, 1fr); row-gap: 4px; }
   dl.facts dd { margin-bottom: 8px; }
-  ul.gates li { grid-template-columns: 44px minmax(0, 1fr); }
+  ul.gates li, ul.gates.gaps li { grid-template-columns: 44px minmax(0, 1fr); }
   ul.gates li > :last-child { grid-column: 2; }
 }

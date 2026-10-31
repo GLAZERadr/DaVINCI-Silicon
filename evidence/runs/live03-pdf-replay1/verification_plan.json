@@ -21,6 +21,7 @@
     "mutants_sha256": "3e17913c1b2117f60c4e2a69a6b28775d8ab5e2e4116b16c8fa46957baf68da1",
     "mutation_suite_matches": true,
     "weak_demo_suite_matches": true,
+    "gaps_suite_matches": true,
     "simulator": "Icarus Verilog version 12.0 (stable) ()",
     "final_rtl_sha256": "466229822924bf013d4f9ca473df0c347c76a3d3e3cc825eb2e503d6678a863b",
     "block": "sync_fifo",
@@ -872,6 +873,158 @@
       "injected": 8,
       "survivors": []
     }
+  },
+  "gaps": {
+    "summary": {
+      "fragile": [
+        "M1",
+        "M8"
+      ],
+      "random_only": [],
+      "requirements_without_mutant": [
+        "REQ-04",
+        "REQ-09"
+      ],
+      "single_drops_with_survivors": [],
+      "directed_only_drops_with_survivors": [
+        "test_full_simultaneous_rw"
+      ],
+      "all_predictions_match": true
+    },
+    "mutants": [
+      {
+        "id": "M1",
+        "req": "REQ-06",
+        "directed_killers": [
+          "test_full_simultaneous_rw"
+        ],
+        "killed_by_own_req_tests": [
+          "test_full_simultaneous_rw"
+        ],
+        "fragile": true,
+        "random_only": false
+      },
+      {
+        "id": "M2",
+        "req": "REQ-03",
+        "directed_killers": [
+          "test_almost_full",
+          "test_full_flag",
+          "test_full_simultaneous_rw",
+          "test_overflow",
+          "test_wraparound_order"
+        ],
+        "killed_by_own_req_tests": [
+          "test_full_flag"
+        ],
+        "fragile": false,
+        "random_only": false
+      },
+      {
+        "id": "M3",
+        "req": "REQ-08",
+        "directed_killers": [
+          "test_almost_full",
+          "test_full_flag",
+          "test_full_simultaneous_rw",
+          "test_overflow",
+          "test_wraparound_order"
+        ],
+        "killed_by_own_req_tests": [
+          "test_almost_full"
+        ],
+        "fragile": false,
+        "random_only": false
+      },
+      {
+        "id": "M4",
+        "req": "REQ-02",
+        "directed_killers": [
+          "test_almost_full",
+          "test_full_simultaneous_rw",
+          "test_overflow",
+          "test_wraparound_order"
+        ],
+        "killed_by_own_req_tests": [
+          "test_wraparound_order"
+        ],
+        "fragile": false,
+        "random_only": false
+      },
+      {
+        "id": "M5",
+        "req": "REQ-05",
+        "directed_killers": [
+          "test_empty_simultaneous_rw",
+          "test_underflow"
+        ],
+        "killed_by_own_req_tests": [
+          "test_underflow"
+        ],
+        "fragile": false,
+        "random_only": false
+      },
+      {
+        "id": "M6",
+        "req": "REQ-01",
+        "directed_killers": [
+          "test_almost_full",
+          "test_empty_flag",
+          "test_empty_simultaneous_rw",
+          "test_full_flag",
+          "test_full_simultaneous_rw",
+          "test_overflow",
+          "test_reset_state",
+          "test_underflow",
+          "test_wraparound_order"
+        ],
+        "killed_by_own_req_tests": [
+          "test_reset_state"
+        ],
+        "fragile": false,
+        "random_only": false
+      },
+      {
+        "id": "M7",
+        "req": "REQ-07",
+        "directed_killers": [
+          "test_empty_simultaneous_rw",
+          "test_underflow"
+        ],
+        "killed_by_own_req_tests": [
+          "test_empty_simultaneous_rw"
+        ],
+        "fragile": false,
+        "random_only": false
+      },
+      {
+        "id": "M8",
+        "req": "REQ-10",
+        "directed_killers": [
+          "test_full_simultaneous_rw"
+        ],
+        "killed_by_own_req_tests": [
+          "test_full_simultaneous_rw"
+        ],
+        "fragile": true,
+        "random_only": false
+      }
+    ],
+    "drops_with_survivors": [
+      {
+        "dropped": [
+          "test_full_simultaneous_rw",
+          "test_random_regression"
+        ],
+        "killed": 6,
+        "injected": 8,
+        "survivors": [
+          "M1",
+          "M8"
+        ]
+      }
+    ],
+    "drops_total": 19
   },
   "attempts": [
     {

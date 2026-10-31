@@ -21,6 +21,7 @@
     "mutants_sha256": "3e17913c1b2117f60c4e2a69a6b28775d8ab5e2e4116b16c8fa46957baf68da1",
     "mutation_suite_matches": false,
     "weak_demo_suite_matches": false,
+    "gaps_suite_matches": false,
     "simulator": "Icarus Verilog version 12.0 (stable) ()",
     "final_rtl_sha256": "466229822924bf013d4f9ca473df0c347c76a3d3e3cc825eb2e503d6678a863b",
     "block": "sync_fifo",
@@ -727,6 +728,7 @@
   },
   "mutation": null,
   "weak_test_check": null,
+  "gaps": null,
   "attempts": [
     {
       "n": 1,

@@ -2,7 +2,7 @@ RTL ?= rtl/sync_fifo.v
 RUN ?= manual
 IMAGE = davinci-sim:latest
 
-.PHONY: sim mutate weak-demo image sandbox api evidence board plan plan-ref
+.PHONY: sim mutate weak-demo image sandbox api evidence board plan plan-ref gaps
 
 # Local run (needs iverilog + cocotb installed)
 sim:
@@ -29,6 +29,11 @@ sandbox:
 # restore the full suite and watch it die.
 weak-demo:
 	python3 verify/mutate.py $(RTL) --weak-demo --out runs/weak_demo
+
+# Coverage gaps: mutation check with each test left out (and each directed test
+# together with the random regression); single-test kills; untargeted requirements.
+gaps:
+	python3 verify/gaps.py $(RTL) --out runs/coverage_gap
 
 # Verification plan for a stored run: runs/$(RUN)/verification_plan.{md,json}.
 # Reads stored files only (no simulation, no model call); output is reproducible.

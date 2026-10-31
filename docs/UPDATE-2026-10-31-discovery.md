@@ -45,6 +45,7 @@ Show where the plan is weak instead of only where the RTL fails.
 - Generalise the weak-test demo: drop each directed test in turn, re-run the mutation check, and report which mutants survive. 10 suite runs × 8 mutants, run in the sandbox, results stored in `runs/coverage_gap/`.
 - Output: a "Plan gaps" section in P1 and on the board, labelled measured.
 - Done when: dropping `test_full_simultaneous_rw` reproduces the known result (M1 and M8 survive), and the full-suite row shows 8/8.
+- **Result (31 Oct, `make gaps`, 37 s, local):** full suite 8/8. Leaving out any single test: no survivors (the random regression catches every mutant). Leaving out `test_full_simultaneous_rw` together with the random regression: M1 and M8 survive (6/8), the same as the weak-test demo; every other directed test is backed up. M1 and M8 have only one directed killer. REQ-04 and REQ-09 have no mutant, so nothing shows their tests would catch a bug. All 19 re-simulated suites matched the prediction from the full run's killers. The original criterion was imprecise: dropping `test_full_simultaneous_rw` alone kills everything, because the random regression catches M1 and M8.
 
 ### P3 – Scenario coverage counters
 Count how often key FIFO situations actually happened during simulation.

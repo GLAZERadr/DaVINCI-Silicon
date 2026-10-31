@@ -118,6 +118,7 @@ export type Board = {
   ledger: { liveCallsTotal: number; liveCallsOk: number; liveSpendUsd: number };
   planId: string | null; // run whose verification plan is linked (the replay when there is one)
   referencePlan: boolean;
+  gaps: Json | null; // coverage-gap check (verify/gaps.py), only when measured on the pinned suite
 };
 
 export type RunSummary = { id: string; status: string; seedBug: string | null; fromExtraction: boolean };
@@ -154,6 +155,7 @@ export function board(id: string): Board {
       mutants: m.mutants,
     },
     weakDemo: read("weak_demo.json"),
+    gaps: (() => { const g = read("gaps.json"); return g && g.suite_sha256 === idx.pinned_suite_sha256 ? g : null; })(),
     referencePlan: fs.existsSync(path.join(ROOT, "reference", "verification_plan.md")),
     planId: [entry.replay?.run_id, id].find((r) => r && fs.existsSync(path.join(ROOT, "runs", r, "verification_plan.md"))) ?? null,
     pinnedSuite: idx.pinned_suite_sha256,

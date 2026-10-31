@@ -52,6 +52,10 @@ Results are per test: a test shared by two requirements marks both rows.
 
 ○ No mutation check for this suite hash.
 
+## Plan gaps (measured against the reference RTL)
+
+○ No coverage-gap check for this suite hash (`make gaps`).
+
 ## Every attempt
 
 | # | Source | Status | Frozen suite |
