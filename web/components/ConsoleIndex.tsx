@@ -68,8 +68,12 @@ export default function ConsoleIndex({ recorded, requirements }: { recorded: Rec
   const active = jobs.filter((j) => j.state !== "done");
   return (
     <main className="board">
+      <section className="title-block">
+        <p className="eyebrow">Run Console</p>
+        <h1 className="display-title">Every attempt, line by line. <span className="tone-2">Diff, prompt, simulator output and the model&apos;s diagnosis, kept apart from what was measured.</span></h1>
+      </section>
       <section className="card">
-        <p className="label">Run Console</p>
+        <p className="label">Open a run</p>
         <p className="lede">Every attempt of a run: the requirements tree with per-test results, the RTL diff against the previous attempt, the prompt, simulator, compile and sweep output, and the model&apos;s diagnosis kept apart from what was measured.</p>
         <p className="label" style={{ marginTop: 8 }}>Recorded runs · work without the API</p>
         <ul className="run-cards">

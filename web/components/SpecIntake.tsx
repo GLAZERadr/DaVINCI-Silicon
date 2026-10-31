@@ -163,8 +163,12 @@ export default function SpecIntake() {
         </nav>
       )}
       {!xid && <>
+      <section className="title-block">
+        <p className="eyebrow">Spec intake</p>
+        <h1 className="display-title">Bring a datasheet. <span className="tone-2">Muse Spark lists the requirements; a person approves them before any RTL is written.</span></h1>
+      </section>
       <section className="card">
-        <p className="label">Spec intake</p>
+        <p className="label">Upload a spec</p>
         <p className="lede">Upload a datasheet page or timing diagram (PDF or image). Muse Spark reads it and lists the requirements it finds; it never sees <span className="mono">spec/requirements.json</span>. A second call maps each item to a reference requirement. Both are AI interpretation: a person reviews, edits and approves the list before any RTL is generated from it.</p>
         <form className="run-form" onSubmit={upload}>
           <div className="run-form-row">

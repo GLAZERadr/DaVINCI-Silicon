@@ -18,7 +18,7 @@ export default async function RunConsole({ params }: { params: Promise<{ id: str
   const runs = consoleRuns(id);
   return (
     <>
-      <SiteHeader active="console" />
+      <SiteHeader active="console" crumbs={[{ label: id, href: `/runs/${id}/` }, { label: "console" }]} />
       <nav className="subbar" aria-label="Recorded runs">
         {runList().map((r) => (
           <Link key={r.id} href={`/runs/${r.id}/console/`} aria-current={r.id === id ? "page" : undefined}>{r.id}</Link>

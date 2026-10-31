@@ -64,11 +64,15 @@ export default function NewRun({ mutants, recorded }: { mutants: Mutant[]; recor
   const needsToken = mode === "live" && !hasToken;
   return (
     <main className="board">
+      <section className="title-block">
+        <p className="eyebrow">New run</p>
+        <h1 className="display-title">Start a run. <span className="tone-2">The model writes RTL; the frozen tests, the sweep and the sandbox decide.</span></h1>
+      </section>
       <ApiPanel onChange={(ok, tok) => { setApiOk(ok); setHasToken(tok); }} />
 
       <section className="card">
-        <p className="label">New run</p>
-        <p className="lede">The model writes RTL; the frozen suite, the parameter sweep and the sandbox decide. Every attempt is recorded, including rejected and failed ones. The server always simulates model-written RTL in its Docker sandbox; this page cannot change that.</p>
+        <p className="label">Run settings</p>
+        <p className="lede">Every attempt is recorded, including rejected and failed ones. The server always simulates model-written RTL in its Docker sandbox; this page cannot change that.</p>
         <form className="run-form" onSubmit={start}>
           <fieldset>
             <legend className="label">Model</legend>
