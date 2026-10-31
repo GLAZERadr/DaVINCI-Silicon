@@ -180,6 +180,30 @@ export default function Board({ data, runs }: { data: BoardData; runs: RunSummar
           </div>
         </section>
 
+        {data.scenarios && (
+          <section className="card" aria-labelledby="scenarios">
+            <p id="scenarios" className="label">Scenario coverage</p>
+            <p className="lede">
+              How often the frozen suite drove the final RTL into each situation, counted at every rising clock edge
+              over {data.scenarios.cycles.toLocaleString()} cycles from a waveform of the same tests. Measured, on {data.planId}.
+              {!data.scenarios.suite_passed && " The suite did not pass on this RTL, so the counts are partial."}
+            </p>
+            <div className="table-wrap">
+              <table>
+                <thead><tr><th>Scenario</th><th>Count</th></tr></thead>
+                <tbody>
+                  {Object.entries(data.scenarios.counts as Record<string, number>).map(([k, n]) => (
+                    <tr key={k}>
+                      <td>{data.scenarios!.descriptions[k]}</td>
+                      <td>{n > 0 ? <span className="mark-pass">✓ {n}</span> : <span className="mark-fail">✕ never reached</span>}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </section>
+        )}
+
         {data.gaps && (
           <section className="card" aria-labelledby="gaps">
             <p id="gaps" className="label">Plan gaps</p>

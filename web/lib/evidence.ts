@@ -118,6 +118,7 @@ export type Board = {
   ledger: { liveCallsTotal: number; liveCallsOk: number; liveSpendUsd: number };
   planId: string | null; // run whose verification plan is linked (the replay when there is one)
   referencePlan: boolean;
+  scenarios: Json | null; // scenario counts from the linked plan (already checked against pins there)
   gaps: Json | null; // coverage-gap check (verify/gaps.py), only when measured on the pinned suite
 };
 
@@ -143,6 +144,7 @@ export function board(id: string): Board {
   const entry = idx.runs.find((e: Json) => e.live.run_id === id);
   if (!entry) throw new Error(`run ${id} is not in the evidence bundle`);
   const m = read("mutation.json")!;
+  const planId = [entry.replay?.run_id, id].find((r) => r && fs.existsSync(path.join(ROOT, "runs", r, "verification_plan.md"))) ?? null;
   return {
     live: loadRun(id),
     replay: entry.replay ? loadRun(entry.replay.run_id) : null,
@@ -157,7 +159,8 @@ export function board(id: string): Board {
     weakDemo: read("weak_demo.json"),
     gaps: (() => { const g = read("gaps.json"); return g && g.suite_sha256 === idx.pinned_suite_sha256 ? g : null; })(),
     referencePlan: fs.existsSync(path.join(ROOT, "reference", "verification_plan.md")),
-    planId: [entry.replay?.run_id, id].find((r) => r && fs.existsSync(path.join(ROOT, "runs", r, "verification_plan.md"))) ?? null,
+    planId,
+    scenarios: planId ? read(`runs/${planId}/verification_plan.json`)?.scenarios ?? null : null,
     pinnedSuite: idx.pinned_suite_sha256,
     pinnedSweep: idx.pinned_sweep_sha256,
     ledger: {

@@ -24,6 +24,7 @@ Built for the Meta Global AI Developer Hackathon 2026 (Startup Track, "Push the 
 | Image/PDF spec input → extracted requirements → human approval → RTL (`agent/extract.py`) | done |
 | Evidence Board: static Next.js site over the committed `evidence/` bundle (`web/`, `make evidence board`) | done; Run Console deferred |
 | Coverage gaps: mutation check with each test left out, single-test kills, requirements no mutant targets (`verify/gaps.py`, `make gaps`) | done; directed tests alone miss M1/M8 without `test_full_simultaneous_rw`; REQ-04 and REQ-09 have no mutant |
+| Scenario counters: how often the frozen suite reaches full, empty, overflow/underflow cases, simultaneous read+write, wraparound (`verify/coverage.py`, `make coverage`) | done; every scenario reached on the reference and all exported RTLs |
 | Verification plan per run: requirement → tests → mutants → measured result, from stored files only (`verify/plan.py`, `make plan`, `make plan-ref`) | done; in the evidence bundle and downloadable from the board |
 
 ## Run
@@ -39,6 +40,7 @@ python -m agent.pipeline --run-id demo01 --seed-bug M1           # seeded bug �
 python -m agent.pipeline --run-id sbx01 --sandbox docker        # simulate inside the sandbox
 make api                                                         # HTTP API on :8000
 make gaps                                                        # where the test plan is thin (37 s, local)
+make coverage RUN=live01-replay-7c96                             # scenario counts on a run's final RTL (in Docker)
 make plan RUN=live01                                             # runs/live01/verification_plan.{md,json}, $0, no simulation
 make plan-ref                                                    # same for the reference RTL (simulates it locally)
 make evidence                                                    # export live runs + replays + their plans to evidence/

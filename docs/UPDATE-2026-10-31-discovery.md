@@ -54,6 +54,7 @@ Count how often key FIFO situations actually happened during simulation.
 - Run it on the reference RTL and on each run's final RTL. A scenario with a count of 0 is flagged as a gap in P1/P2.
 - Done when: the reference RTL shows every scenario with a count above 0, and the counts are identical across two runs of the same RTL.
 - Open question for Adrian: whether this is worth the time over P1/P2 if Monday slips. It is the first thing to cut in this list.
+- **Result (31 Oct, `make coverage-ref`, `make coverage RUN=<id>`):** `verify/coverage.py` (pinned in `verify/coverage.sha256`) builds its own waves-on simulation of the frozen tests and counts 11 scenarios at each rising edge from a VCD; model RTL is counted inside Docker (image now also carries `spec/interface.json`, read-only). Reference and all three model RTLs: 3253 cycles, every scenario reached (fewest: read+write while full, 10). Counts identical across repeated runs; overflow pulses equal write-when-full events (22) and underflow pulses equal read-when-empty events (141). On a failing design the counts are partial (seeded M1: 532 cycles, because a failing test stops at its first mismatch); the plan says so.
 
 ### P4 – Copy changes
 - Board hero, page title, README intro and the video script lead with the verification plan and evidence.

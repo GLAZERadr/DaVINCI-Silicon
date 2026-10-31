@@ -22,6 +22,7 @@
     "mutation_suite_matches": false,
     "weak_demo_suite_matches": false,
     "gaps_suite_matches": false,
+    "coverage_sha256": null,
     "simulator": "Icarus Verilog version 13.0 (stable) (v13_0)",
     "final_rtl_sha256": "9b33a512be0355d469804c46a5e7e2d4397d02a5f5afd36b6b9d1ed8659f7d39",
     "block": "sync_fifo",
@@ -331,6 +332,7 @@
   },
   "mutation": null,
   "weak_test_check": null,
+  "scenarios": null,
   "gaps": null,
   "attempts": [
     {

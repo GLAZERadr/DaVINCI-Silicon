@@ -49,6 +49,26 @@ Results are per test: a test shared by two requirements marks both rows.
 
 Weak-test check: with `test_full_simultaneous_rw`, `test_random_regression` left out, 6/8 killed (survivors: M1, M8); restored suite 8/8.
 
+## Scenario coverage (final RTL)
+
+How often the frozen suite drove the final RTL into each situation, counted at every rising clock edge over 3253 cycles from a waveform of the same tests (`verify/coverage.py`, flags as the design reported them).
+
+| Scenario | Count |
+| --- | --- |
+| rst high at the edge | 29 |
+| full high | 67 |
+| empty high | 320 |
+| almost_full high | 213 |
+| write, no read, while full (overflow case) | 22 |
+| read while empty (underflow case) | 141 |
+| read and write together while full | 10 |
+| read and write together while empty | 48 |
+| overflow output high | 22 |
+| underflow output high | 141 |
+| accepted writes since reset reach a multiple of DEPTH=16 | 96 |
+
+Never reached: none.
+
 ## Plan gaps (measured against the reference RTL)
 
 - Mutants caught by only one directed test: M1, M8

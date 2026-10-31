@@ -22,6 +22,7 @@
     "mutation_suite_matches": true,
     "weak_demo_suite_matches": true,
     "gaps_suite_matches": true,
+    "coverage_sha256": "11aa2cb731b85ec228206081c32d3a1557047e332a646e74abf69a7c07430fdc",
     "simulator": "Icarus Verilog version 12.0 (stable) ()",
     "final_rtl_sha256": "466229822924bf013d4f9ca473df0c347c76a3d3e3cc825eb2e503d6678a863b",
     "block": "sync_fifo",
@@ -873,6 +874,38 @@
       "injected": 8,
       "survivors": []
     }
+  },
+  "scenarios": {
+    "rtl_sha256": "466229822924bf013d4f9ca473df0c347c76a3d3e3cc825eb2e503d6678a863b",
+    "cycles": 3253,
+    "counts": {
+      "reset": 29,
+      "full": 67,
+      "empty": 320,
+      "almost_full": 213,
+      "write_when_full": 22,
+      "read_when_empty": 141,
+      "rw_when_full": 10,
+      "rw_when_empty": 48,
+      "overflow_pulse": 22,
+      "underflow_pulse": 141,
+      "write_pointer_wrap": 96
+    },
+    "descriptions": {
+      "reset": "rst high at the edge",
+      "full": "full high",
+      "empty": "empty high",
+      "almost_full": "almost_full high",
+      "write_when_full": "write, no read, while full (overflow case)",
+      "read_when_empty": "read while empty (underflow case)",
+      "rw_when_full": "read and write together while full",
+      "rw_when_empty": "read and write together while empty",
+      "overflow_pulse": "overflow output high",
+      "underflow_pulse": "underflow output high",
+      "write_pointer_wrap": "accepted writes since reset reach a multiple of DEPTH=16"
+    },
+    "zero": [],
+    "suite_passed": true
   },
   "gaps": {
     "summary": {

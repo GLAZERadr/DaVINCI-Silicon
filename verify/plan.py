@@ -82,7 +82,8 @@ def column(run: dict, att: dict | None, tests: list[str], all_tests: list[str]) 
 
 
 def build(run: dict, reqs: dict, suite_tests: list[str], mutants: list, mutation: dict | None,
-          weak: dict | None, requirements_sha256: str, gaps: dict | None = None) -> dict:
+          weak: dict | None, requirements_sha256: str, gaps: dict | None = None,
+          scenarios: dict | None = None, scenarios_pin: str | None = None) -> dict:
     """suite_tests is the frozen suite's full test list (from spec/requirements.json),
     which a run's own requirements, e.g. an approved extraction, may not cover."""
     all_tests = sorted(suite_tests)
@@ -95,6 +96,11 @@ def build(run: dict, reqs: dict, suite_tests: list[str], mutants: list, mutation
     mut_ok = bool(mutation) and mutation.get("suite_sha256") == suite
     weak_ok = bool(weak) and weak.get("suite_sha256") == suite
     gaps_ok = bool(gaps) and gaps.get("suite_sha256") == suite
+    # Scenario counts belong to this run only if they were taken on its final RTL,
+    # with the pinned counter and the same suite.
+    final_rtl = (attempts[-1] if attempts else {}).get("rtl_sha256")
+    sc_ok = (bool(scenarios) and scenarios.get("status") == "ok" and scenarios.get("suite_sha256") == suite
+             and scenarios.get("coverage_sha256") == scenarios_pin and scenarios.get("rtl_sha256") == final_rtl)
     by_id = {m["id"]: m for m in (mutation or {}).get("mutants", [])}
 
     rows = []
@@ -134,6 +140,7 @@ def build(run: dict, reqs: dict, suite_tests: list[str], mutants: list, mutation
             "mutation_suite_matches": mut_ok,
             "weak_demo_suite_matches": weak_ok,
             "gaps_suite_matches": gaps_ok,
+            "coverage_sha256": scenarios_pin if sc_ok else None,
             "simulator": (fm or {}).get("simulator"),
             "final_rtl_sha256": (final or {}).get("rtl_sha256"),
             "block": reqs.get("block"),
@@ -160,6 +167,10 @@ def build(run: dict, reqs: dict, suite_tests: list[str], mutants: list, mutation
                       "ref_rtl_sha256": mutation.get("ref_rtl_sha256")} if mut_ok else None),
         "weak_test_check": ({"tests_dropped": weak["tests_dropped"], "weak": weak["weak"],
                              "restored": weak["restored"]} if weak_ok else None),
+        "scenarios": ({"rtl_sha256": scenarios["rtl_sha256"], "cycles": scenarios["cycles"],
+                       "counts": scenarios["counts"], "descriptions": scenarios["scenarios"],
+                       "zero": scenarios["zero"], "suite_passed": bool(fm) and fm["status"] == "pass"}
+                      if sc_ok else None),
         "gaps": ({"summary": gaps["summary"],
                   "mutants": [{k: m[k] for k in ("id", "req", "directed_killers", "killed_by_own_req_tests",
                                                  "fragile", "random_only")} for m in gaps["mutants"]],
@@ -259,6 +270,22 @@ def markdown(p: dict) -> str:
                 f"{w['weak']['killed']}/{w['weak']['injected']} killed (survivors: {', '.join(w['weak']['survivors']) or 'none'}); "
                 f"restored suite {w['restored']['killed']}/{w['restored']['injected']}."]
 
+    out += ["", "## Scenario coverage (final RTL)", ""]
+    sc = p["scenarios"]
+    if sc:
+        out += [f"How often the frozen suite drove the final RTL into each situation, counted at every rising "
+                f"clock edge over {sc['cycles']} cycles from a waveform of the same tests (`verify/coverage.py`, "
+                "flags as the design reported them)."]
+        if not sc["suite_passed"]:
+            out += ["", "> ○ The suite did not pass on this RTL, and a failing test stops at its first mismatch, "
+                    "so these counts are partial."]
+        out += ["", "| Scenario | Count |", "| --- | --- |"]
+        for k, n in sc["counts"].items():
+            out.append(f"| {sc['descriptions'][k]} | {n}{'  ○ never reached' if n == 0 else ''} |")
+        out += ["", f"Never reached: {', '.join(sc['zero']) or 'none'}."]
+    else:
+        out.append("○ Not counted for this RTL (`make coverage RUN=<id>`, or `make coverage-ref`).")
+
     out += ["", "## Plan gaps (measured against the reference RTL)", ""]
     gp = p["gaps"]
     if gp:
@@ -319,7 +346,9 @@ def plan_for(run_dir: Path, reference: bool = False) -> dict:
                  json.loads((ROOT / "verify" / "mutants.json").read_text()),
                  load(ROOT / "runs" / "mutation" / "mutation.json"),
                  load(ROOT / "runs" / "weak_demo" / "weak_demo.json"), sha256(raw),
-                 load(ROOT / "runs" / "coverage_gap" / "gaps.json"))
+                 load(ROOT / "runs" / "coverage_gap" / "gaps.json"),
+                 load(run_dir / "coverage" / "coverage.json"),
+                 (ROOT / "verify" / "coverage.sha256").read_text().strip())
 
 
 def main():

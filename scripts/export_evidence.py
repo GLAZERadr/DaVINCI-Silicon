@@ -4,7 +4,7 @@ For each named live run, copies the run and its most recent replay that was
 checked against the current pinned suite and sweep (so today's gates are shown
 next to what happened live), plus the mutation check, the weak-test demo, the
 coverage-gap check, the requirement and interface files, a verification plan
-per run and for the reference RTL, and a ledger summary. Absolute paths are
+(with scenario counts where taken) per run and for the reference RTL, and a ledger summary. Absolute paths are
 rewritten relative to the repo; no secrets are read. Ends with MANIFEST.sha256.
 
 usage: python scripts/export_evidence.py live01 live02-m1 live03-pdf [--out evidence]
@@ -52,6 +52,8 @@ def export_run(run_id: str, out: Path) -> dict:
         if (src / name).exists():
             copy_text(src / name, dst / name)
     r = json.loads((src / "run.json").read_text())
+    if (src / "coverage" / "coverage.json").exists():
+        copy_text(src / "coverage" / "coverage.json", dst / "coverage" / "coverage.json")
     for a in r["attempts"]:
         for f in ATTEMPT_FILES:
             p = src / f"attempt_{a['n']}" / f
@@ -118,6 +120,8 @@ def main():
         plan.write(json.loads(scrub(json.dumps(p))), out / "runs" / run_id)
     if (RUNS / "reference" / "verdict.json").exists():
         (out / "reference").mkdir()
+        if (RUNS / "reference" / "coverage" / "coverage.json").exists():
+            copy_text(RUNS / "reference" / "coverage" / "coverage.json", out / "reference" / "coverage" / "coverage.json")
         plan.write(json.loads(scrub(json.dumps(plan.plan_for(RUNS / "reference", reference=True)))), out / "reference")
         index["reference_plan"] = True
     else:

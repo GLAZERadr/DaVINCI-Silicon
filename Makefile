@@ -2,7 +2,7 @@ RTL ?= rtl/sync_fifo.v
 RUN ?= manual
 IMAGE = davinci-sim:latest
 
-.PHONY: sim mutate weak-demo image sandbox api evidence board plan plan-ref gaps
+.PHONY: sim mutate weak-demo image sandbox api evidence board plan plan-ref gaps coverage coverage-ref
 
 # Local run (needs iverilog + cocotb installed)
 sim:
@@ -34,6 +34,14 @@ weak-demo:
 # together with the random regression); single-test kills; untargeted requirements.
 gaps:
 	python3 verify/gaps.py $(RTL) --out runs/coverage_gap
+
+# Scenario counters (full, empty, overflow case, wraparound, ...) from a waveform
+# of the frozen suite: on a stored run's final RTL inside Docker, or on the reference RTL.
+coverage:
+	python3 verify/coverage.py --run runs/$(RUN)
+
+coverage-ref:
+	python3 verify/coverage.py --reference
 
 # Verification plan for a stored run: runs/$(RUN)/verification_plan.{md,json}.
 # Reads stored files only (no simulation, no model call); output is reproducible.
