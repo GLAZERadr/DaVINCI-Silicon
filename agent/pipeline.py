@@ -29,11 +29,13 @@ TESTS = ROOT / "tests"
 SUITE_LOCK = ROOT / "verify" / "suite.sha256"
 AI_LABEL = "AI interpretation · not verified"
 
-# Generated RTL must not reach outside the simulator.
-FORBIDDEN = re.compile(
-    r"\$(system|fopen|fclose|fwrite|fdisplay|fmonitor|fstrobe|fread|fscanf|fgets|fgetc|"
-    r"readmem\w*|writemem\w*|dump\w*|finish|stop)\b|`include",
-)
+# Generated RTL must not reach outside the simulator. A list of banned system
+# tasks was bypassed on 31 Oct (`define + `` token pasting rebuilt $fopen, and
+# $fwriteh slipped past the word boundary), so the rule is now total: no `$`
+# at all, and no compiler directive except `timescale. The sync FIFO needs
+# neither. The sandbox, not this check, is the security boundary.
+DOLLAR = re.compile(r"\$")
+DIRECTIVE = re.compile(r"`(?!timescale\b)")
 MAX_RTL_BYTES = 64_000
 SIM_TIMEOUT_S = 180
 SANDBOX_IMAGE = os.environ.get("DAVINCI_SANDBOX_IMAGE", "davinci-sim:latest")
@@ -45,7 +47,7 @@ DOCKER_LIMITS = ["--network", "none", "--cpus", "1", "--memory", "512m", "--pids
 
 SYSTEM = """You are a careful RTL engineer. You write synthesisable Verilog-2001.
 Answer with exactly one fenced ```verilog block that contains the complete module.
-Do not use $system, file I/O, $readmem, $finish, $stop, $dump* or `include.
+Do not use any $ system task or function, and no compiler directive other than `timescale.
 Keep the module name, parameters and ports exactly as the spec gives them."""
 
 
@@ -93,10 +95,40 @@ def validate(rtl: str | None) -> str | None:
         return "no Verilog block defining module sync_fifo in the reply"
     if len(rtl.encode()) > MAX_RTL_BYTES:
         return f"RTL larger than {MAX_RTL_BYTES} bytes"
-    m = FORBIDDEN.search(rtl)
-    if m:
-        return f"forbidden construct {m.group(0)!r}"
+    for rule, what in ((DOLLAR, "system task or function ($)"), (DIRECTIVE, "compiler directive (`)")):
+        m = rule.search(rtl)
+        if m:
+            line = rtl.count("\n", 0, m.start()) + 1
+            snippet = rtl.splitlines()[line - 1].strip()[:80]
+            return f"forbidden {what} on line {line}: {snippet!r}"
     return None
+
+
+# Model-written RTL is untrusted: it may only be simulated inside the sandbox.
+# The fake provider returns the reference RTL, so local runs stay possible for
+# development; DAVINCI_ALLOW_LOCAL_SIM=1 is an explicit operator override.
+def model_rtl_possible(providers: set, source_run: str | None) -> bool:
+    if providers & set(llm.LIVE):
+        return True
+    if source_run:  # a replay re-simulates whatever the source run's model wrote
+        src = json.loads((RUNS / source_run / "run.json").read_text()).get("providers", {})
+        return bool(set(src.values()) & (set(llm.LIVE) | {"replay"}))
+    return False
+
+
+def choose_sandbox(requested: str | None, providers: set, source_run: str | None) -> str:
+    untrusted = model_rtl_possible(providers, source_run)
+    backend = requested or ("docker" if untrusted else "local")
+    if backend == "local" and untrusted and os.environ.get("DAVINCI_ALLOW_LOCAL_SIM") != "1":
+        raise SystemExit("refusing to simulate model-written RTL outside the sandbox: use --sandbox docker "
+                         "(or set DAVINCI_ALLOW_LOCAL_SIM=1 to override deliberately)")
+    return backend
+
+
+def local_env() -> dict:
+    """Environment for a local simulation: enough to find the tools, no secrets."""
+    keep = ("PATH", "HOME", "LANG", "LC_ALL", "TMPDIR", "SYSTEMROOT")
+    return {k: os.environ[k] for k in keep if k in os.environ}
 
 
 def sandbox_image_id() -> str | None:
@@ -115,8 +147,9 @@ def simulate(rtl_path: Path, out: Path, backend: str = "local") -> dict:
                "-v", f"{rtl_path.resolve()}:/work/in/dut.v:ro", "-v", f"{out.resolve()}:/work/out", SANDBOX_IMAGE]
     else:
         cmd = [sys.executable, str(ROOT / "verify" / "run_suite.py"), str(rtl_path), "--out", str(out)]
+    env = None if backend == "docker" else local_env()
     try:
-        p = subprocess.run(cmd, capture_output=True, text=True, timeout=SIM_TIMEOUT_S, cwd=ROOT)
+        p = subprocess.run(cmd, capture_output=True, text=True, timeout=SIM_TIMEOUT_S, cwd=ROOT, env=env)
     except subprocess.TimeoutExpired:
         return {"status": "timeout", "passed": 0, "total": 0, "tests": [],
                 "error": f"simulation exceeded {SIM_TIMEOUT_S}s", "sandbox": backend}
@@ -193,8 +226,8 @@ def main(argv=None):
     ap.add_argument("--replay-from", help="run to replay; --run-id then names the new run")
     ap.add_argument("--seed-bug", help="start from the reference RTL with this mutant applied (e.g. M1)")
     ap.add_argument("--max-repairs", type=int, default=3)
-    ap.add_argument("--sandbox", default=os.environ.get("DAVINCI_SANDBOX", "local"), choices=["local", "docker"],
-                    help="where the simulator runs (docker: locked-down container)")
+    ap.add_argument("--sandbox", default=os.environ.get("DAVINCI_SANDBOX") or None, choices=["local", "docker"],
+                    help="where the simulator runs; default docker whenever model-written RTL is involved")
     ap.add_argument("--reasoning-effort", default=os.environ.get("DAVINCI_REASONING_EFFORT"))
     ap.add_argument("--spec", type=Path, default=ROOT / "spec" / "fifo_spec.md")
     ap.add_argument("--requirements", type=Path, default=ROOT / "spec" / "requirements.json")
@@ -215,6 +248,7 @@ def main(argv=None):
     gen_p = a.gen_provider or a.provider
     rep_p = a.repair_provider or a.provider
 
+    a.sandbox = choose_sandbox(a.sandbox, {gen_p, rep_p}, source)
     locked = SUITE_LOCK.read_text().strip()
     check_suite(locked, "before run")
     image_id = None

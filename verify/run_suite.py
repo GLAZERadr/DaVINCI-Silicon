@@ -18,13 +18,17 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 TESTS = ROOT / "tests"
-FROZEN = [TESTS / "test_sync_fifo.py", TESTS / "golden_model.py"]
+# Everything that decides a verdict: the tests, the golden model, this runner
+# (it turns results.xml into pass/fail) and the mutant set the suite is
+# qualified against. Pinned in verify/suite.sha256.
+FROZEN = [TESTS / "test_sync_fifo.py", TESTS / "golden_model.py",
+          ROOT / "verify" / "run_suite.py", ROOT / "verify" / "mutants.json"]
 
 
 def suite_hash():
     h = hashlib.sha256()
     for f in FROZEN:
-        h.update(f.read_bytes())
+        h.update(f.relative_to(ROOT).as_posix().encode() + b"\0" + f.read_bytes() + b"\0")
     return h.hexdigest()
 
 
