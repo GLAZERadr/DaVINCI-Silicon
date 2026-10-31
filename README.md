@@ -16,6 +16,7 @@ Built for the Meta Global AI Developer Hackathon 2026 (Startup Track, "Push the 
 | Model client: Meta / Baseten / replay, cost ledger, budget guard (`agent/llm.py`) | done, not yet run live |
 | Verified loop with bounded repair, evidence `run.json` (`agent/pipeline.py`) | done, dry-run verified |
 | HTTP API: runs, SSE progress, replay, mutation, ledger (`api/server.py`) | done |
+| Image/PDF spec input → extracted requirements → human approval → RTL (`agent/extract.py`) | done |
 | UI | next |
 
 ## Run
@@ -30,6 +31,9 @@ python -m agent.pipeline --run-id dry01 --provider fake          # offline loop,
 python -m agent.pipeline --run-id demo01 --seed-bug M1           # seeded bug → repair
 python -m agent.pipeline --run-id sbx01 --sandbox docker        # simulate inside the sandbox
 make api                                                         # HTTP API on :8000
+python -m agent.extract spec/fixtures/sf16_datasheet.pdf         # spec page → requirements for approval
+python -m agent.extract --approve <xid> --by "Name"              # approve; then run with
+#   --requirements runs/_extract/<xid>/approved.json --spec runs/_extract/<xid>/interface_spec.md
 python -m agent.pipeline --run-id demo01 --provider replay       # replay a recorded run, $0
 ```
 
