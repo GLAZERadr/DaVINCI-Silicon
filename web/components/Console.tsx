@@ -338,14 +338,14 @@ export default function Console({ runs, requirements, traceSource = "static" }:
       </aside>
 
       <footer className="c-status" aria-label="Run status">
-        <span className={`c-status-run ${st.tone}`}>{st.mark} {st.word}</span>
-        <span className="mono">{run.id}</span>
-        <span>attempt {a?.n ?? "–"}/{run.attemptsTotal}</span>
-        <span>{run.providers.generate}{run.providers.repair !== run.providers.generate ? ` → ${run.providers.repair}` : ""}</span>
-        <span>${run.costUsd.toFixed(4)} · {run.tokens.in.toLocaleString()}/{run.tokens.out.toLocaleString()} tok</span>
-        {run.sandbox ? <span>sandbox {run.sandbox.backend}</span> : null}
-        <span className="mono">suite at run time {short(run.suiteSha, 10)}</span>
-        {run.replayCheck ? <span>{run.replayCheck.reproduced ? "✓ replay reproduced" : "✕ replay differs"}</span> : null}
+        <span className={`c-status-run ${st.tone}`}><span className="c-dot" aria-hidden="true" />{st.word}</span>
+        <span className="c-sb mono">{run.id}</span>
+        <span className="c-sb">Attempt {a?.n ?? "–"} of {run.attemptsTotal}</span>
+        <span className="c-sb">{run.providers.generate}{run.providers.repair !== run.providers.generate ? ` → ${run.providers.repair}` : ""}</span>
+        <span className="c-sb">${run.costUsd.toFixed(4)} <span className="c-sb-dim">· {run.tokens.in.toLocaleString()} in / {run.tokens.out.toLocaleString()} out</span></span>
+        {run.sandbox ? <span className="c-sb">Sandbox: {run.sandbox.backend}</span> : null}
+        <span className="c-sb c-sb-end"><span className="c-sb-dim">Suite at run time</span> <span className="mono">{short(run.suiteSha, 10)}</span></span>
+        {run.replayCheck ? <span className={`c-sb ${run.replayCheck.reproduced ? "mark-pass" : "mark-fail"}`}>{run.replayCheck.reproduced ? "✓ Replay reproduced" : "✕ Replay differs"}</span> : null}
       </footer>
     </div>
   );

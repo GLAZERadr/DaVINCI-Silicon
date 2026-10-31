@@ -334,9 +334,10 @@ export default function Board({ data, runs }: { data: BoardData; runs: RunSummar
                 return (
                   <li key={r.id}>
                     <Link href={`/runs/${r.id}/`} aria-current={r.id === live.id ? "page" : undefined}>
-                      <span className={`mark-${st.tone}`} aria-label={st.word}>{st.mark}</span>
-                      <span className="mono">{r.id}</span>
-                      <span className="meta-text">{r.seedBug ? "seeded bug → repair" : r.fromExtraction ? "from a PDF spec" : "from the spec"}</span>
+                      <span className={`run-badge ${st.tone}`} aria-hidden="true">{st.mark}</span>
+                      <span className="run-name">{r.id}</span>
+                      <span className={`run-state mark-${st.tone}`}>{st.word}</span>
+                      <span className="run-desc">{r.seedBug ? "Seeded bug, then repair" : r.fromExtraction ? "From a PDF spec" : "From the written spec"}</span>
                     </Link>
                   </li>
                 );
