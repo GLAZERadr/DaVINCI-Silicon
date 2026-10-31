@@ -15,12 +15,13 @@ Built for the Meta Global AI Developer Hackathon 2026 (Startup Track, "Push the 
 | Docker sandbox (`docker/Dockerfile`, `make sandbox`, `--sandbox docker`) | done: no network, read-only tests, CPU/mem/pid caps, 120 s timeout |
 | Model client: Meta / Baseten / replay, cost ledger, budget guard (`agent/llm.py`) | done, not yet run live |
 | Verified loop with bounded repair, evidence `run.json` (`agent/pipeline.py`) | done, dry-run verified |
-| API, UI | next |
+| HTTP API: runs, SSE progress, replay, mutation, ledger (`api/server.py`) | done |
+| UI | next |
 
 ## Run
 
 ```bash
-pip install cocotb==2.1.0     # plus Icarus Verilog (brew install icarus-verilog / apt install iverilog)
+pip install -r requirements.txt   # plus Icarus Verilog (brew install icarus-verilog / apt install iverilog)
 make sim                      # run the frozen suite against rtl/sync_fifo.v
 make mutate                   # mutation score of the suite
 make weak-demo                # weakened suite lets mutants survive; full suite kills them
@@ -28,6 +29,7 @@ make image && make sandbox    # same run inside the locked-down container
 python -m agent.pipeline --run-id dry01 --provider fake          # offline loop, $0
 python -m agent.pipeline --run-id demo01 --seed-bug M1           # seeded bug → repair
 python -m agent.pipeline --run-id sbx01 --sandbox docker        # simulate inside the sandbox
+make api                                                         # HTTP API on :8000
 python -m agent.pipeline --run-id demo01 --provider replay       # replay a recorded run, $0
 ```
 

@@ -203,7 +203,10 @@ class Replayer:
             raise LLMError(f"replay of {self.source} exhausted after {self.i} calls")
         rec = self.calls[self.i]
         self.i += 1
-        cached = json.loads((CACHE / f"{rec['request_sha256']}.json").read_text())
+        f = CACHE / f"{rec['request_sha256']}.json"
+        if not f.exists():
+            raise LLMError(f"replay of {self.source}: cached response {f.name} missing")
+        cached = json.loads(f.read_text())
         return Reply(text=cached["text"], provider="replay", model=f"replay:{cached['model']}",
                      request_sha256="", extra={"replayed_from": self.source,
                                                "request_matches": rec["request_sha256"] == h})

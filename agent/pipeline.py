@@ -190,7 +190,7 @@ def main(argv=None):
     ap.add_argument("--provider", default=os.environ.get("DAVINCI_PROVIDER", "meta"), choices=llm.PROVIDERS)
     ap.add_argument("--gen-provider", default=os.environ.get("DAVINCI_PROVIDER_GEN"), choices=llm.PROVIDERS)
     ap.add_argument("--repair-provider", default=os.environ.get("DAVINCI_PROVIDER_REPAIR"), choices=llm.PROVIDERS)
-    ap.add_argument("--replay-from", help="run to replay (default: --run-id)")
+    ap.add_argument("--replay-from", help="run to replay; --run-id then names the new run")
     ap.add_argument("--seed-bug", help="start from the reference RTL with this mutant applied (e.g. M1)")
     ap.add_argument("--max-repairs", type=int, default=3)
     ap.add_argument("--sandbox", default=os.environ.get("DAVINCI_SANDBOX", "local"), choices=["local", "docker"],
@@ -203,13 +203,15 @@ def main(argv=None):
     replayer, source = None, None
     if "replay" in (a.provider, a.gen_provider, a.repair_provider):
         a.provider = a.gen_provider = a.repair_provider = "replay"
+        # --replay-from X --run-id Y replays X into Y; --run-id X alone replays X into X-replayN.
         source = a.replay_from or a.run_id
         replayer = llm.Replayer(source)
         a.seed_bug = json.loads((RUNS / source / "run.json").read_text()).get("seed_bug")
-        n = 1
-        while (RUNS / f"{source}-replay{n}").exists():
-            n += 1
-        a.run_id = f"{source}-replay{n}"
+        if not a.replay_from:
+            n = 1
+            while (RUNS / f"{source}-replay{n}").exists():
+                n += 1
+            a.run_id = f"{source}-replay{n}"
     gen_p = a.gen_provider or a.provider
     rep_p = a.repair_provider or a.provider
 

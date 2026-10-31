@@ -2,7 +2,7 @@ RTL ?= rtl/sync_fifo.v
 RUN ?= manual
 IMAGE = davinci-sim:latest
 
-.PHONY: sim mutate weak-demo image sandbox
+.PHONY: sim mutate weak-demo image sandbox api
 
 # Local run (needs iverilog + cocotb installed)
 sim:
@@ -29,3 +29,7 @@ sandbox:
 # restore the full suite and watch it die.
 weak-demo:
 	python3 verify/mutate.py $(RTL) --weak-demo --out runs/weak_demo
+
+# HTTP API for the UI (runs execute one at a time in a background worker).
+api:
+	uvicorn api.server:app --port 8000
