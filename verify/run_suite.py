@@ -56,7 +56,8 @@ def run(rtl: Path, out: Path, timeout_s: int = 120) -> dict:
     except Exception as e:  # compile error is a measured result, not a crash
         verdict.update(status="compile_error", error=str(e)[-2000:],
                        log=(out / "build.log").read_text()[-4000:] if (out / "build.log").exists() else "")
-        verdict["seconds"] = round(time.time() - t0, 2)
+        verdict.update(passed=0, total=0, seconds=round(time.time() - t0, 2))
+        (out / "verdict.json").write_text(json.dumps(verdict, indent=2))
         return verdict
     results = out / "results.xml"
     try:
