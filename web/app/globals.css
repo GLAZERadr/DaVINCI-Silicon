@@ -305,3 +305,51 @@ label.choice strong { color: var(--text); }
   .subbar-end { margin-left: 0; width: 100%; }
   .timeline li { grid-template-columns: 44px 16px minmax(0, 1fr); }
 }
+
+/* ---- evidence layout ---- */
+.hero { flex-direction: column; align-items: flex-start; justify-content: flex-start; gap: 16px; }
+.hero-more { margin-top: 12px; }
+.hero-more summary, details.disclosure summary { color: var(--link); font-size: 14px; min-height: 36px; }
+.hero-more p { margin: 4px 0 0; font-size: 14px; color: var(--secondary); line-height: 1.6; max-width: 740px; }
+details > summary { list-style: none; }
+details > summary::-webkit-details-marker { display: none; }
+details > summary::before { content: "▸"; display: inline-block; margin-right: 8px; transition: transform 0.15s; color: var(--muted); }
+details[open] > summary::before { transform: rotate(90deg); }
+.c-tree summary::before { content: none; }
+.tile-suite { border-style: dashed; }
+.story { align-items: start; }
+.group-title { margin: 16px 0 0; font-size: 13px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); }
+.subbar-label { color: var(--muted); font-size: 12px; letter-spacing: 0.14em; }
+.subbar a { display: inline-flex; flex-direction: column; line-height: 1.25; }
+.subbar-hint { font-size: 11px; font-weight: 500; letter-spacing: 0; text-transform: none; color: var(--muted); }
+
+.c-diffbar { padding: 8px 16px; border-bottom: 1px solid var(--border); background: var(--surface-2); font-size: 13px; position: sticky; top: 0; z-index: 1; }
+@media (max-width: 700px) {
+  .c-tree { max-height: 260px; overflow-y: auto; }
+}
+
+/* ---- spec review ---- */
+.review-back { display: flex; align-items: center; gap: 12px; font-size: 13px; color: var(--secondary); }
+.review-summary { list-style: none; margin: 0 0 16px; padding: 12px 14px; border: 1px solid var(--border-strong); border-radius: var(--radius-sm);
+  display: flex; flex-direction: column; gap: 6px; font-size: 14px; background: var(--surface-2); }
+.drafts li.unmatched { border-color: var(--fail-text); }
+.refs-card { position: sticky; top: 16px; max-height: calc(100vh - 140px); overflow-y: auto; }
+.approve-bar { position: sticky; bottom: 0; z-index: 5; padding: 16px 20px; border-color: var(--purple);
+  box-shadow: 0 -12px 32px rgba(11, 15, 23, 0.85); }
+.approve-form { display: grid; grid-template-columns: minmax(0, 1fr) 240px auto; gap: 16px; align-items: end; }
+.approve-text { margin: 0; font-size: 14px; line-height: 1.5; color: var(--secondary); }
+.approve-text strong { color: var(--text); }
+.approve-name { display: flex; flex-direction: column; gap: 6px; }
+@media (max-width: 900px) {
+  .refs-card { position: static; max-height: none; }
+  .approve-form { grid-template-columns: minmax(0, 1fr); }
+}
+
+.btn-live { background: transparent; border: 1px solid var(--purple); color: var(--text); }
+.btn-live:hover { background: rgba(124, 58, 237, 0.16); filter: none; }
+tr.row-link { cursor: pointer; }
+tr.row-link:hover td { background: rgba(124, 58, 237, 0.06); }
+tr.row-muted td { color: var(--muted); }
+@media (max-width: 700px) {
+  .approve-bar { position: static; box-shadow: none; }
+}

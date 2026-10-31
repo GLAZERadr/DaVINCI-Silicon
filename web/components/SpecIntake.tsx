@@ -126,17 +126,43 @@ export default function SpecIntake() {
     }
   }
 
-  const setDraft = (i: number, patch: Partial<Draft>) =>
-    setDrafts((ds) => ds.map((d, j) => (j === i ? { ...d, ...patch } : d)));
+  const setDraft = (id: string, patch: Partial<Draft>) =>
+    setDrafts((ds) => ds.map((d) => (d.id === id ? { ...d, ...patch } : d)));
+
+  function back() {
+    setXid(null);
+    setRec(null);
+    setRunId(null);
+    window.history.replaceState(null, "", "?");
+    refreshList();
+  }
 
   const approved = rec?.approved as Json | undefined;
   const comparison: Json | undefined = rec?.latest_remap?.comparison ?? rec?.comparison;
   const refs: Json[] = rec?.reference?.requirements ?? [];
   const included = drafts.filter((d) => d.include).length;
   const pages = Number(rec?.source?.pages ?? 0);
+  // Riskiest first: items no reference requirement covers, then partial matches.
+  const rank = (d: Draft) => (!d.maps_to ? 0 : d.relation === "part_of" ? 1 : 2);
+  const sorted = [...drafts].sort((a, b) => rank(a) - rank(b));
+  const noMatch = drafts.filter((d) => d.include && !d.maps_to).length;
+  const levels = refs.map((r) => {
+    const row = comparison?.rows?.find((x: Json) => x.reference === r.id);
+    return row?.coverage ?? (row?.covered ? "full" : "none");
+  });
+  const count = (l: string) => levels.filter((x) => x === l).length;
+  const flagged: string[] = rec?.extracted?.unreadable ?? [];
+  const panel = <ApiPanel onChange={(ok, tok) => { setApiOk(ok); setHasToken(tok); }} needToken="Live extraction and approval need the API token (Connection settings)." />;
 
   return (
     <main className="board">
+      {xid && (
+        <nav className="review-back" aria-label="Spec intake">
+          <button type="button" className="btn btn-quiet btn-sm" onClick={back}>← All extractions</button>
+          <span className="mono">{xid}</span>
+        </nav>
+      )}
+      {!xid && <>
       <section className="card">
         <p className="label">Spec intake</p>
         <p className="lede">Upload a datasheet page or timing diagram (PDF or image). Muse Spark reads it and lists the requirements it finds; it never sees <span className="mono">spec/requirements.json</span>. A second call maps each item to a reference requirement. Both are AI interpretation: a person reviews, edits and approves the list before any RTL is generated from it.</p>
@@ -159,7 +185,7 @@ export default function SpecIntake() {
         </form>
       </section>
 
-      <ApiPanel onChange={(ok, tok) => { setApiOk(ok); setHasToken(tok); }} needToken="Live extraction and approval need the API token (Connection settings)." />
+      {panel}
 
       {apiOk && list.length > 0 && (
         <section className="card">
@@ -182,6 +208,7 @@ export default function SpecIntake() {
           </div>
         </section>
       )}
+      </>}
 
       {error && <p className="mark-fail" role="alert">✕ {error}</p>}
 
@@ -196,6 +223,11 @@ export default function SpecIntake() {
               {approved ? <span className="pill pass">✓ Approved by {approved.approved_by}</span> : <span className="pill neutral">○ Awaiting review</span>}
             </div>
             <p className="lede">{drafts.length} items extracted from {pages} page(s) · {rec.provider} · ${Number(rec.cost_usd ?? 0).toFixed(3)}{rec.latest_remap ? " · mapping from the latest re-map" : ""}</p>
+            <ul className="review-summary" aria-label="Review summary (AI interpretation)">
+              <li><span className="mark-pass">✓ {count("full")} full</span> · <span className="mark-neutral">○ {count("partial")} partial</span> · <span className="mark-fail">✕ {count("none")} none</span> <span className="draft-meta">coverage of the {refs.length} reference requirements</span></li>
+              <li><span className={noMatch ? "mark-fail" : "mark-pass"}>{noMatch ? "✕" : "✓"} {noMatch} checked item(s) match no reference requirement</span> <span className="draft-meta">nothing in the frozen suite checks them; listed first below</span></li>
+              {flagged.length > 0 && <li><span className="mark-fail">✕ {flagged.length} part(s) flagged unreadable:</span> {flagged.join(" · ")}</li>}
+            </ul>
             {pages > 0 && (
               <div className="pages">
                 {Array.from({ length: pages }, (_, i) => (
@@ -206,20 +238,17 @@ export default function SpecIntake() {
                 ))}
               </div>
             )}
-            {(rec.extracted.unreadable ?? []).length > 0 && (
-              <p className="lede"><span className="mark-neutral">○ The model flagged as unreadable:</span> {(rec.extracted.unreadable as string[]).join(" · ")}</p>
-            )}
           </section>
 
           <section className="grid-2 intake">
             <div className="card">
               <p className="label">Extracted from the document · AI interpretation · not verified</p>
               <ul className="drafts">
-                {drafts.map((d, i) => (
-                  <li key={d.id} className={d.include ? undefined : "excluded"}>
+                {sorted.map((d) => (
+                  <li key={d.id} className={`${d.include ? "" : "excluded"} ${!d.maps_to ? "unmatched" : ""}`}>
                     <div className="draft-head">
                       <label className="choice">
-                        <input type="checkbox" checked={d.include} disabled={!!approved} onChange={(e) => setDraft(i, { include: e.target.checked })} />
+                        <input type="checkbox" checked={d.include} disabled={!!approved} onChange={(e) => setDraft(d.id, { include: e.target.checked })} />
                         <span className="mono">{d.id}</span>
                       </label>
                       <span className="draft-map">
@@ -229,13 +258,13 @@ export default function SpecIntake() {
                     {approved
                       ? <p className="draft-text">{d.text}</p>
                       : <textarea aria-label={`${d.id} text`} value={d.text} rows={2}
-                          onChange={(e) => setDraft(i, { text: e.target.value, edited: true })} />}
+                          onChange={(e) => setDraft(d.id, { text: e.target.value, edited: true })} />}
                     <p className="draft-meta">{d.source_location}{d.confidence ? ` · confidence ${d.confidence}` : ""}{d.edited ? " · edited" : ""}{d.reason ? ` · ${d.reason}` : ""}</p>
                   </li>
                 ))}
               </ul>
             </div>
-            <div className="card">
+            <div className="card refs-card">
               <p className="label">Reference requirements · spec/requirements.json</p>
               <p className="lede">Coverage of each reference requirement by the extracted items, as judged by the map call (AI interpretation). The frozen tests check the reference list either way.</p>
               <ul className="refs">
@@ -254,7 +283,7 @@ export default function SpecIntake() {
             </div>
           </section>
 
-          <section className="card">
+          <section className={`card ${approved ? "" : "approve-bar"}`} aria-label="Approval">
             {approved ? (
               <>
                 <p className="label">Approved</p>
@@ -270,17 +299,17 @@ export default function SpecIntake() {
                 {!hasToken && <p className="mark-neutral">○ The live run needs the API token.</p>}
               </>
             ) : (
-              <form className="run-form" onSubmit={approve}>
-                <p className="label">Approve</p>
-                <p className="lede">Approving sends exactly the {included} checked items, with your edits and the mappings shown, to the RTL step. This is a human decision and is recorded with your name.</p>
-                <div className="run-form-row">
-                  <label>
-                    <span className="label">Approved by</span>
-                    <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Your name" autoComplete="name" />
-                  </label>
-                </div>
-                <div><button type="submit" className="btn" disabled={busy || !name.trim() || included === 0 || !hasToken}>Approve {included} requirements</button></div>
-                {!hasToken && <p className="mark-neutral">○ Approval needs the API token.</p>}
+              <form className="approve-form" onSubmit={approve}>
+                <p className="approve-text">
+                  <strong>Approve {included} of {drafts.length} items</strong> with your edits and the mappings shown. They become the spec the RTL step receives; recorded with your name.
+                  {noMatch > 0 && <span className="mark-fail"> {noMatch} have no frozen test.</span>}
+                  {!hasToken && <span className="mark-neutral"> Approval needs the API token.</span>}
+                </p>
+                <label className="approve-name">
+                  <span className="label">Approved by</span>
+                  <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Your name" autoComplete="name" />
+                </label>
+                <button type="submit" className="btn" disabled={busy || !name.trim() || included === 0 || !hasToken}>Approve {included}</button>
               </form>
             )}
           </section>
@@ -288,6 +317,7 @@ export default function SpecIntake() {
       )}
 
       {runId && <RunProgress runId={runId} />}
+      {xid && panel}
     </main>
   );
 }

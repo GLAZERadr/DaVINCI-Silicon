@@ -19,6 +19,35 @@ function simulated(run: Run, a: Attempt): Attempt {
   return a.sameAs ? run.attempts.find((x) => x.n === a.sameAs) ?? a : a;
 }
 
+// A changed line whose code is the same once comments and whitespace are removed.
+const norm = (l: string) => l.slice(1).replace(/\/\/.*$/, "").replace(/\s+/g, "");
+
+function hideNoise(text: string): { text: string; hidden: number } {
+  const lines = text.replace(/\n$/, "").split("\n");
+  const keep = lines.map(() => true);
+  let start = 0;
+  const flush = (end: number) => {
+    const del = new Map<string, number[]>();
+    for (let i = start; i < end; i++) {
+      if (lines[i].startsWith("-") && !lines[i].startsWith("---")) {
+        const k = norm(lines[i]);
+        if (!k) keep[i] = false; else del.set(k, [...(del.get(k) ?? []), i]);
+      }
+    }
+    for (let i = start; i < end; i++) {
+      if (lines[i].startsWith("+") && !lines[i].startsWith("+++")) {
+        const k = norm(lines[i]);
+        const match = del.get(k);
+        if (!k) keep[i] = false;
+        else if (match?.length) { keep[i] = false; keep[match.shift()!] = false; }
+      }
+    }
+  };
+  lines.forEach((l, i) => { if (l.startsWith("@@")) { flush(i); start = i; } });
+  flush(lines.length);
+  return { text: lines.filter((_, i) => keep[i]).join("\n"), hidden: keep.filter((k) => !k).length };
+}
+
 function Code({ text, diff }: { text: string; diff?: boolean }) {
   const lines = text.replace(/\n$/, "").split("\n");
   return (
@@ -52,10 +81,18 @@ function Tabs<T extends string>({ tabs, value, onChange, label }:
   );
 }
 
+// Open on the first failing attempt when a later one changed the outcome; else the last.
+function startAttempt(run: Run): number {
+  if (!run.attempts.length) return 0;
+  const firstFail = run.attempts.find((a) => a.status !== "pass");
+  return firstFail && run.attempts.length > 1 ? firstFail.n : run.attempts[run.attempts.length - 1].n;
+}
+
 export default function Console({ runs, requirements }: { runs: ConsoleRun[]; requirements: Requirement[] }) {
   const [which, setWhich] = useState(0);
   const run = runs[which].run;
-  const [sel, setSel] = useState(run.attempts.length ? run.attempts[run.attempts.length - 1].n : 0);
+  const [sel, setSel] = useState(startAttempt(run));
+  const [quiet, setQuiet] = useState(true);
   const [editor, setEditor] = useState<"diff" | "rtl" | "prompt">("diff");
   const [panel, setPanel] = useState<"sim" | "compile" | "sweep">("sim");
 
@@ -69,11 +106,15 @@ export default function Console({ runs, requirements }: { runs: ConsoleRun[]; re
   ];
   const shownEditor = editorTabs.find((t) => t.key === editor && !t.disabled)?.key ?? editorTabs.find((t) => !t.disabled)?.key;
   const st = status(run.status);
+  const next = a ? run.attempts.find((x) => x.n === a.n + 1) : undefined;
+  const failing = (sim?.tests ?? []).filter((t) => !t.passed);
+  const ordered = [...failing, ...(sim?.tests ?? []).filter((t) => t.passed)];
+  const shownDiff = a?.diff ? (quiet ? hideNoise(a.diff) : { text: a.diff, hidden: 0 }) : null;
 
   function pickRun(i: number) {
     setWhich(i);
     const r = runs[i].run;
-    setSel(r.attempts.length ? r.attempts[r.attempts.length - 1].n : 0);
+    setSel(startAttempt(r));
   }
 
   return (
@@ -144,7 +185,17 @@ export default function Console({ runs, requirements }: { runs: ConsoleRun[]; re
         <Tabs label="Editor" tabs={editorTabs} value={shownEditor ?? "diff"} onChange={setEditor} />
         <div className="c-scroll">
           {!a ? <p className="c-empty">No attempt to show.</p>
-            : shownEditor === "diff" && a.diff ? <Code text={a.diff} diff />
+            : shownEditor === "diff" && shownDiff ? (
+              <>
+                <div className="c-diffbar">
+                  <label className="choice">
+                    <input type="checkbox" checked={quiet} onChange={(e) => setQuiet(e.target.checked)} />
+                    <span>Hide comment and whitespace changes{quiet && shownDiff.hidden ? ` (${shownDiff.hidden} lines hidden)` : ""}</span>
+                  </label>
+                </div>
+                <Code text={shownDiff.text} diff />
+              </>
+            )
             : shownEditor === "rtl" && a.rtl ? <Code text={a.rtl} />
             : shownEditor === "prompt" && a.prompt ? (
               <div className="c-prompt">
@@ -162,7 +213,7 @@ export default function Console({ runs, requirements }: { runs: ConsoleRun[]; re
 
       <section className="c-panel" aria-label="Simulator output">
         <Tabs label="Output" value={panel} onChange={setPanel} tabs={[
-          { key: "sim", label: `Simulator${sim?.total ? ` · ${sim.passed}/${sim.total}` : ""}` },
+          { key: "sim", label: `Simulator${sim?.total ? ` · ${sim.passed}/${sim.total}${failing.length ? ` · ${failing.length} failing` : ""}` : ""}` },
           { key: "compile", label: "Compile (G1)" },
           { key: "sweep", label: "Parameter sweep (G3)" },
         ]} />
@@ -173,9 +224,9 @@ export default function Console({ runs, requirements }: { runs: ConsoleRun[]; re
             : sim && sim.tests.length ? (
               <>
                 {a.sameAs ? <p className="mark-neutral">○ Same design as attempt {a.sameAs}; not simulated again. Showing attempt {a.sameAs}.</p> : null}
-                <p className="label">Measured · {sim.simulator ?? "simulator"} · suite {short(sim.suiteSha, 10)}</p>
+                <p className="label">Measured · {sim.simulator ?? "simulator"} · suite at run time {short(sim.suiteSha, 10)}</p>
                 <ul className="c-results">
-                  {sim.tests.map((t) => (
+                  {ordered.map((t) => (
                     <li key={t.name}>
                       <span className={t.passed ? "mark-pass" : "mark-fail"}>{t.passed ? "✓ PASS" : "✕ FAIL"}</span>{" "}
                       <span className="mono">{t.name}</span>
@@ -209,10 +260,23 @@ export default function Console({ runs, requirements }: { runs: ConsoleRun[]; re
       </section>
 
       <aside className="c-right" aria-label="Diagnosis and attempt details">
-        <div className="ai">
-          <p className="label">AI interpretation · not verified</p>
-          <p>{a?.diagnosis ?? (a?.source === "seeded" ? "No model text: this attempt is the seeded bug." : a?.n === 1 ? "First generation: the model answers with RTL only, no diagnosis." : "No diagnosis recorded.")}</p>
-        </div>
+        {next?.diagnosis && a?.status !== "pass" ? (
+          <div className="ai">
+            <p className="label">AI interpretation · not verified · diagnosis of this failure (sent with attempt {next.n})</p>
+            <p>{next.diagnosis}</p>
+          </div>
+        ) : null}
+        {a?.diagnosis ? (
+          <div className="ai">
+            <p className="label">AI interpretation · not verified · diagnosis that produced this attempt</p>
+            <p>{a.diagnosis}</p>
+          </div>
+        ) : !(next?.diagnosis && a?.status !== "pass") ? (
+          <div className="ai">
+            <p className="label">AI interpretation · not verified</p>
+            <p>{a?.source === "seeded" ? "No model text: this attempt is the seeded bug." : a?.n === 1 ? "First generation: the model answers with RTL only, no diagnosis." : "No diagnosis recorded."}</p>
+          </div>
+        ) : null}
         <div className={`measured ${sim?.total ? (sim.passed === sim.total ? "pass" : "fail") : ""}`}>
           <p className="label">Measured</p>
           <p>{a?.rejection ? `Rejected: ${a.rejection}` : sim?.total ? `${sim.passed}/${sim.total} frozen tests` : "Not simulated"}
@@ -241,7 +305,7 @@ export default function Console({ runs, requirements }: { runs: ConsoleRun[]; re
         <span>{run.providers.generate}{run.providers.repair !== run.providers.generate ? ` → ${run.providers.repair}` : ""}</span>
         <span>${run.costUsd.toFixed(4)} · {run.tokens.in.toLocaleString()}/{run.tokens.out.toLocaleString()} tok</span>
         {run.sandbox ? <span>sandbox {run.sandbox.backend}</span> : null}
-        <span className="mono">suite {short(run.suiteSha, 10)}</span>
+        <span className="mono">suite at run time {short(run.suiteSha, 10)}</span>
         {run.replayCheck ? <span>{run.replayCheck.reproduced ? "✓ replay reproduced" : "✕ replay differs"}</span> : null}
       </footer>
     </div>

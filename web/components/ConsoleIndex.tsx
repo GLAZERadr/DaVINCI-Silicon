@@ -16,6 +16,7 @@ export default function ConsoleIndex({ recorded, requirements }: { recorded: Rec
   const [jobs, setJobs] = useState<Json[]>([]);
   const [open, setOpen] = useState<string | null>(null);
   const [loaded, setLoaded] = useState<Run | null>(null);
+  const [reqs, setReqs] = useState<{ list: Requirement[]; from: string } | null>(null);
   const [note, setNote] = useState<string | null>(null);
 
   const load = useCallback(async (id: string) => {
@@ -25,6 +26,10 @@ export default function ConsoleIndex({ recorded, requirements }: { recorded: Rec
     try {
       const r = await apiRun(id);
       if ("run" in r) {
+        // A run from an approved extraction was generated against that list.
+        const xid = r.run.extraction?.extraction_id;
+        const approved = xid ? await api(`/extractions/${encodeURIComponent(xid)}`).then((x) => x.approved).catch(() => null) : null;
+        setReqs(approved ? { list: approved.requirements, from: `approved extraction ${xid}` } : null);
         setLoaded(r.run);
         setNote(null);
       } else {
@@ -53,9 +58,9 @@ export default function ConsoleIndex({ recorded, requirements }: { recorded: Rec
         <nav className="subbar" aria-label="Run">
           <button type="button" className="subbar-back" onClick={() => { setOpen(null); setLoaded(null); window.history.replaceState(null, "", "?"); }}>← All runs</button>
           <span className="mono">{open}</span>
-          <span className="subbar-end mark-neutral">from the API · requirements shown are the default list</span>
+          <span className="subbar-end mark-neutral">from the API · requirements: {reqs?.from ?? "default list"}</span>
         </nav>
-        <Console runs={[{ label: "Run", run: loaded }]} requirements={requirements} />
+        <Console runs={[{ label: "Run", run: loaded }]} requirements={reqs?.list ?? requirements} />
       </>
     );
   }
@@ -94,18 +99,20 @@ export default function ConsoleIndex({ recorded, requirements }: { recorded: Rec
           )}
           <div className="table-wrap">
             <table>
-              <thead><tr><th>Run</th><th>Status</th><th>Providers</th><th>Attempts</th><th>Cost</th><th /></tr></thead>
+              <thead><tr><th>Run</th><th>Status</th><th>Model</th><th>Attempts</th><th>Cost</th><th /></tr></thead>
               <tbody>
                 {runs.map((r) => {
                   const st = status(r.status);
+                  const gen = r.providers?.generate;
+                  const kind = r.replayed_from ? `replay of ${r.replayed_from}` : gen === "fake" ? "offline stand-in" : gen === "meta" || gen === "baseten" ? `live · ${gen}` : gen ?? "–";
                   return (
-                    <tr key={r.run_id}>
+                    <tr key={r.run_id} className={`row-link ${gen === "fake" ? "row-muted" : ""}`} onClick={() => pick(r.run_id)}>
                       <td className="mono">{r.run_id}</td>
                       <td><span className={`pill ${st.tone}`}>{st.mark} {st.word}</span></td>
-                      <td>{r.providers?.generate ?? "–"}</td>
+                      <td>{kind}</td>
                       <td>{r.attempts_total ?? "–"}</td>
                       <td>${Number(r.cost_usd ?? 0).toFixed(4)}</td>
-                      <td><button type="button" className="btn btn-quiet btn-sm" onClick={() => pick(r.run_id)}>Open</button></td>
+                      <td><button type="button" className="btn btn-quiet btn-sm" onClick={(e) => { e.stopPropagation(); pick(r.run_id); }}>Open</button></td>
                     </tr>
                   );
                 })}

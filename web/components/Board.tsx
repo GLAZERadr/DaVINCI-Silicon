@@ -74,12 +74,13 @@ export default function Board({ data, runs }: { data: BoardData; runs: RunSummar
 
   return (
     <>
-      <SiteHeader active="evidence">
-        <a className="btn btn-quiet" href="https://github.com/GLAZERadr/DaVINCI-Silicon/tree/main/evidence">Raw evidence</a>
-      </SiteHeader>
+      <SiteHeader active="evidence" />
       <nav className="subbar" aria-label="Recorded runs">
+        <span className="subbar-label">Recorded runs</span>
         {runs.map((r) => (
-          <Link key={r.id} href={`/runs/${r.id}/`} aria-current={r.id === live.id ? "page" : undefined}>{r.id}</Link>
+          <Link key={r.id} href={`/runs/${r.id}/`} aria-current={r.id === live.id ? "page" : undefined}>
+            {r.id}<span className="subbar-hint">{r.seedBug ? "seeded bug → repair" : r.fromExtraction ? "from a PDF spec" : "from the spec"}</span>
+          </Link>
         ))}
         <span className="subbar-end">
           <Link className="btn btn-quiet btn-sm" href={`/runs/${live.id}/console/`}>Open in Run Console</Link>
@@ -89,34 +90,30 @@ export default function Board({ data, runs }: { data: BoardData; runs: RunSummar
 
       <main className="board">
         <section className="hero" aria-labelledby="verdict">
+          <span className={`verdict display ${runStatus.tone}`}>{runStatus.mark} {runStatus.word.toUpperCase()} · MEASURED</span>
           <div>
             <p className="kicker">Verification plan · sync_fifo · {live.id} · {day(live.started)}</p>
             <h1 id="verdict" className="display">{headline}</h1>
             <p className="sub">
-              Every requirement is traced to frozen tests the model can neither see nor edit, and mutation testing
-              shows those tests catch planted bugs before any RTL is judged. Every AI attempt is simulated and counted.{" "}
               {live.seedBug
-                ? `Attempt 1 is the reference RTL with seeded bug ${live.seedBug}; Muse Spark repaired it from the simulator's measured failures. `
-                : "Here the RTL under test was written by Muse Spark from the spec. "}
-              {live.extraction
-                ? `Requirements came from an image/PDF extraction (${live.extraction.extraction_id}), approved before generation. `
-                : ""}
-              {replay
-                ? `The same recorded model output was re-checked under today's gates (Verilog-2001 compile, port check, parameter sweep) by replay ${replay.id}.`
-                : "No replay under today's gates is in this bundle."}
+                ? `Attempt 1 is the reference RTL with seeded bug ${live.seedBug}. Muse Spark repaired it from the simulator's measured failures; the frozen tests decided.`
+                : "Muse Spark wrote the RTL from the spec; the frozen tests decided."}
+              {live.extraction ? ` Requirements came from a PDF/image extraction (${live.extraction.extraction_id}), approved before generation.` : ""}
             </p>
+            <details className="hero-more">
+              <summary>How this is proven</summary>
+              <p>
+                Every requirement is traced to frozen tests the model can neither see nor edit, and mutation testing
+                shows those tests catch planted bugs before any RTL is judged. Every AI attempt is simulated and counted.{" "}
+                {replay
+                  ? `The same recorded model output was re-checked under today's gates (Verilog-2001 compile, port check, parameter sweep) by replay ${replay.id}.`
+                  : "No replay under today's gates is in this bundle."}
+              </p>
+            </details>
           </div>
-          <span className={`verdict display ${runStatus.tone}`}>{runStatus.mark} {runStatus.word.toUpperCase()} · MEASURED</span>
         </section>
 
         <section className="grid-4" aria-label="Key figures">
-          <div className="tile">
-            <p className="label">Suite mutation score</p>
-            <p className="value display">{mutation.matchesPin ? `${mutation.killed}/${mutation.injected}` : "n/a"}</p>
-            <p className="note">{mutation.matchesPin
-              ? "hand-written bugs in the reference RTL caught by the frozen tests; describes the suite, not this RTL"
-              : "measured against a different suite than the pinned one; not shown"}</p>
-          </div>
           <div className="tile">
             <p className="label">Attempts to green</p>
             <p className="value display">{live.attemptsToGreen ?? "n/a"}</p>
@@ -131,6 +128,63 @@ export default function Board({ data, runs }: { data: BoardData; runs: RunSummar
             <p className="label">Model cost</p>
             <p className="value display">${live.costUsd.toFixed(3)}</p>
             <p className="note">{live.tokens.in.toLocaleString()} in / {live.tokens.out.toLocaleString()} out tokens, from the ledger</p>
+          </div>
+          <div className="tile tile-suite">
+            <p className="label">Suite mutation score</p>
+            <p className="value display">{mutation.matchesPin ? `${mutation.killed}/${mutation.injected}` : "n/a"}</p>
+            <p className="note">{mutation.matchesPin
+              ? "about the test suite, not this run: hand-written bugs in the reference RTL caught by the frozen tests"
+              : "measured against a different suite than the pinned one; not shown"}</p>
+          </div>
+        </section>
+
+        <section className="grid-2 story">
+          <div className="card" aria-labelledby="why">
+            <p id="why" className="label" style={{ marginBottom: 16 }}>What changed and why</p>
+            {live.attempts.map((a, i) => {
+              const sim = a.total ? `${a.passed}/${a.total} frozen tests` : status(a.status).word;
+              const failed = a.tests.filter((t) => !t.passed).map((t) => t.name);
+              return (
+                <div key={a.n}>
+                  {a.diagnosis && (
+                    <div className="ai">
+                      <p className="label">AI interpretation · not verified · diagnosis for attempt {a.n}</p>
+                      <p><Prose text={a.diagnosis} /></p>
+                    </div>
+                  )}
+                  <div className={`measured ${a.total ? (a.passed === a.total ? "pass" : "fail") : ""}`} style={{ marginBottom: i < live.attempts.length - 1 ? 12 : 0 }}>
+                    <p className="label">Measured · attempt {a.n}{a.source === "seeded" ? ` (seeded ${a.seeded?.mutant ?? ""})` : ""}</p>
+                    <p>{sim}{failed.length > 0 && <>; failing <span className="mono">{failed.join(", ")}</span></>}</p>
+                  </div>
+                </div>
+              );
+            })}
+            {!repair && live.attempts.length > 0 && (
+              <p className="foot" style={{ marginTop: 12 }}>The first attempt passed, so no repair or diagnosis was requested.</p>
+            )}
+            <p className="foot" style={{ marginTop: 12 }}>
+              Test files unchanged: run-time suite hash {live.attempts.every((a) => !a.suiteSha || a.suiteSha === live.suiteSha) ? "matched on every attempt" : "CHANGED"} (<span className="mono">{short(live.suiteSha, 10)}</span>).
+            </p>
+            {repair?.diff && (
+              <details className="disclosure">
+                <summary>Show RTL diff, attempt {repair.n - 1} → {repair.n}</summary>
+                <Diff text={repair.diff} />
+              </details>
+            )}
+          </div>
+          <div className="card" aria-labelledby="selfcheck">
+            <p id="selfcheck" className="label" style={{ marginBottom: 16 }}>Can the tests be trusted?</p>
+            <div className="measured pass">
+              <p className="label">Measured · suite mutation check</p>
+              <p>{mutation.matchesPin ? `${mutation.killed} of ${mutation.injected}` : "n/a"} hand-written bugs planted in the reference RTL are caught by the frozen tests.</p>
+            </div>
+            {weakDemo && (
+              <div className="measured" style={{ marginTop: 12 }}>
+                <p className="label">Measured · the suite catches its own weak test</p>
+                <p>With <span className="mono">{weakDemo.tests_dropped.join(", ")}</span> left out, mutants <span className="mono">{weakDemo.weak.survivors.join(", ")}</span> survive ({weakDemo.weak.killed}/{weakDemo.weak.injected}). The full frozen suite kills them ({weakDemo.restored.killed}/{weakDemo.restored.injected}).</p>
+              </div>
+            )}
+            <p className="foot" style={{ marginTop: 12 }}>The model never sees or edits these tests; they are pinned by hash before every run.</p>
           </div>
         </section>
 
@@ -176,6 +230,23 @@ export default function Board({ data, runs }: { data: BoardData; runs: RunSummar
           </div>
         </section>
 
+        <section className="card" aria-labelledby="gates">
+            <p id="gates" className="label" style={{ marginBottom: 16 }}>Gates on the final RTL{replay ? " (today)" : ""}</p>
+            <ul className="gates">
+              <li><span className="gate mono">G1</span><span>Static checks and Verilog-2001 compile (<span className="mono">iverilog -g2001 -Wall</span>)</span>
+                <Mark ok={last?.compileOk ?? null} /></li>
+              <li><span className="gate mono">G2</span><span>Frozen suite, golden model compared every cycle, default parameters</span>
+                <span className={lastSim && lastSim.passed === lastSim.total ? "mark-pass" : "mark-fail"}>{lastSim ? `${lastSim.passed === lastSim.total ? "✓" : "✕"} ${lastSim.passed}/${lastSim.total}` : "○ Not run"}</span></li>
+              {(last?.sweep?.sets ?? []).map((s, i) => (
+                <li key={i}><span className="gate mono">{i === 0 ? "G3" : ""}</span>
+                  <span>Parameter sweep, WIDTH {s.params.WIDTH} · DEPTH {s.params.DEPTH} · AF_THRESH {s.params.AF_THRESH} (not shown to the model)</span>
+                  <Mark ok={s.status === "pass"} /></li>
+              ))}
+              {!last?.sweep && <li><span className="gate mono">G3</span><span>Parameter sweep</span><Mark ok={null} /></li>}
+            </ul>
+        </section>
+
+        <h2 className="group-title">Test-plan depth</h2>
         {data.scenarios && (
           <section className="card" aria-labelledby="scenarios">
             <p id="scenarios" className="label">Scenario coverage</p>
@@ -251,71 +322,16 @@ export default function Board({ data, runs }: { data: BoardData; runs: RunSummar
           </section>
         )}
 
-        <section className="grid-2">
-          <div className="card" aria-labelledby="why">
-            <p id="why" className="label" style={{ marginBottom: 16 }}>What changed and why</p>
-            {repair ? (
-              <div className="ai">
-                <p className="label">AI interpretation · not verified</p>
-                <p><Prose text={repair.diagnosis!} /></p>
-              </div>
-            ) : (
-              <div className="ai">
-                <p className="label">AI interpretation · not verified</p>
-                <p>None. The first attempt passed, so no repair or diagnosis was requested.</p>
-              </div>
-            )}
-            <div className={`measured ${runStatus.tone === "neutral" ? "" : runStatus.tone}`}>
-              <p className="label">Measured</p>
-              <p>
-                {live.attempts.map((a, i) => (
-                  <span key={a.n}>
-                    {i > 0 && " → "}
-                    Attempt {a.n}{a.source === "seeded" ? " (seeded)" : ""}: {a.total ? `${a.passed}/${a.total} tests` : status(a.status).word}
-                  </span>
-                ))}
-                {failedFirst.length > 0 && <>. Attempt 1 failed <span className="mono">{failedFirst.join(", ")}</span></>}
-                . Test files unchanged: suite hash {live.attempts.every((a) => !a.suiteSha || a.suiteSha === live.suiteSha) ? "matched on every attempt" : "CHANGED"}.
-              </p>
-            </div>
-            {repair?.diff && (
-              <details>
-                <summary>RTL diff, attempt {repair.n - 1} → {repair.n}</summary>
-                <Diff text={repair.diff} />
-              </details>
-            )}
-          </div>
-
-          <div className="card" aria-labelledby="gates">
-            <p id="gates" className="label" style={{ marginBottom: 16 }}>Gates on the final RTL{replay ? " (today)" : ""}</p>
-            <ul className="gates">
-              <li><span className="gate mono">G1</span><span>Static checks and Verilog-2001 compile (<span className="mono">iverilog -g2001 -Wall</span>)</span>
-                <Mark ok={last?.compileOk ?? null} /></li>
-              <li><span className="gate mono">G2</span><span>Frozen suite, golden model compared every cycle, default parameters</span>
-                <span className={lastSim && lastSim.passed === lastSim.total ? "mark-pass" : "mark-fail"}>{lastSim ? `${lastSim.passed === lastSim.total ? "✓" : "✕"} ${lastSim.passed}/${lastSim.total}` : "○ Not run"}</span></li>
-              {(last?.sweep?.sets ?? []).map((s, i) => (
-                <li key={i}><span className="gate mono">{i === 0 ? "G3" : ""}</span>
-                  <span>Parameter sweep, WIDTH {s.params.WIDTH} · DEPTH {s.params.DEPTH} · AF_THRESH {s.params.AF_THRESH} (not shown to the model)</span>
-                  <Mark ok={s.status === "pass"} /></li>
-              ))}
-              {!last?.sweep && <li><span className="gate mono">G3</span><span>Parameter sweep</span><Mark ok={null} /></li>}
-            </ul>
-            {weakDemo && (
-              <div className="measured" style={{ marginTop: 20 }}>
-                <p className="label">Measured · the suite catches its own weak test</p>
-                <p>With <span className="mono">{weakDemo.tests_dropped.join(", ")}</span> left out, mutants <span className="mono">{weakDemo.weak.survivors.join(", ")}</span> survive ({weakDemo.weak.killed}/{weakDemo.weak.injected}). The full frozen suite kills them ({weakDemo.restored.killed}/{weakDemo.restored.injected}).</p>
-              </div>
-            )}
-          </div>
-        </section>
-
         <section className="card" id="reproduce" aria-labelledby="repro">
-          <p id="repro" className="label" style={{ marginBottom: 16 }}>Reproduce it</p>
+          <div className="api-row" style={{ marginBottom: 16 }}>
+            <p id="repro" className="label">Reproduce it</p>
+            <a className="btn btn-quiet btn-sm" href="https://github.com/GLAZERadr/DaVINCI-Silicon/tree/main/evidence">Raw evidence on GitHub</a>
+          </div>
           <dl className="facts">
             <dt>Model</dt><dd>{model} (live, {day(live.started)})</dd>
-            <dt>Simulator</dt><dd>{lastSim?.simulator ?? first?.simulator ?? "n/a"}, cocotb 2.1.0</dd>
+            <dt>Simulator</dt><dd>{lastSim?.simulator ?? first?.simulator ?? "n/a"}, cocotb 2.1.0{replay ? " (replay)" : ""}{first?.simulator && first.simulator !== lastSim?.simulator ? `; live run: ${first.simulator}` : ""}</dd>
             <dt>Container</dt><dd><code>{replay?.sandbox?.image_id ? `davinci-sim ${short(replay.sandbox.image_id, 19)}` : "n/a"}</code></dd>
-            <dt>Frozen suite</dt><dd><code>sha256 {short(data.pinnedSuite, 16)}…</code></dd>
+            <dt>Frozen suite</dt><dd><code>sha256 {short(data.pinnedSuite, 16)}…</code> current pin{replay ? ", used by the replay" : ""}{live.suiteSha && live.suiteSha !== data.pinnedSuite ? <>; live run used <code>{short(live.suiteSha, 16)}…</code> (before later gates were added)</> : null}</dd>
             <dt>Sweep</dt><dd><code>sha256 {short(data.pinnedSweep, 16)}…</code></dd>
             <dt>Recorded replay</dt>
             <dd>{replay ? <>{replay.id}: <Pill s={replay.status} />{" "}{replay.replayCheck?.reproduced ? "reproduced the live run attempt for attempt" : "did not reproduce the live run"}</> : "none"}</dd>

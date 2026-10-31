@@ -43,6 +43,8 @@ export default function NewRun({ mutants, recorded }: { mutants: Mutant[]; recor
 
   async function start(e: React.FormEvent) {
     e.preventDefault();
+    if (mode === "live" && !window.confirm(
+      "Start a paid live run on Muse Spark 1.3?\n\nRecorded live runs cost $0.008–$0.051 each; every call is counted in the ledger against the $120 budget.")) return;
     setBusy(true);
     setError(null);
     try {
@@ -62,6 +64,8 @@ export default function NewRun({ mutants, recorded }: { mutants: Mutant[]; recor
   const needsToken = mode === "live" && !hasToken;
   return (
     <main className="board">
+      <ApiPanel onChange={(ok, tok) => { setApiOk(ok); setHasToken(tok); }} />
+
       <section className="card">
         <p className="label">New run</p>
         <p className="lede">The model writes RTL; the frozen suite, the parameter sweep and the sandbox decide. Every attempt is recorded, including rejected and failed ones. The server always simulates model-written RTL in its Docker sandbox; this page cannot change that.</p>
@@ -108,14 +112,13 @@ export default function NewRun({ mutants, recorded }: { mutants: Mutant[]; recor
           {needsToken && <p className="mark-neutral">○ Add the API token under Connection settings to start a live run.</p>}
           {error && <p className="mark-fail" role="alert">✕ {error}</p>}
           <div>
-            <button type="submit" className="btn" disabled={!apiOk || busy || needsToken || (mode === "replay" && !source)}>
-              {busy ? "Starting…" : mode === "replay" ? "Replay" : "Start run"}
+            <button type="submit" className={`btn ${mode === "live" ? "btn-live" : ""}`} disabled={!apiOk || busy || needsToken || (mode === "replay" && !source)}>
+              {busy ? "Starting…" : mode === "replay" ? "Replay · $0" : mode === "fake" ? "Start dry run · $0" : "Start live run · paid"}
             </button>
           </div>
         </form>
       </section>
 
-      <ApiPanel onChange={(ok, tok) => { setApiOk(ok); setHasToken(tok); }} needToken={mode === "live" ? "Live runs need the API token (Connection settings)." : undefined} />
 
       {watch && apiOk && <RunProgress runId={watch} />}
     </main>

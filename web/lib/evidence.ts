@@ -116,8 +116,8 @@ export function defaultRequirements(): Requirement[] {
 export function consoleRuns(id: string): { label: string; run: Run }[] {
   const entry = index().runs.find((e: Json) => e.live.run_id === id);
   if (!entry) throw new Error(`run ${id} is not in the evidence bundle`);
-  const out = [{ label: "Live run", run: loadRun(id) }];
-  if (entry.replay) out.push({ label: "Replay · today's gates", run: loadRun(entry.replay.run_id) });
+  const out = [{ label: "Original live run", run: loadRun(id) }];
+  if (entry.replay) out.push({ label: "Re-checked today (replay)", run: loadRun(entry.replay.run_id) });
   return out;
 }
 
