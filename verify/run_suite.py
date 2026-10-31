@@ -1,10 +1,14 @@
 """Run the frozen cocotb suite against an RTL file and print a JSON verdict.
 
-usage: python verify/run_suite.py <rtl.v> [--out runs/<id>]
+usage: python verify/run_suite.py <rtl.v> [--out runs/<id>] [--drop test_a,test_b]
+
+--drop runs a reduced suite (used only by the weak-test demo in mutate.py).
+The frozen files are never edited; the verdict lists what was left out.
 """
 import argparse
 import hashlib
 import json
+import re
 import shutil
 import subprocess
 import sys
@@ -24,12 +28,17 @@ def suite_hash():
     return h.hexdigest()
 
 
+def all_tests():
+    src = (TESTS / "test_sync_fifo.py").read_text()
+    return re.findall(r"@cocotb\.test\(\)\s*async def (\w+)", src)
+
+
 def tool_version():
     out = subprocess.run(["iverilog", "-V"], capture_output=True, text=True).stdout
     return out.splitlines()[0] if out else "unknown"
 
 
-def run(rtl: Path, out: Path, timeout_s: int = 120) -> dict:
+def run(rtl: Path, out: Path, timeout_s: int = 120, drop=()) -> dict:
     from cocotb_tools.runner import get_runner
 
     out.mkdir(parents=True, exist_ok=True)
@@ -43,6 +52,12 @@ def run(rtl: Path, out: Path, timeout_s: int = 120) -> dict:
         "simulator": tool_version(),
         "tests": [],
     }
+    drop = list(drop)
+    unknown = set(drop) - set(all_tests())
+    if unknown:
+        raise ValueError(f"unknown tests to drop: {sorted(unknown)}")
+    if drop:
+        verdict["tests_dropped"] = drop
     runner = get_runner("icarus")
     try:
         runner.build(
@@ -65,6 +80,7 @@ def run(rtl: Path, out: Path, timeout_s: int = 120) -> dict:
             hdl_toplevel="sync_fifo",
             test_module="test_sync_fifo",
             test_dir=TESTS,
+            testcase=[t for t in all_tests() if t not in drop] if drop else None,
             build_dir=build,
             results_xml=results,
             log_file=out / "sim.log",
@@ -92,7 +108,8 @@ if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     ap.add_argument("rtl", type=Path)
     ap.add_argument("--out", type=Path, default=ROOT / "runs" / "manual")
+    ap.add_argument("--drop", default="", help="comma-separated tests to leave out")
     a = ap.parse_args()
-    v = run(a.rtl.resolve(), a.out.resolve())
+    v = run(a.rtl.resolve(), a.out.resolve(), drop=[t for t in a.drop.split(",") if t])
     print(json.dumps({k: v[k] for k in v if k != "tests"} | {"failed": [t for t in v["tests"] if not t["passed"]]}, indent=2))
     sys.exit(0 if v["status"] == "pass" else 1)

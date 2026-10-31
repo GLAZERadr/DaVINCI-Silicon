@@ -2,7 +2,7 @@ RTL ?= rtl/sync_fifo.v
 RUN ?= manual
 IMAGE = davinci-sim:latest
 
-.PHONY: sim mutate image sandbox
+.PHONY: sim mutate weak-demo image sandbox
 
 # Local run (needs iverilog + cocotb installed)
 sim:
@@ -24,3 +24,8 @@ sandbox:
 	  -v $(PWD)/runs/$(RUN)/in:/work/in:ro \
 	  -v $(PWD)/runs/$(RUN)/out:/work/out \
 	  $(IMAGE)
+
+# Weak-test demo: leave out the REQ-06 tests, watch a mutant survive, then
+# restore the full suite and watch it die.
+weak-demo:
+	python3 verify/mutate.py $(RTL) --weak-demo --out runs/weak_demo
