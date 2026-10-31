@@ -10,6 +10,7 @@
     {"id": "REQ-06", "text": "Read and write in the same cycle when full: the oldest word is read, the new word is stored, count stays DEPTH.", "tests": ["test_full_simultaneous_rw", "test_random_regression"]},
     {"id": "REQ-07", "text": "Read and write in the same cycle when empty: the word is stored, the read is ignored, underflow pulses.", "tests": ["test_empty_simultaneous_rw", "test_random_regression"]},
     {"id": "REQ-08", "text": "almost_full is 1 exactly when count >= AF_THRESH.", "tests": ["test_almost_full", "test_random_regression"]},
-    {"id": "REQ-09", "text": "count equals the number of stored entries after every cycle.", "tests": ["test_full_flag", "test_random_regression"]}
+    {"id": "REQ-09", "text": "count equals the number of stored entries after every cycle.", "tests": ["test_full_flag", "test_random_regression"]},
+    {"id": "REQ-10", "text": "A write when full together with a read in the same cycle is accepted: overflow stays 0.", "tests": ["test_full_simultaneous_rw", "test_random_regression"]}
   ]
 }

@@ -2,7 +2,7 @@
 
 Single-clock synchronous FIFO. This is the spec the model receives; the frozen
 suite in `tests/` and the golden model `tests/golden_model.py` are the
-executable form of the same rules. Requirements REQ-01..09 are listed in
+executable form of the same rules. Requirements REQ-01..10 are listed in
 `spec/requirements.json` with the tests that cover each one.
 
 ## Parameters
@@ -54,7 +54,7 @@ Let `full`, `empty` and `count` be the values *before* the edge.
 On the edge:
 
 1. **Reset (REQ-01).** If `rst` is 1: the FIFO becomes empty, `count = 0`, `dout = 0`, `overflow = 0`, `underflow = 0`. Nothing else happens.
-2. **Flags.** `overflow <= wr_en && full && !rd_en` (REQ-04). `underflow <= rd_en && empty` (REQ-05, REQ-07). Both are set for exactly one cycle per offending request.
+2. **Flags.** `overflow <= wr_en && full && !rd_en` (REQ-04); a write while full with a same-cycle read does not raise it (REQ-10). `underflow <= rd_en && empty` (REQ-05, REQ-07). Both are set for exactly one cycle per offending request.
 3. **Read.** If `do_read`, `dout` takes the oldest stored word and that word is removed. Otherwise `dout` holds its previous value (REQ-05).
 4. **Write.** If `do_write`, `din` is stored as the newest word.
 5. **Count (REQ-09).** `count` increases by 1 on write-only, decreases by 1 on read-only, and is unchanged when both or neither happen.
