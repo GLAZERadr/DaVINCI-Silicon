@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import ApiPanel from "./ApiPanel";
 import RunProgress from "./RunProgress";
-import { api, apiBase, apiToken } from "@/lib/api";
+import { api, apiBase } from "@/lib/api";
 import type { Json } from "@/lib/run";
 
 type Item = { id: string; text: string; source_location?: string; confidence?: string };
@@ -18,6 +18,7 @@ const COVER: Record<string, { mark: string; tone: string; word: string }> = {
 // Image/PDF spec → extracted requirements → human review and approval → run.
 export default function SpecIntake() {
   const [apiOk, setApiOk] = useState(false);
+  const [hasToken, setHasToken] = useState(false);
   const [list, setList] = useState<Json[]>([]);
   const [xid, setXid] = useState<string | null>(null);
   const [rec, setRec] = useState<Json | null>(null);
@@ -153,12 +154,12 @@ export default function SpecIntake() {
               </select>
             </label>
           </div>
-          {provider === "meta" && !apiToken() && <p className="mark-neutral">○ Live extraction needs the API token (Connection settings).</p>}
-          <div><button className="btn" type="submit" disabled={!apiOk || !file || busy || (provider === "meta" && !apiToken())}>{busy ? "Uploading…" : "Extract requirements"}</button></div>
+          {provider === "meta" && !hasToken && <p className="mark-neutral">○ Live extraction needs the API token (Connection settings).</p>}
+          <div><button className="btn" type="submit" disabled={!apiOk || !file || busy || (provider === "meta" && !hasToken)}>{busy ? "Uploading…" : "Extract requirements"}</button></div>
         </form>
       </section>
 
-      <ApiPanel onChange={setApiOk} needToken="Live extraction and approval need the API token (Connection settings)." />
+      <ApiPanel onChange={(ok, tok) => { setApiOk(ok); setHasToken(tok); }} needToken="Live extraction and approval need the API token (Connection settings)." />
 
       {apiOk && list.length > 0 && (
         <section className="card">
@@ -263,10 +264,10 @@ export default function SpecIntake() {
                   {" "}Approved file <span className="mono">sha256 {String(rec.approved_sha256).slice(0, 16)}…</span>
                 </p>
                 <div className="btn-row">
-                  <button type="button" className="btn" disabled={busy || !apiToken()} onClick={() => run("meta")}>Generate RTL with Muse Spark</button>
+                  <button type="button" className="btn" disabled={busy || !hasToken} onClick={() => run("meta")}>Generate RTL with Muse Spark</button>
                   <button type="button" className="btn btn-quiet" disabled={busy} onClick={() => run("fake")}>Offline dry run ($0)</button>
                 </div>
-                {!apiToken() && <p className="mark-neutral">○ The live run needs the API token.</p>}
+                {!hasToken && <p className="mark-neutral">○ The live run needs the API token.</p>}
               </>
             ) : (
               <form className="run-form" onSubmit={approve}>
@@ -278,8 +279,8 @@ export default function SpecIntake() {
                     <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Your name" autoComplete="name" />
                   </label>
                 </div>
-                <div><button type="submit" className="btn" disabled={busy || !name.trim() || included === 0 || !apiToken()}>Approve {included} requirements</button></div>
-                {!apiToken() && <p className="mark-neutral">○ Approval needs the API token.</p>}
+                <div><button type="submit" className="btn" disabled={busy || !name.trim() || included === 0 || !hasToken}>Approve {included} requirements</button></div>
+                {!hasToken && <p className="mark-neutral">○ Approval needs the API token.</p>}
               </form>
             )}
           </section>

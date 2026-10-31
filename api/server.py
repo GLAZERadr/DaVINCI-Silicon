@@ -60,6 +60,9 @@ app.add_middleware(
     allow_origins=[o for o in os.environ.get("DAVINCI_CORS_ORIGINS", "http://localhost:3000").split(",") if o],
     allow_methods=["GET", "POST"],
     allow_headers=["Authorization", "Content-Type"],
+    # Lets the hosted board (a public origin) reach an API running on the viewer's
+    # own machine; browsers ask for this before calling localhost. Origins above still apply.
+    allow_private_network=True,
 )
 
 

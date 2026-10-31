@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import ApiPanel from "./ApiPanel";
 import RunProgress from "./RunProgress";
-import { api, apiToken } from "@/lib/api";
+import { api } from "@/lib/api";
 import type { Json } from "@/lib/run";
 
 type Mutant = { id: string; req: string; desc: string };
@@ -12,6 +12,7 @@ type Mode = "replay" | "fake" | "live";
 // Start a run through the API and follow it live.
 export default function NewRun({ mutants, recorded }: { mutants: Mutant[]; recorded: string[] }) {
   const [apiOk, setApiOk] = useState(false);
+  const [hasToken, setHasToken] = useState(false);
   const [mode, setMode] = useState<Mode>("replay");
   const [source, setSource] = useState(recorded[0] ?? "");
   const [sources, setSources] = useState<string[]>(recorded);
@@ -58,7 +59,7 @@ export default function NewRun({ mutants, recorded }: { mutants: Mutant[]; recor
     }
   }
 
-  const needsToken = mode === "live" && !apiToken();
+  const needsToken = mode === "live" && !hasToken;
   return (
     <main className="board">
       <section className="card">
@@ -114,7 +115,7 @@ export default function NewRun({ mutants, recorded }: { mutants: Mutant[]; recor
         </form>
       </section>
 
-      <ApiPanel onChange={setApiOk} needToken={mode === "live" ? "Live runs need the API token (Connection settings)." : undefined} />
+      <ApiPanel onChange={(ok, tok) => { setApiOk(ok); setHasToken(tok); }} needToken={mode === "live" ? "Live runs need the API token (Connection settings)." : undefined} />
 
       {watch && apiOk && <RunProgress runId={watch} />}
     </main>

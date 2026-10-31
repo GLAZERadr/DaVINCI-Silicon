@@ -4,26 +4,28 @@ import { useEffect, useState } from "react";
 import { api, apiBase, apiToken, setApiBase, setApiToken } from "@/lib/api";
 
 // API connection: base URL, health, and the token for live model calls.
-export default function ApiPanel({ needToken, onChange }: { needToken?: string; onChange?: (ok: boolean) => void }) {
+export default function ApiPanel({ needToken, onChange }: { needToken?: string; onChange?: (ok: boolean, hasToken: boolean) => void }) {
   const [base, setBase] = useState("");
   const [token, setToken] = useState("");
   const [health, setHealth] = useState<"checking" | "ok" | "down" | "none">("checking");
   const [open, setOpen] = useState(false);
+  const [saved, setSaved] = useState({ base: "", token: false }); // read after mount: storage is browser-only
 
   async function check() {
+    setSaved({ base: apiBase(), token: !!apiToken() });
     if (!apiBase()) {
       setHealth("none");
-      onChange?.(false);
+      onChange?.(false, !!apiToken());
       return;
     }
     setHealth("checking");
     try {
       await api("/health");
       setHealth("ok");
-      onChange?.(true);
+      onChange?.(true, !!apiToken());
     } catch {
       setHealth("down");
-      onChange?.(false);
+      onChange?.(false, !!apiToken());
     }
   }
 
@@ -50,8 +52,8 @@ export default function ApiPanel({ needToken, onChange }: { needToken?: string; 
       <div className="api-row">
         <div>
           <span className={tone}>{label}</span>
-          <span className="mono api-url">{apiBase() || "set NEXT_PUBLIC_DAVINCI_API or enter a URL"}</span>
-          {apiToken() ? <span className="mark-neutral"> · token set for this tab</span> : null}
+          <span className="mono api-url">{saved.base || "set NEXT_PUBLIC_DAVINCI_API or enter a URL"}</span>
+          {saved.token ? <span className="mark-neutral"> · token set for this tab</span> : null}
         </div>
         <button type="button" className="btn btn-quiet" onClick={() => setOpen(!open)} aria-expanded={open}>
           {open ? "Close" : "Connection settings"}
@@ -60,9 +62,12 @@ export default function ApiPanel({ needToken, onChange }: { needToken?: string; 
       {health === "none" || health === "down" ? (
         <p className="lede" style={{ margin: "12px 0 0" }}>
           This page talks to the DaVINCI API (<code>make api</code>). Recorded runs stay readable on the Evidence and Run Console pages without it.
+          {health === "down" && saved.base.includes("127.0.0.1")
+            ? " For an API on this computer, allow the browser's local network access prompt for this site, and check that make api is running."
+            : ""}
         </p>
       ) : null}
-      {needToken && !apiToken() && health === "ok" ? (
+      {needToken && !saved.token && health === "ok" ? (
         <p className="lede" style={{ margin: "12px 0 0" }}>{needToken}</p>
       ) : null}
       {open && (

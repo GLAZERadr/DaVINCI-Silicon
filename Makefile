@@ -55,8 +55,12 @@ plan-ref:
 	python3 verify/plan.py --reference runs/reference
 
 # HTTP API for the UI (runs execute one at a time in a background worker).
+# Until it is hosted, it runs here and the Vercel board connects to it from this
+# machine's browser (Connection settings → http://127.0.0.1:8000). Model-written
+# RTL still runs only in the local Docker sandbox, so Docker must be running.
+CORS ?= https://davinci-silicon-fe.vercel.app,http://127.0.0.1:4320,http://localhost:3000
 api:
-	uvicorn api.server:app --port 8000
+	DAVINCI_CORS_ORIGINS="$(CORS)" uvicorn api.server:app --host 127.0.0.1 --port 8000
 
 # Committed evidence bundle for the Evidence Board (live runs + today's-gates replays).
 LIVE ?= live01 live02-m1 live03-pdf

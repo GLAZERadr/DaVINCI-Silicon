@@ -8,6 +8,8 @@ Loop: spec → requirements (human-approved) → frozen tests → mutation proof
 
 **Live board:** https://davinci-silicon-fe.vercel.app/ (Evidence and Run Console from the committed evidence bundle; New run and Spec intake need the API).
 
+Until the API is hosted, run it on your machine with `make api` (Docker running) and enter `http://127.0.0.1:8000` under Connection settings on the board's New run or Spec intake page. Chrome asks once to allow the site to reach your local network; allow it. The API only accepts the board's own origins (`CORS` in the Makefile).
+
 Built for the Meta Global AI Developer Hackathon 2026 (Startup Track, "Push the Frontier"). Everything in this repo was written during the hackathon (Oct 27 – Nov 4, 2026).
 
 ## Status
