@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
-import { Inter, JetBrains_Mono, Orbitron } from "next/font/google";
 import "./globals.css";
 
-const inter = Inter({ subsets: ["latin"], weight: ["300", "400", "500", "600"], variable: "--font-inter" });
-const mono = JetBrains_Mono({ subsets: ["latin"], weight: ["400", "500"], variable: "--font-mono" });
-const orbitron = Orbitron({ subsets: ["latin"], weight: ["600", "700"], variable: "--font-orbitron" });
+// Fonts come from Google Fonts at view time (next/font/google failed in a clean
+// Turbopack build). Families are named in globals.css.
+const FONTS = "https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600"
+  + "&family=JetBrains+Mono:wght@400;500&family=Orbitron:wght@600;700&display=swap";
 
 export const metadata: Metadata = {
   title: "DaVINCI Evidence Board",
@@ -13,7 +13,12 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${inter.variable} ${mono.variable} ${orbitron.variable}`}>
+    <html lang="en">
+      <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
+        <link rel="stylesheet" href={FONTS} />
+      </head>
       <body>{children}</body>
     </html>
   );

@@ -11,6 +11,9 @@
   --pass-dark: #82B184;
   --fail-dark: #E58282;
   --radius: 4px;
+  --font-inter: "Inter";
+  --font-mono: "JetBrains Mono";
+  --font-orbitron: "Orbitron";
 }
 
 * { box-sizing: border-box; }
