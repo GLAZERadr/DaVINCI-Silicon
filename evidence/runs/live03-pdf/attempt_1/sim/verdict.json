@@ -1,0 +1,62 @@
+{
+  "rtl": "/work/in/dut.v",
+  "rtl_sha256": "466229822924bf013d4f9ca473df0c347c76a3d3e3cc825eb2e503d6678a863b",
+  "suite_sha256": "7d3b6b582d0aefaefee0c8a8fb24a0e7c107a77e5c2a2a8a987774626c1638a4",
+  "simulator": "Icarus Verilog version 12.0 (stable) ()",
+  "tests": [
+    {
+      "name": "test_reset_state",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "name": "test_full_flag",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "name": "test_empty_flag",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "name": "test_wraparound_order",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "name": "test_overflow",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "name": "test_underflow",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "name": "test_full_simultaneous_rw",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "name": "test_empty_simultaneous_rw",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "name": "test_almost_full",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "name": "test_random_regression",
+      "passed": true,
+      "message": ""
+    }
+  ],
+  "passed": 10,
+  "total": 10,
+  "status": "pass",
+  "seconds": 0.3
+}

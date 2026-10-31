@@ -1,0 +1,11 @@
+{"t": 0.0, "type": "run_started", "run_id": "live02-m1-replay5", "generate": "replay", "repair": "replay", "seed_bug": "M1"}
+{"t": 0.0, "type": "seeded", "attempt": 1, "mutant": "M1", "desc": "write blocked when full even with a same-cycle read"}
+{"t": 0.21, "type": "simulating", "attempt": 1}
+{"t": 1.05, "type": "verdict", "attempt": 1, "status": "fail", "passed": 8, "total": 10}
+{"t": 1.05, "type": "model_call", "attempt": 2, "step": "repair", "provider": "replay"}
+{"t": 1.06, "type": "diagnosis", "attempt": 2, "label": "AI interpretation \u00b7 not verified", "text": "`do_write` was `wr_en && !full`, so a simultaneous read+write when full dropped the write and decremented `count`; spec requires `do_write = wr_en && (!full || rd_en)` so both pointers advance and count stays at DEPTH."}
+{"t": 1.39, "type": "simulating", "attempt": 2}
+{"t": 2.77, "type": "verdict", "attempt": 2, "status": "pass", "passed": 10, "total": 10}
+{"t": 2.77, "type": "sweeping", "attempt": 2}
+{"t": 4.18, "type": "sweep", "attempt": 2, "status": "pass"}
+{"t": 4.18, "type": "run_finished", "status": "pass", "attempts": 2, "cost_usd": 0.0}

@@ -1,0 +1,1 @@
+{"step": "generate", "attempt": 1, "ok": true, "error": null, "provider": "meta", "model": "muse-spark-1.3", "request_sha256": "e454150a1c92ebe09ce84247916f3389561c07d293d0d85f9741820d76eab705", "tokens_in": 2646, "tokens_out": 11195, "cost_usd": 0.050886, "seconds": 35.92, "extra": {"finish_reason": "stop"}}

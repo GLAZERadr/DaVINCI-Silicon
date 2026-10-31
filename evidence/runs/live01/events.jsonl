@@ -1,0 +1,5 @@
+{"t": 0.0, "type": "run_started", "run_id": "live01", "generate": "meta", "repair": "meta", "seed_bug": "-"}
+{"t": 0.0, "type": "model_call", "attempt": 1, "step": "generate", "provider": "meta"}
+{"t": 27.02, "type": "simulating", "attempt": 1}
+{"t": 27.67, "type": "verdict", "attempt": 1, "status": "pass", "passed": 10, "total": 10}
+{"t": 27.67, "type": "run_finished", "status": "pass", "attempts": 1, "cost_usd": 0.027093}

@@ -1,0 +1,62 @@
+{
+  "rtl": "runs/live01/attempt_1/sync_fifo.v",
+  "rtl_sha256": "9b33a512be0355d469804c46a5e7e2d4397d02a5f5afd36b6b9d1ed8659f7d39",
+  "suite_sha256": "7d3b6b582d0aefaefee0c8a8fb24a0e7c107a77e5c2a2a8a987774626c1638a4",
+  "simulator": "Icarus Verilog version 13.0 (stable) (v13_0)",
+  "tests": [
+    {
+      "name": "test_reset_state",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "name": "test_full_flag",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "name": "test_empty_flag",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "name": "test_wraparound_order",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "name": "test_overflow",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "name": "test_underflow",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "name": "test_full_simultaneous_rw",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "name": "test_empty_simultaneous_rw",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "name": "test_almost_full",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "name": "test_random_regression",
+      "passed": true,
+      "message": ""
+    }
+  ],
+  "passed": 10,
+  "total": 10,
+  "status": "pass",
+  "seconds": 0.39
+}

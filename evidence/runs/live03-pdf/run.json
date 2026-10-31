@@ -1,0 +1,80 @@
+{
+  "run_id": "live03-pdf",
+  "started": "2026-10-31T16:23:52+0700",
+  "providers": {
+    "generate": "meta",
+    "repair": "meta"
+  },
+  "seed_bug": null,
+  "replayed_from": null,
+  "max_repairs": 3,
+  "sandbox": {
+    "backend": "docker",
+    "image": "davinci-sim:latest",
+    "image_id": "sha256:57b1594276bdb55160039366271d35665b1bcf762991e1293b0ed54d0cd33141"
+  },
+  "suite_sha256": "7d3b6b582d0aefaefee0c8a8fb24a0e7c107a77e5c2a2a8a987774626c1638a4",
+  "spec_sha256": "13f46daa8c388fb4bc71732ce3224d9b157ab92fb0a81be7872965d529bf3956",
+  "requirements_sha256": "c7bdf104527e0183c374a59af5f7e70b7840f8b8f03f536ee39d569b3f8d22ec",
+  "attempts": [
+    {
+      "n": 1,
+      "started_s": 0.0,
+      "source": "model",
+      "provider": "meta",
+      "model": "muse-spark-1.3",
+      "tokens_in": 2646,
+      "tokens_out": 11195,
+      "cost_usd": 0.050886,
+      "model_seconds": 35.92,
+      "finish_reason": "stop",
+      "rtl_sha256": "466229822924bf013d4f9ca473df0c347c76a3d3e3cc825eb2e503d6678a863b",
+      "status": "pass",
+      "measured": {
+        "label": "measured",
+        "status": "pass",
+        "passed": 10,
+        "total": 10,
+        "failed": [],
+        "simulator": "Icarus Verilog version 12.0 (stable) ()",
+        "sim_seconds": 0.3,
+        "suite_sha256": "7d3b6b582d0aefaefee0c8a8fb24a0e7c107a77e5c2a2a8a987774626c1638a4",
+        "sandbox": "docker"
+      },
+      "finished_s": 36.75
+    }
+  ],
+  "extraction": {
+    "extraction_id": "x-20261031-162122-f882",
+    "approved_sha256": "c7bdf104527e0183c374a59af5f7e70b7840f8b8f03f536ee39d569b3f8d22ec",
+    "approved_by": "Claude (integration test, not a human review)",
+    "approved_at": "2026-10-31T16:22:28+0700",
+    "source": "upload.pdf",
+    "untested": [
+      "EX-01",
+      "EX-02",
+      "EX-03",
+      "EX-07",
+      "EX-08",
+      "EX-16",
+      "EX-18",
+      "EX-22",
+      "EX-26",
+      "EX-27"
+    ]
+  },
+  "spec_file": "runs/_extract/x-20261031-162122-f882/interface_spec.md",
+  "requirements_file": "runs/_extract/x-20261031-162122-f882/approved.json",
+  "finished": "2026-10-31T16:24:29+0700",
+  "status": "pass",
+  "attempts_total": 1,
+  "attempts_to_green": 1,
+  "first_pass": true,
+  "time_to_green_s": 36.75,
+  "wall_seconds": 36.75,
+  "cost_usd": 0.050886,
+  "tokens": {
+    "in": 2646,
+    "out": 11195
+  }
+}
