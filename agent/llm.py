@@ -1,15 +1,18 @@
-"""Model client for DaVINCI: one call() for every provider, with a cost ledger,
-a hard budget guard and a response cache used for replay.
+"""Model client for DaVINCI: one call() for every provider, with a cost ledger
+and a hard budget guard.
 
 Providers
   meta     Meta Model API, muse-spark-1.3 (OpenAI-compatible)
   baseten  Muse Spark Open on Baseten (OpenAI-compatible)
-  replay   returns the responses recorded by an earlier run, in order; $0
+  replay   returns the responses an earlier run recorded in its own run
+           directory, in call order; $0
   fake     deterministic offline stand-in for development; $0
 
 Every call, including failed and refused ones, is appended to
 runs/_ledger.jsonl. Live calls are refused when the price for the provider is
-not set or when spend would pass DAVINCI_BUDGET_USD.
+not set or when spend would pass DAVINCI_BUDGET_USD. Live replies are also
+archived in runs/_cache/<response_sha256>.json, written once and never
+overwritten; replay does not depend on it.
 """
 import hashlib
 import json
@@ -62,6 +65,7 @@ class Reply:
     tokens_out: int = 0
     cost_usd: float = 0.0
     seconds: float = 0.0
+    response_sha256: str = ""
     extra: dict = field(default_factory=dict)
 
 
@@ -205,12 +209,14 @@ def _fake(messages: list, step: str) -> Reply:
 
 
 class Replayer:
-    """Serves the responses an earlier run recorded, in call order. A request
-    whose hash differs from the recorded one is still answered (the prompt
-    drifted) but flagged so the evidence shows it."""
+    """Serves the responses an earlier run recorded, in call order, from that
+    run's own attempt_<n>/response.md, so a run directory replays on its own.
+    A request whose hash differs from the recorded one is still answered (the
+    prompt drifted) but flagged so the evidence shows it."""
 
     def __init__(self, source_run: str):
-        calls = RUNS / source_run / "calls.jsonl"
+        self.dir = RUNS / source_run
+        calls = self.dir / "calls.jsonl"
         if not calls.exists():
             raise LLMError(f"nothing to replay: {calls} not found")
         self.source = source_run
@@ -224,11 +230,14 @@ class Replayer:
             raise LLMError(f"replay of {self.source} exhausted after {self.i} calls")
         rec = self.calls[self.i]
         self.i += 1
-        f = CACHE / f"{rec['request_sha256']}.json"
+        f = self.dir / f"attempt_{rec['attempt']}" / "response.md"
         if not f.exists():
-            raise LLMError(f"replay of {self.source}: cached response {f.name} missing")
-        cached = json.loads(f.read_text())
-        return Reply(text=cached["text"], provider="replay", model=f"replay:{cached['model']}",
+            raise LLMError(f"replay of {self.source}: {f.relative_to(RUNS)} missing")
+        text = f.read_text()
+        # Runs recorded before response hashes existed carry none; newer ones must match.
+        if rec.get("response_sha256") and hashlib.sha256(text.encode()).hexdigest() != rec["response_sha256"]:
+            raise LLMError(f"replay of {self.source}: {f.relative_to(RUNS)} does not match its recorded hash")
+        return Reply(text=text, provider="replay", model=f"replay:{rec.get('model', 'unknown')}",
                      request_sha256="", extra={"replayed_from": self.source,
                                                "request_matches": rec["request_sha256"] == h})
 
@@ -256,11 +265,15 @@ def call(messages: list, *, provider: str, step: str, run_id: str,
         _ledger({**base, "status": "error", "error": str(e)[:500], "cost_usd": 0})
         raise
     reply.request_sha256 = h
-    if provider != "replay":
+    reply.response_sha256 = hashlib.sha256(reply.text.encode()).hexdigest()
+    if provider in LIVE:  # archive only real replies, keyed by content, never overwritten
         CACHE.mkdir(parents=True, exist_ok=True)
-        (CACHE / f"{h}.json").write_text(json.dumps(
-            {"messages": messages, "opts": opts, "text": reply.text, "model": reply.model}, indent=1))
-    _ledger({**base, "status": "ok", "model": reply.model, "tokens_in": reply.tokens_in,
+        f = CACHE / f"{reply.response_sha256}.json"
+        if not f.exists():
+            f.write_text(json.dumps({"provider": provider, "model": reply.model, "request_sha256": h,
+                                     "messages": messages, "opts": opts, "text": reply.text}, indent=1))
+    _ledger({**base, "status": "ok", "model": reply.model, "response_sha256": reply.response_sha256,
+             "tokens_in": reply.tokens_in,
              "tokens_out": reply.tokens_out, "cost_usd": reply.cost_usd, "seconds": reply.seconds})
     return reply
 
