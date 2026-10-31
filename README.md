@@ -6,6 +6,8 @@ Each run produces a verification plan (requirement → tests → mutants killed 
 
 Loop: spec → requirements (human-approved) → frozen tests → mutation proof → AI-generated RTL → real simulation → bounded repair → evidence report → replay.
 
+**Live board:** https://davinci-silicon-fe.vercel.app/ (Evidence and Run Console from the committed evidence bundle; New run and Spec intake need the API).
+
 Built for the Meta Global AI Developer Hackathon 2026 (Startup Track, "Push the Frontier"). Everything in this repo was written during the hackathon (Oct 27 – Nov 4, 2026).
 
 ## Status
