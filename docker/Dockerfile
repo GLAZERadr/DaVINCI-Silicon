@@ -1,11 +1,19 @@
 # DaVINCI simulation sandbox: Icarus Verilog + cocotb, runs untrusted RTL.
-FROM python:3.12-slim
 
+# cocotb has no prebuilt wheel for every platform (e.g. linux/arm64), so build
+# it here; the final image carries no compiler.
+FROM python:3.12-slim AS wheels
 RUN apt-get update \
- && apt-get install -y --no-install-recommends iverilog make \
+ && apt-get install -y --no-install-recommends g++ \
  && rm -rf /var/lib/apt/lists/*
+RUN pip wheel --no-cache-dir --wheel-dir /wheels cocotb==2.1.0
 
-RUN pip install --no-cache-dir cocotb==2.1.0
+FROM python:3.12-slim
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends iverilog \
+ && rm -rf /var/lib/apt/lists/*
+COPY --from=wheels /wheels /wheels
+RUN pip install --no-cache-dir --no-index --find-links /wheels cocotb==2.1.0 && rm -rf /wheels
 
 RUN useradd --create-home --uid 1000 sim
 WORKDIR /work

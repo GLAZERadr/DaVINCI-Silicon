@@ -15,14 +15,14 @@ image:
 	docker build -f docker/Dockerfile -t $(IMAGE) .
 
 # Sandboxed run: no network, capped CPU/memory/processes, read-only root,
-# 120 s timeout inside the container, non-root user.
+# no capabilities, 120 s timeout inside the container, non-root user.
 sandbox:
 	mkdir -p runs/$(RUN)/in runs/$(RUN)/out
 	cp $(RTL) runs/$(RUN)/in/dut.v
 	docker run --rm --network none --cpus 1 --memory 512m --pids-limit 256 \
-	  --read-only --tmpfs /tmp:size=64m \
-	  -v $(PWD)/runs/$(RUN)/in:/work/in:ro \
-	  -v $(PWD)/runs/$(RUN)/out:/work/out \
+	  --read-only --tmpfs /tmp:size=64m --cap-drop ALL --security-opt no-new-privileges \
+	  -v "$(CURDIR)/runs/$(RUN)/in:/work/in:ro" \
+	  -v "$(CURDIR)/runs/$(RUN)/out:/work/out" \
 	  $(IMAGE)
 
 # Weak-test demo: leave out the REQ-06 tests, watch a mutant survive, then

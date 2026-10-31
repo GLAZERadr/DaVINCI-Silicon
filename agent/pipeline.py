@@ -36,6 +36,12 @@ FORBIDDEN = re.compile(
 )
 MAX_RTL_BYTES = 64_000
 SIM_TIMEOUT_S = 180
+SANDBOX_IMAGE = os.environ.get("DAVINCI_SANDBOX_IMAGE", "davinci-sim:latest")
+# Same limits as `make sandbox`: no network, capped CPU/memory/processes,
+# read-only root, no capabilities, non-root user (set in the image).
+DOCKER_LIMITS = ["--network", "none", "--cpus", "1", "--memory", "512m", "--pids-limit", "256",
+                 "--read-only", "--tmpfs", "/tmp:size=64m", "--cap-drop", "ALL",
+                 "--security-opt", "no-new-privileges"]
 
 SYSTEM = """You are a careful RTL engineer. You write synthesisable Verilog-2001.
 Answer with exactly one fenced ```verilog block that contains the complete module.
@@ -93,20 +99,34 @@ def validate(rtl: str | None) -> str | None:
     return None
 
 
-def simulate(rtl_path: Path, out: Path) -> dict:
-    """Run the frozen suite on rtl_path. Local backend: a separate Python
-    process with a hard timeout. Returns the verdict (measured)."""
+def sandbox_image_id() -> str | None:
+    r = subprocess.run(["docker", "image", "inspect", "--format", "{{.Id}}", SANDBOX_IMAGE],
+                       capture_output=True, text=True)
+    return r.stdout.strip() or None
+
+
+def simulate(rtl_path: Path, out: Path, backend: str = "local") -> dict:
+    """Run the frozen suite on rtl_path and return the verdict (measured).
+    local:  a separate Python process with a hard timeout.
+    docker: the locked-down sandbox image; RTL mounted read-only."""
     out.mkdir(parents=True, exist_ok=True)
+    if backend == "docker":
+        cmd = ["docker", "run", "--rm", *DOCKER_LIMITS,
+               "-v", f"{rtl_path.resolve()}:/work/in/dut.v:ro", "-v", f"{out.resolve()}:/work/out", SANDBOX_IMAGE]
+    else:
+        cmd = [sys.executable, str(ROOT / "verify" / "run_suite.py"), str(rtl_path), "--out", str(out)]
     try:
-        subprocess.run([sys.executable, str(ROOT / "verify" / "run_suite.py"), str(rtl_path), "--out", str(out)],
-                       capture_output=True, text=True, timeout=SIM_TIMEOUT_S, cwd=ROOT)
+        p = subprocess.run(cmd, capture_output=True, text=True, timeout=SIM_TIMEOUT_S, cwd=ROOT)
     except subprocess.TimeoutExpired:
         return {"status": "timeout", "passed": 0, "total": 0, "tests": [],
-                "error": f"simulation exceeded {SIM_TIMEOUT_S}s"}
+                "error": f"simulation exceeded {SIM_TIMEOUT_S}s", "sandbox": backend}
     vf = out / "verdict.json"
     if not vf.exists():
-        return {"status": "sim_error", "passed": 0, "total": 0, "tests": [], "error": "runner wrote no verdict"}
-    return json.loads(vf.read_text())
+        # The in-container `timeout 120` exits 124 without a verdict.
+        status = "timeout" if p.returncode == 124 else "sim_error"
+        return {"status": status, "passed": 0, "total": 0, "tests": [], "sandbox": backend,
+                "error": f"runner wrote no verdict (exit {p.returncode}): {p.stderr[-1500:]}"}
+    return json.loads(vf.read_text()) | {"sandbox": backend}
 
 
 def measured_feedback(verdict: dict | None, rejection: str | None) -> str:
@@ -173,6 +193,8 @@ def main(argv=None):
     ap.add_argument("--replay-from", help="run to replay (default: --run-id)")
     ap.add_argument("--seed-bug", help="start from the reference RTL with this mutant applied (e.g. M1)")
     ap.add_argument("--max-repairs", type=int, default=3)
+    ap.add_argument("--sandbox", default=os.environ.get("DAVINCI_SANDBOX", "local"), choices=["local", "docker"],
+                    help="where the simulator runs (docker: locked-down container)")
     ap.add_argument("--reasoning-effort", default=os.environ.get("DAVINCI_REASONING_EFFORT"))
     ap.add_argument("--spec", type=Path, default=ROOT / "spec" / "fifo_spec.md")
     ap.add_argument("--requirements", type=Path, default=ROOT / "spec" / "requirements.json")
@@ -193,6 +215,11 @@ def main(argv=None):
 
     locked = SUITE_LOCK.read_text().strip()
     check_suite(locked, "before run")
+    image_id = None
+    if a.sandbox == "docker":
+        image_id = sandbox_image_id()
+        if not image_id:
+            raise SystemExit(f"sandbox image {SANDBOX_IMAGE} not found: run `make image`")
     run = Run(a.run_id)
     spec, reqs = a.spec.read_text(), a.requirements.read_text()
     ctx = spec_context(spec, reqs)
@@ -204,6 +231,7 @@ def main(argv=None):
         "run_id": run.id, "started": time.strftime("%Y-%m-%dT%H:%M:%S%z"),
         "providers": {"generate": gen_p, "repair": rep_p}, "seed_bug": a.seed_bug,
         "replayed_from": source, "max_repairs": a.max_repairs,
+        "sandbox": {"backend": a.sandbox, "image": SANDBOX_IMAGE if image_id else None, "image_id": image_id},
         "suite_sha256": locked, "spec_sha256": sha256(spec.encode()), "requirements_sha256": sha256(reqs.encode()),
         "attempts": [],
     }
@@ -264,15 +292,18 @@ def main(argv=None):
             att["diff_vs_prev"] = "".join(difflib.unified_diff(
                 prev_rtl.splitlines(True), rtl.splitlines(True), f"attempt_{n - 1}", f"attempt_{n}"))
         run.event("simulating", attempt=n)
-        verdict = simulate(rtl_path, adir / "sim")
+        verdict = simulate(rtl_path, adir / "sim", a.sandbox)
         check_suite(locked, f"after attempt {n}")
+        if verdict.get("suite_sha256") not in (None, locked):
+            raise SystemExit(f"ABORT: simulator ran a different suite ({verdict['suite_sha256']}); "
+                             "rebuild the sandbox image with `make image`")
         att["status"] = verdict["status"]
         att["measured"] = {
             "label": "measured", "status": verdict["status"],
             "passed": verdict.get("passed", 0), "total": verdict.get("total", 0),
             "failed": [{"name": t["name"], "message": t["message"]} for t in verdict.get("tests", []) if not t["passed"]],
             "simulator": verdict.get("simulator"), "sim_seconds": verdict.get("seconds"),
-            "suite_sha256": verdict.get("suite_sha256"),
+            "suite_sha256": verdict.get("suite_sha256"), "sandbox": verdict.get("sandbox"),
         }
         if verdict.get("error"):
             att["measured"]["error"] = verdict["error"][-1500:]
