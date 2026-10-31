@@ -118,13 +118,19 @@ def _ledger(entry: dict):
         f.write(json.dumps(entry) + "\n")
 
 
+def _content_tokens(content) -> float:
+    if isinstance(content, str):
+        return len(content) / 4
+    return sum(len(part.get("text", "")) / 4 if part.get("type") == "text" else 3000 for part in content)
+
+
 def _guard(provider: str, max_tokens: int, messages: list):
     p = prices(provider)
     if p is None:
         k_in, k_out = LIVE[provider]["price"]
         raise BudgetError(f"{k_in}/{k_out} not set: refusing a live {provider} call the budget guard cannot price")
-    # Worst case: ~4 chars per input token, every output token used.
-    est_in = sum(len(m["content"]) if isinstance(m["content"], str) else 4000 for m in messages) / 4
+    # Worst case: ~4 chars per input token, ~3000 tokens per image, every output token used.
+    est_in = sum(_content_tokens(m["content"]) for m in messages)
     worst = (est_in * p[0] + max_tokens * p[1]) / 1e6
     spent, cap = spent_usd(), budget_usd()
     if spent + worst > cap:
@@ -156,6 +162,8 @@ def _live(provider: str, messages: list, opts: dict) -> Reply:
     body = {"model": model, "messages": messages, cfg["max_tokens_field"]: max_tokens}
     if opts.get("reasoning_effort") and provider == "meta":
         body["reasoning_effort"] = opts["reasoning_effort"]
+    if opts.get("response_format"):
+        body["response_format"] = opts["response_format"]
     t0 = time.time()
     data = _post(f"{cfg['base']}/chat/completions", key, body, int(opts.get("timeout", 300)))
     usage = data.get("usage") or {}
@@ -175,6 +183,17 @@ def _fake(messages: list, step: str) -> Reply:
     """Offline stand-in: answers with the reference RTL. Lets the whole loop,
     including repair, be exercised without spending credit."""
     rtl = (ROOT / "rtl" / "sync_fifo.v").read_text()
+    ref = json.loads((ROOT / "spec" / "requirements.json").read_text())["requirements"]
+    if step == "extract":  # echoes the reference list, as if read perfectly
+        return Reply(text=json.dumps({"block": "sync_fifo", "params": [], "ports": [], "unreadable": [],
+                                      "requirements": [{"id": f"EX-{i:02d}", "text": r["text"],
+                                                        "source_location": "fake", "confidence": "high"}
+                                                       for i, r in enumerate(ref, 1)]}),
+                     provider="fake", model="fake-reference", request_sha256="")
+    if step == "map":
+        return Reply(text=json.dumps({"mapping": [{"id": f"EX-{i:02d}", "maps_to": r["id"], "reason": "fake"}
+                                                  for i, r in enumerate(ref, 1)]}),
+                     provider="fake", model="fake-reference", request_sha256="")
     if step == "repair":
         text = ("DIAGNOSIS: (fake provider) the write enable ignores a same-cycle read when full; "
                 "allow the write when rd_en is high.\n\n```verilog\n" + rtl + "```\n")

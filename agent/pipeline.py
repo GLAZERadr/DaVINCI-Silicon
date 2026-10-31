@@ -237,6 +237,12 @@ def main(argv=None):
         "suite_sha256": locked, "spec_sha256": sha256(spec.encode()), "requirements_sha256": sha256(reqs.encode()),
         "attempts": [],
     }
+    approved = json.loads(reqs)
+    if approved.get("extraction_id"):  # requirements came from an approved image/PDF extraction
+        record["extraction"] = {"extraction_id": approved["extraction_id"], "approved_sha256": sha256(reqs.encode()),
+                                "approved_by": approved.get("approved_by"), "approved_at": approved.get("approved_at"),
+                                "source": approved.get("source", {}).get("name"), "untested": approved.get("untested")}
+    record["spec_file"], record["requirements_file"] = str(a.spec), str(a.requirements)
     run.event("run_started", run_id=run.id, generate=gen_p, repair=rep_p, seed_bug=a.seed_bug or "-")
 
     prev_rtl, verdict, rejection, final = None, None, None, "fail"

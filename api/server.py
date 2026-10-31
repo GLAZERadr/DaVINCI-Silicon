@@ -13,9 +13,15 @@ usage: uvicorn api.server:app --port 8000
   GET  /mutation                 latest mutation check + weak-test demo
   GET  /ledger                   every model call with cost, plus budget
 
+  POST /extractions              upload a spec image/PDF → {extraction_id}
+  GET  /extractions[/{xid}]      extracted list next to spec/requirements.json
+  GET  /extractions/{xid}/pages/{n}   page image the model saw
+  POST /extractions/{xid}/approve     human approval (may edit the list)
+  POST /runs {extraction_id}     run from an approved list
+
 Live providers (meta, baseten) cost money. When DAVINCI_API_TOKEN is set, a
-run that uses one needs `Authorization: Bearer <token>`; replay and fake
-runs are open.
+run or extraction that uses one needs `Authorization: Bearer <token>`, and so
+does approving an extraction; replay and fake runs are open.
 """
 import asyncio
 import json
@@ -29,11 +35,12 @@ import threading
 import time
 from pathlib import Path
 
-from fastapi import FastAPI, Header, HTTPException, Request
+from fastapi import FastAPI, File, Form, Header, HTTPException, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import PlainTextResponse, StreamingResponse
+from fastapi.responses import FileResponse, PlainTextResponse, StreamingResponse
 from pydantic import BaseModel, Field
 
+from agent import extract as ex
 from agent import llm
 
 ROOT = llm.ROOT
@@ -63,6 +70,13 @@ class RunRequest(BaseModel):
     max_repairs: int = Field(3, ge=0, le=3)
     spec: str | None = Field(None, description="spec markdown; default spec/fifo_spec.md", max_length=100_000)
     requirements: dict | None = Field(None, description="approved requirements; default spec/requirements.json")
+    extraction_id: str | None = Field(None, description="run from an approved image/PDF extraction")
+
+
+class Approval(BaseModel):
+    approved_by: str = Field(..., min_length=1, max_length=200)
+    requirements: list[dict] | None = Field(None, description="edited list of {id, text[, maps_to]}; "
+                                                              "omit to approve the extracted list as is")
 
 
 # ---- job worker: one run at a time --------------------------------------------
@@ -157,7 +171,15 @@ def create_run(req: RunRequest, authorization: str | None = Header(None)):
         argv += ["--repair-provider", req.repair_provider]
     if req.seed_bug:
         argv += ["--seed-bug", req.seed_bug]
-    if req.spec is not None or req.requirements is not None:
+    if req.extraction_id:
+        if req.spec is not None or req.requirements is not None:
+            raise HTTPException(422, "give extraction_id or spec/requirements, not both")
+        rec = _extraction(req.extraction_id)
+        if "approved" not in rec:
+            raise HTTPException(409, f"extraction {req.extraction_id} is not approved ({rec['status']})")
+        d = ex.EXTRACT_DIR / req.extraction_id
+        argv += ["--requirements", str(d / "approved.json"), "--spec", str(d / "interface_spec.md")]
+    elif req.spec is not None or req.requirements is not None:
         inputs = API_DIR / "inputs" / run_id
         inputs.mkdir(parents=True)
         if req.spec is not None:
@@ -287,3 +309,100 @@ def ledger():
 @app.get("/health")
 def health():
     return {"ok": True, "queue": _queue.qsize()}
+
+
+# ---- image/PDF spec input -----------------------------------------------------
+
+MAX_UPLOAD = 20_000_000
+_extractions: dict[str, dict] = {}
+
+
+def _extraction(xid: str) -> dict:
+    try:
+        return ex.load(xid)
+    except ValueError:
+        raise HTTPException(400, "bad extraction id") from None
+    except FileNotFoundError:
+        job = _extractions.get(xid)
+        if not job:
+            raise HTTPException(404, f"no extraction {xid}") from None
+        return dict(job)
+
+
+def _run_extraction(xid: str, path: Path, provider: str):
+    log = API_DIR / "logs" / f"{xid}.log"
+    log.parent.mkdir(parents=True, exist_ok=True)
+    with log.open("w") as f:
+        p = subprocess.run([sys.executable, "-m", "agent.extract", str(path), "--provider", provider, "--xid", xid],
+                           cwd=ROOT, stdout=f, stderr=subprocess.STDOUT)
+    done = (ex.EXTRACT_DIR / xid / "extracted.json").exists()
+    _extractions[xid].update(status="done" if done else "error", exit_code=p.returncode,
+                             error=None if done else log.read_text()[-2000:])
+    _log_job({"run_id": xid, "kind": "extraction", **_extractions[xid]})
+
+
+@app.post("/extractions", status_code=202)
+async def create_extraction(file: UploadFile = File(...), provider: str = Form("meta"),
+                            authorization: str | None = Header(None)):
+    if provider not in ("meta", "baseten", "fake"):
+        raise HTTPException(422, "provider must be meta, baseten or fake")
+    _require_token({provider}, authorization)
+    suffix = Path(file.filename or "").suffix.lower()
+    if suffix != ".pdf" and suffix not in ex.IMAGE_MIME:
+        raise HTTPException(422, f"file must be PDF or one of {sorted(ex.IMAGE_MIME)}")
+    data = await file.read(MAX_UPLOAD + 1)
+    if len(data) > MAX_UPLOAD:
+        raise HTTPException(413, f"file larger than {MAX_UPLOAD} bytes")
+    xid = ex.new_xid()
+    up = API_DIR / "uploads" / xid
+    up.mkdir(parents=True)
+    path = up / f"upload{suffix}"
+    path.write_bytes(data)
+    _extractions[xid] = {"extraction_id": xid, "status": "running", "provider": provider,
+                         "source": {"name": Path(file.filename or "upload").name, "bytes": len(data)}}
+    _log_job({"run_id": xid, "kind": "extraction", **_extractions[xid]})
+    threading.Thread(target=_run_extraction, args=(xid, path, provider), daemon=True).start()
+    return {"extraction_id": xid, "status": "running"}
+
+
+@app.get("/extractions")
+def list_extractions():
+    out = []
+    if ex.EXTRACT_DIR.exists():
+        for d in sorted(ex.EXTRACT_DIR.iterdir(), reverse=True):
+            if (d / "extracted.json").exists():
+                r = ex.load(d.name)
+                out.append({k: r.get(k) for k in ("extraction_id", "status", "created", "provider", "cost_usd")}
+                           | {"source": r["source"]["name"], "approved": "approved" in r})
+    running = [j for j in _extractions.values() if j["status"] != "done"]
+    return {"running": running, "extractions": out}
+
+
+@app.get("/extractions/{xid}")
+def get_extraction(xid: str):
+    rec = _extraction(xid)
+    rec["reference"] = json.loads(ex.REFERENCE.read_text())
+    return rec
+
+
+@app.get("/extractions/{xid}/pages/{n}")
+def extraction_page(xid: str, n: int):
+    _extraction(xid)
+    f = ex.EXTRACT_DIR / xid / "pages" / f"page_{n}.png"
+    if not f.exists():
+        raise HTTPException(404, f"no page {n}")
+    return FileResponse(f, media_type="image/png")
+
+
+@app.post("/extractions/{xid}/approve")
+def approve_extraction(xid: str, body: Approval, authorization: str | None = Header(None)):
+    _require_token(set(llm.LIVE), authorization)  # approval is a trust decision: same gate as live runs
+    _extraction(xid)
+    try:
+        rec = ex.approve(xid, body.approved_by, body.requirements)
+    except ValueError as e:
+        code = 409 if "already approved" in str(e) or "is running" in str(e) or "is aborted" in str(e) else 422
+        raise HTTPException(code, str(e)) from None
+    _log_job({"run_id": xid, "kind": "approval", "status": "approved", "approved_by": body.approved_by,
+              "approved_sha256": rec["approved_sha256"]})
+    return rec
