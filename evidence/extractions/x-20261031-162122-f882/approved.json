@@ -1,0 +1,296 @@
+{
+  "block": "sync_fifo",
+  "params": {
+    "WIDTH": 8,
+    "DEPTH": 16,
+    "AF_THRESH": 14
+  },
+  "requirements": [
+    {
+      "id": "EX-01",
+      "text": "All state changes occur on the rising edge of clk.",
+      "maps_to": null,
+      "tests": [],
+      "edited": false
+    },
+    {
+      "id": "EX-02",
+      "text": "rst is a synchronous reset, active high.",
+      "maps_to": null,
+      "tests": [],
+      "edited": false
+    },
+    {
+      "id": "EX-03",
+      "text": "dout is registered pop data, valid after the edge.",
+      "maps_to": null,
+      "tests": [],
+      "edited": false
+    },
+    {
+      "id": "EX-04",
+      "text": "full indicates occupancy is 16.",
+      "maps_to": "REQ-03",
+      "tests": [
+        "test_full_flag",
+        "test_empty_flag",
+        "test_random_regression"
+      ],
+      "edited": false
+    },
+    {
+      "id": "EX-05",
+      "text": "empty indicates occupancy is 0.",
+      "maps_to": "REQ-03",
+      "tests": [
+        "test_full_flag",
+        "test_empty_flag",
+        "test_random_regression"
+      ],
+      "edited": false
+    },
+    {
+      "id": "EX-06",
+      "text": "almost_full indicates occupancy at or above the almost-full level.",
+      "maps_to": "REQ-08",
+      "tests": [
+        "test_almost_full",
+        "test_random_regression"
+      ],
+      "edited": false
+    },
+    {
+      "id": "EX-07",
+      "text": "overflow indicates push refused, high for one clock.",
+      "maps_to": null,
+      "tests": [],
+      "edited": false
+    },
+    {
+      "id": "EX-08",
+      "text": "underflow indicates pop refused, high for one clock.",
+      "maps_to": null,
+      "tests": [],
+      "edited": false
+    },
+    {
+      "id": "EX-09",
+      "text": "count indicates words currently held.",
+      "maps_to": "REQ-09",
+      "tests": [
+        "test_full_flag",
+        "test_random_regression"
+      ],
+      "edited": false
+    },
+    {
+      "id": "EX-10",
+      "text": "At a rising edge with rst = 1, storage is emptied.",
+      "maps_to": "REQ-01",
+      "tests": [
+        "test_reset_state",
+        "test_random_regression"
+      ],
+      "edited": false
+    },
+    {
+      "id": "EX-11",
+      "text": "At a rising edge with rst = 1, count becomes 0.",
+      "maps_to": "REQ-01",
+      "tests": [
+        "test_reset_state",
+        "test_random_regression"
+      ],
+      "edited": false
+    },
+    {
+      "id": "EX-12",
+      "text": "At a rising edge with rst = 1, empty becomes 1.",
+      "maps_to": "REQ-01",
+      "tests": [
+        "test_reset_state",
+        "test_random_regression"
+      ],
+      "edited": false
+    },
+    {
+      "id": "EX-13",
+      "text": "At a rising edge with rst = 1, dout becomes 00h.",
+      "maps_to": "REQ-01",
+      "tests": [
+        "test_reset_state",
+        "test_random_regression"
+      ],
+      "edited": false
+    },
+    {
+      "id": "EX-14",
+      "text": "At a rising edge with rst = 1, overflow becomes 0.",
+      "maps_to": "REQ-01",
+      "tests": [
+        "test_reset_state",
+        "test_random_regression"
+      ],
+      "edited": false
+    },
+    {
+      "id": "EX-15",
+      "text": "At a rising edge with rst = 1, underflow becomes 0.",
+      "maps_to": "REQ-01",
+      "tests": [
+        "test_reset_state",
+        "test_random_regression"
+      ],
+      "edited": false
+    },
+    {
+      "id": "EX-16",
+      "text": "A push when not full stores din and increments count by 1.",
+      "maps_to": null,
+      "tests": [],
+      "edited": false
+    },
+    {
+      "id": "EX-17",
+      "text": "A push while full with no pop is dropped and overflow pulses for one clock.",
+      "maps_to": "REQ-04",
+      "tests": [
+        "test_overflow",
+        "test_random_regression"
+      ],
+      "edited": false
+    },
+    {
+      "id": "EX-18",
+      "text": "A pop when not empty makes the oldest word appear on dout and decrements count by 1.",
+      "maps_to": null,
+      "tests": [],
+      "edited": false
+    },
+    {
+      "id": "EX-19",
+      "text": "A pop while empty is ignored and dout keeps its old value.",
+      "maps_to": "REQ-05",
+      "tests": [
+        "test_underflow",
+        "test_random_regression"
+      ],
+      "edited": false
+    },
+    {
+      "id": "EX-20",
+      "text": "A pop while empty causes underflow to pulse for one clock.",
+      "maps_to": "REQ-05",
+      "tests": [
+        "test_underflow",
+        "test_random_regression"
+      ],
+      "edited": false
+    },
+    {
+      "id": "EX-21",
+      "text": "Push plus pop while full outputs the oldest word and stores the new word with count staying at 16.",
+      "maps_to": "REQ-06",
+      "tests": [
+        "test_full_simultaneous_rw",
+        "test_random_regression"
+      ],
+      "edited": false
+    },
+    {
+      "id": "EX-22",
+      "text": "Push plus pop while full causes no overflow.",
+      "maps_to": null,
+      "tests": [],
+      "edited": false
+    },
+    {
+      "id": "EX-23",
+      "text": "Push plus pop while empty stores the word and the pop is ignored.",
+      "maps_to": "REQ-07",
+      "tests": [
+        "test_empty_simultaneous_rw",
+        "test_random_regression"
+      ],
+      "edited": false
+    },
+    {
+      "id": "EX-24",
+      "text": "Push plus pop while empty causes underflow to pulse.",
+      "maps_to": "REQ-07",
+      "tests": [
+        "test_empty_simultaneous_rw",
+        "test_random_regression"
+      ],
+      "edited": false
+    },
+    {
+      "id": "EX-25",
+      "text": "When holding 16 words with push and pop both high, each edge returns the oldest word on dout and stores din with count staying 16 and full staying 1.",
+      "maps_to": "REQ-06",
+      "tests": [
+        "test_full_simultaneous_rw",
+        "test_random_regression"
+      ],
+      "edited": false
+    },
+    {
+      "id": "EX-26",
+      "text": "When push and pop are both high while full, overflow stays 0 because a pop frees the slot in the same cycle.",
+      "maps_to": null,
+      "tests": [],
+      "edited": false
+    },
+    {
+      "id": "EX-27",
+      "text": "Pop only causes count to fall to 15 and full to drop.",
+      "maps_to": null,
+      "tests": [],
+      "edited": false
+    },
+    {
+      "id": "EX-28",
+      "text": "Words leave in the order they were pushed, including when the internal address wraps from entry 15 back to entry 0.",
+      "maps_to": "REQ-02",
+      "tests": [
+        "test_wraparound_order",
+        "test_random_regression"
+      ],
+      "edited": false
+    },
+    {
+      "id": "EX-29",
+      "text": "almost_full is high whenever count is 14 or more.",
+      "maps_to": "REQ-08",
+      "tests": [
+        "test_almost_full",
+        "test_random_regression"
+      ],
+      "edited": false
+    }
+  ],
+  "extraction_id": "x-20261031-162122-f882",
+  "source": {
+    "name": "upload.pdf",
+    "sha256": "bcf4ec7b904125bd73c0679d0ec611ec20c5b935faa1e0894fdefeb2b248fd99",
+    "pages": 2,
+    "page_sha256": [
+      "6d473a0b51cc8d26f5eeb103ff0c7ff7314968b3ac37335c5ad9f54a033f5c85",
+      "25f6803d9866ad0b56d6573994b18d735b305742a7344b86e00b9058154ed00a"
+    ]
+  },
+  "approved_by": "Claude (integration test, not a human review)",
+  "approved_at": "2026-10-31T16:22:28+0700",
+  "untested": [
+    "EX-01",
+    "EX-02",
+    "EX-03",
+    "EX-07",
+    "EX-08",
+    "EX-16",
+    "EX-18",
+    "EX-22",
+    "EX-26",
+    "EX-27"
+  ]
+}

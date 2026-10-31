@@ -1,0 +1,164 @@
+{
+  "pinned_suite_sha256": "4adc7da757edd72117db7a297aa7900d5744361903b2b9d1aea339da5dcc7db1",
+  "pinned_sweep_sha256": "b73c1b823e400e72eaf76f91d72a90aa370f56711604f309f1037ed5710e16e2",
+  "runs": [
+    {
+      "live": {
+        "run_id": "live01",
+        "status": "pass",
+        "started": "2026-10-31T15:53:22+0700",
+        "providers": {
+          "generate": "meta",
+          "repair": "meta"
+        },
+        "seed_bug": null,
+        "replayed_from": null,
+        "attempts_total": 1,
+        "attempts_to_green": 1,
+        "time_to_green_s": 27.67,
+        "cost_usd": 0.027093,
+        "suite_sha256": "7d3b6b582d0aefaefee0c8a8fb24a0e7c107a77e5c2a2a8a987774626c1638a4",
+        "sweep_sha256": null,
+        "from_extraction": false
+      },
+      "replay": {
+        "run_id": "live01-replay4",
+        "status": "pass",
+        "started": "2026-10-31T16:43:44+0700",
+        "providers": {
+          "generate": "replay",
+          "repair": "replay"
+        },
+        "seed_bug": null,
+        "replayed_from": "live01",
+        "attempts_total": 1,
+        "attempts_to_green": 1,
+        "time_to_green_s": 2.46,
+        "cost_usd": 0.0,
+        "suite_sha256": "4adc7da757edd72117db7a297aa7900d5744361903b2b9d1aea339da5dcc7db1",
+        "sweep_sha256": "b73c1b823e400e72eaf76f91d72a90aa370f56711604f309f1037ed5710e16e2",
+        "from_extraction": false
+      }
+    },
+    {
+      "live": {
+        "run_id": "live02-m1",
+        "status": "pass",
+        "started": "2026-10-31T15:54:06+0700",
+        "providers": {
+          "generate": "meta",
+          "repair": "meta"
+        },
+        "seed_bug": "M1",
+        "replayed_from": null,
+        "attempts_total": 2,
+        "attempts_to_green": 2,
+        "time_to_green_s": 7.14,
+        "cost_usd": 0.007938,
+        "suite_sha256": "7d3b6b582d0aefaefee0c8a8fb24a0e7c107a77e5c2a2a8a987774626c1638a4",
+        "sweep_sha256": null,
+        "from_extraction": false
+      },
+      "replay": {
+        "run_id": "live02-m1-replay5",
+        "status": "pass",
+        "started": "2026-10-31T16:43:47+0700",
+        "providers": {
+          "generate": "replay",
+          "repair": "replay"
+        },
+        "seed_bug": "M1",
+        "replayed_from": "live02-m1",
+        "attempts_total": 2,
+        "attempts_to_green": 2,
+        "time_to_green_s": 4.18,
+        "cost_usd": 0.0,
+        "suite_sha256": "4adc7da757edd72117db7a297aa7900d5744361903b2b9d1aea339da5dcc7db1",
+        "sweep_sha256": "b73c1b823e400e72eaf76f91d72a90aa370f56711604f309f1037ed5710e16e2",
+        "from_extraction": false
+      }
+    },
+    {
+      "live": {
+        "run_id": "live03-pdf",
+        "status": "pass",
+        "started": "2026-10-31T16:23:52+0700",
+        "providers": {
+          "generate": "meta",
+          "repair": "meta"
+        },
+        "seed_bug": null,
+        "replayed_from": null,
+        "attempts_total": 1,
+        "attempts_to_green": 1,
+        "time_to_green_s": 36.75,
+        "cost_usd": 0.050886,
+        "suite_sha256": "7d3b6b582d0aefaefee0c8a8fb24a0e7c107a77e5c2a2a8a987774626c1638a4",
+        "sweep_sha256": null,
+        "from_extraction": true
+      },
+      "replay": {
+        "run_id": "live03-pdf-replay1",
+        "status": "pass",
+        "started": "2026-10-31T16:50:43+0700",
+        "providers": {
+          "generate": "replay",
+          "repair": "replay"
+        },
+        "seed_bug": null,
+        "replayed_from": "live03-pdf",
+        "attempts_total": 1,
+        "attempts_to_green": 1,
+        "time_to_green_s": 5.03,
+        "cost_usd": 0.0,
+        "suite_sha256": "4adc7da757edd72117db7a297aa7900d5744361903b2b9d1aea339da5dcc7db1",
+        "sweep_sha256": "b73c1b823e400e72eaf76f91d72a90aa370f56711604f309f1037ed5710e16e2",
+        "from_extraction": true
+      }
+    }
+  ],
+  "ledger": {
+    "label": "measured",
+    "live_calls_total": 15,
+    "live_calls_ok": 13,
+    "live_spend_usd_total": 0.416413,
+    "exported_run_calls": [
+      {
+        "ts": "2026-10-31T15:53:49+0700",
+        "run_id": "live01",
+        "step": "generate",
+        "provider": "meta",
+        "model": "muse-spark-1.3",
+        "status": "ok",
+        "tokens_in": 1455,
+        "tokens_out": 5947,
+        "cost_usd": 0.027093,
+        "seconds": 27.02
+      },
+      {
+        "ts": "2026-10-31T15:54:12+0700",
+        "run_id": "live02-m1",
+        "step": "repair",
+        "provider": "meta",
+        "model": "muse-spark-1.3",
+        "status": "ok",
+        "tokens_in": 2131,
+        "tokens_out": 1241,
+        "cost_usd": 0.007938,
+        "seconds": 6.15
+      },
+      {
+        "ts": "2026-10-31T16:24:28+0700",
+        "run_id": "live03-pdf",
+        "step": "generate",
+        "provider": "meta",
+        "model": "muse-spark-1.3",
+        "status": "ok",
+        "tokens_in": 2646,
+        "tokens_out": 11195,
+        "cost_usd": 0.050886,
+        "seconds": 35.92
+      }
+    ]
+  }
+}

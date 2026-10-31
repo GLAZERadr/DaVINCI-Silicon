@@ -1,0 +1,40 @@
+{
+  "label": "measured: weakened suite vs restored suite, against the reference RTL",
+  "suite_sha256": "4adc7da757edd72117db7a297aa7900d5744361903b2b9d1aea339da5dcc7db1",
+  "ref_rtl_sha256": "6034c49a727be76474d3ec227252b8038d6122e788fc3c3c374c3741dc56313d",
+  "mutants_sha256": "3e17913c1b2117f60c4e2a69a6b28775d8ab5e2e4116b16c8fa46957baf68da1",
+  "simulator": "Icarus Verilog version 13.0 (stable) (v13_0)",
+  "created": "2026-10-31T16:45:04+0700",
+  "tests_dropped": [
+    "test_full_simultaneous_rw",
+    "test_random_regression"
+  ],
+  "weak": {
+    "killed": 6,
+    "injected": 8,
+    "survivors": [
+      "M1",
+      "M8"
+    ]
+  },
+  "restored": {
+    "killed": 8,
+    "injected": 8,
+    "survivors": []
+  },
+  "weak_suite_flagged": true,
+  "survivors_killed_after_restore": [
+    "M1",
+    "M8"
+  ],
+  "killed_by_after_restore": {
+    "M1": [
+      "test_full_simultaneous_rw",
+      "test_random_regression"
+    ],
+    "M8": [
+      "test_full_simultaneous_rw",
+      "test_random_regression"
+    ]
+  }
+}

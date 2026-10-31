@@ -1,0 +1,115 @@
+{
+  "label": "Suite mutation score vs reference RTL (hand-written mutants)",
+  "suite_sha256": "4adc7da757edd72117db7a297aa7900d5744361903b2b9d1aea339da5dcc7db1",
+  "ref_rtl_sha256": "6034c49a727be76474d3ec227252b8038d6122e788fc3c3c374c3741dc56313d",
+  "mutants_sha256": "3e17913c1b2117f60c4e2a69a6b28775d8ab5e2e4116b16c8fa46957baf68da1",
+  "simulator": "Icarus Verilog version 13.0 (stable) (v13_0)",
+  "created": "2026-10-31T16:44:59+0700",
+  "killed": 8,
+  "injected": 8,
+  "tests_dropped": [],
+  "survivors": [],
+  "mutants": [
+    {
+      "id": "M1",
+      "req": "REQ-06",
+      "desc": "write blocked when full even with a same-cycle read",
+      "result": "killed",
+      "killed_by": [
+        "test_full_simultaneous_rw",
+        "test_random_regression"
+      ]
+    },
+    {
+      "id": "M2",
+      "req": "REQ-03",
+      "desc": "full asserts one entry early",
+      "result": "killed",
+      "killed_by": [
+        "test_full_flag",
+        "test_wraparound_order",
+        "test_overflow",
+        "test_full_simultaneous_rw",
+        "test_almost_full",
+        "test_random_regression"
+      ]
+    },
+    {
+      "id": "M3",
+      "req": "REQ-08",
+      "desc": "almost_full threshold off by one",
+      "result": "killed",
+      "killed_by": [
+        "test_full_flag",
+        "test_wraparound_order",
+        "test_overflow",
+        "test_full_simultaneous_rw",
+        "test_almost_full",
+        "test_random_regression"
+      ]
+    },
+    {
+      "id": "M4",
+      "req": "REQ-02",
+      "desc": "read pointer wraps one slot early",
+      "result": "killed",
+      "killed_by": [
+        "test_wraparound_order",
+        "test_overflow",
+        "test_full_simultaneous_rw",
+        "test_almost_full",
+        "test_random_regression"
+      ]
+    },
+    {
+      "id": "M5",
+      "req": "REQ-05",
+      "desc": "underflow flag never raised",
+      "result": "killed",
+      "killed_by": [
+        "test_underflow",
+        "test_empty_simultaneous_rw",
+        "test_random_regression"
+      ]
+    },
+    {
+      "id": "M6",
+      "req": "REQ-01",
+      "desc": "reset does not clear dout",
+      "result": "killed",
+      "killed_by": [
+        "test_reset_state",
+        "test_full_flag",
+        "test_empty_flag",
+        "test_wraparound_order",
+        "test_overflow",
+        "test_underflow",
+        "test_full_simultaneous_rw",
+        "test_empty_simultaneous_rw",
+        "test_almost_full",
+        "test_random_regression"
+      ]
+    },
+    {
+      "id": "M7",
+      "req": "REQ-07",
+      "desc": "read when empty treated as a real read",
+      "result": "killed",
+      "killed_by": [
+        "test_underflow",
+        "test_empty_simultaneous_rw",
+        "test_random_regression"
+      ]
+    },
+    {
+      "id": "M8",
+      "req": "REQ-10",
+      "desc": "overflow pulses even when a read frees a slot",
+      "result": "killed",
+      "killed_by": [
+        "test_full_simultaneous_rw",
+        "test_random_regression"
+      ]
+    }
+  ]
+}
