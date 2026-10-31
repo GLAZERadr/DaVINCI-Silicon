@@ -29,6 +29,7 @@ Built for the Meta Global AI Developer Hackathon 2026 (Startup Track, "Push the 
 | Web UI (`web/`, `make evidence board`): Evidence Board and Run Console as a static site over `evidence/`; New run (live progress) and Spec intake (upload → review → approve → run) against the API | done; API URL from `NEXT_PUBLIC_DAVINCI_API` or the page's Connection settings |
 | Coverage gaps: mutation check with each test left out, single-test kills, requirements no mutant targets (`verify/gaps.py`, `make gaps`) | done; directed tests alone miss M1/M8 without `test_full_simultaneous_rw`; REQ-04 and REQ-09 have no mutant |
 | Scenario counters: how often the frozen suite reaches full, empty, overflow/underflow cases, simultaneous read+write, wraparound (`verify/coverage.py`, `make coverage`) | done; every scenario reached on the reference and all exported RTLs |
+| Waveform and FIFO replay of every attempt: per-cycle trace of the frozen tests with the golden model's expected values, drawn in the Run Console (`verify/trace.py`, `make trace`) | done; measured from the simulator, model RTL traced in Docker |
 | Verification plan per run: requirement → tests → mutants → measured result, from stored files only (`verify/plan.py`, `make plan`, `make plan-ref`) | done; in the evidence bundle and downloadable from the board |
 
 ## Run
@@ -45,6 +46,7 @@ python -m agent.pipeline --run-id sbx01 --sandbox docker        # simulate insid
 make api                                                         # HTTP API on :8000
 make gaps                                                        # where the test plan is thin (37 s, local)
 make coverage RUN=live01-replay-7c96                             # scenario counts on a run's final RTL (in Docker)
+make trace RUN=live02-m1                                         # waveform/FIFO trace of each attempt (in Docker)
 make plan RUN=live01                                             # runs/live01/verification_plan.{md,json}, $0, no simulation
 make plan-ref                                                    # same for the reference RTL (simulates it locally)
 make evidence                                                    # export live runs + replays + their plans to evidence/

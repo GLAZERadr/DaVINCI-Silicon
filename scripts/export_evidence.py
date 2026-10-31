@@ -21,7 +21,7 @@ sys.path.insert(0, str(ROOT / "verify"))
 import plan  # noqa: E402
 RUNS = ROOT / "runs"
 LIVE = {"meta", "baseten"}
-ATTEMPT_FILES = ["prompt.json", "response.md", "sync_fifo.v", "sim/verdict.json", "sweep/sweep.json"]
+ATTEMPT_FILES = ["prompt.json", "response.md", "sync_fifo.v", "sim/verdict.json", "sweep/sweep.json", "trace/trace.json"]
 
 
 def scrub(text: str) -> str:
@@ -120,6 +120,8 @@ def main():
         plan.write(json.loads(scrub(json.dumps(p))), out / "runs" / run_id)
     if (RUNS / "reference" / "verdict.json").exists():
         (out / "reference").mkdir()
+        if (RUNS / "reference" / "trace" / "trace.json").exists():
+            copy_text(RUNS / "reference" / "trace" / "trace.json", out / "reference" / "trace" / "trace.json")
         if (RUNS / "reference" / "coverage" / "coverage.json").exists():
             copy_text(RUNS / "reference" / "coverage" / "coverage.json", out / "reference" / "coverage" / "coverage.json")
         plan.write(json.loads(scrub(json.dumps(plan.plan_for(RUNS / "reference", reference=True)))), out / "reference")

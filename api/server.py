@@ -51,7 +51,7 @@ API_DIR = RUNS / "_api"
 JOBS_LOG = API_DIR / "jobs.jsonl"
 RUN_ID = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$")
 ATTEMPT_FILES = {"sync_fifo.v", "response.md", "prompt.json",
-                 "sim/verdict.json", "sim/sim.log", "sim/build.log"}
+                 "sim/verdict.json", "sim/sim.log", "sim/build.log", "trace/trace.json"}
 MUTANTS = {m["id"] for m in json.loads((ROOT / "verify" / "mutants.json").read_text())}
 
 app = FastAPI(title="DaVINCI Silicon API")
@@ -118,6 +118,10 @@ def _worker():
             p = subprocess.run([sys.executable, "-m", "agent.pipeline", *job["argv"]],
                                cwd=ROOT, stdout=f, stderr=subprocess.STDOUT)
         rj = RUNS / run_id / "run.json"
+        if rj.exists():  # per-cycle traces for the waveform and FIFO views (Docker); a failure only loses the views
+            with log.open("a") as f:
+                subprocess.run([sys.executable, "verify/trace.py", "--run", str(RUNS / run_id)],
+                               cwd=ROOT, stdout=f, stderr=subprocess.STDOUT, timeout=600)
         status = json.loads(rj.read_text())["status"] if rj.exists() else "error"
         # A run that died before writing run.json is still recorded, with its log tail.
         err = None if rj.exists() else log.read_text()[-2000:]

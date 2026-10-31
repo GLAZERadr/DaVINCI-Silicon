@@ -60,7 +60,7 @@ export default function ConsoleIndex({ recorded, requirements }: { recorded: Rec
           <span className="mono">{open}</span>
           <span className="subbar-end mark-neutral">from the API · requirements: {reqs?.from ?? "default list"}</span>
         </nav>
-        <Console runs={[{ label: "Run", run: loaded }]} requirements={reqs?.list ?? requirements} />
+        <Console runs={[{ label: "Run", run: loaded }]} requirements={reqs?.list ?? requirements} traceSource="api" />
       </>
     );
   }

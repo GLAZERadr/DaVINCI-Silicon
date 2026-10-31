@@ -134,3 +134,16 @@ export const STATUS: Record<string, { word: string; mark: string; tone: "pass" |
 };
 
 export const status = (s: string) => STATUS[s] ?? { word: s, mark: "○", tone: "neutral" as const };
+
+// Per-cycle simulation trace (verify/trace.py). `exp` is the golden model; the rest is measured.
+export type TraceCycle = {
+  k: number;
+  t_ns: number;
+  in: Record<string, number | null>;
+  out: Record<string, number | null>;
+  exp: Record<string, number>;
+  mismatch: string[];
+  ptr?: { wr_ptr?: number | null; rd_ptr?: number | null };
+};
+export type TraceTest = { name: string; passed: boolean; message: string; cycles_total: number; first_mismatch: number | null; truncated: boolean; cycles: TraceCycle[] };
+export type Trace = { label: string; status: string; suite_sha256: string; simulator: string; params: { WIDTH: number; DEPTH: number; AF_THRESH: number }; tests: TraceTest[] };

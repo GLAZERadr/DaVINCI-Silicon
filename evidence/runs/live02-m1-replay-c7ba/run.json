@@ -1,0 +1,176 @@
+{
+  "run_id": "live02-m1-replay-c7ba",
+  "started": "2026-10-31T23:20:10+0700",
+  "providers": {
+    "generate": "replay",
+    "repair": "replay"
+  },
+  "seed_bug": "M1",
+  "replayed_from": "live02-m1",
+  "max_repairs": 3,
+  "sandbox": {
+    "backend": "docker",
+    "image": "davinci-sim:latest",
+    "image_id": "sha256:7d2194623d95f4288bace35c697dd33b188f75765745d5761c5f97d6ea2cd8f2"
+  },
+  "suite_sha256": "4adc7da757edd72117db7a297aa7900d5744361903b2b9d1aea339da5dcc7db1",
+  "spec_sha256": "6e04e4641dc412f506396b1271441ba94d847eac5ec86a121431dbc465444126",
+  "requirements_sha256": "7ba5f39c3e28a36b9c9248e13a07dbe5944ce2e5da36589997e7d471140850da",
+  "attempts": [
+    {
+      "n": 1,
+      "started_s": 0.0,
+      "source": "seeded",
+      "seeded": {
+        "mutant": "M1",
+        "req": "REQ-06",
+        "desc": "write blocked when full even with a same-cycle read"
+      },
+      "measured_compile": {
+        "label": "measured",
+        "ok": true,
+        "tool": "iverilog -g2001 -Wall",
+        "output": ""
+      },
+      "rtl_sha256": "80434e0a12d5d30208a0a4a5d4489568a88f6d2903007eed48154541b3a8a043",
+      "status": "fail",
+      "measured": {
+        "label": "measured",
+        "status": "fail",
+        "passed": 8,
+        "total": 10,
+        "failed": [
+          {
+            "name": "test_full_simultaneous_rw",
+            "message": "REQ-06 cycle 19: count expected 0x10, got 0xf (inputs wr_en=1 din=0xa0 rd_en=1 rst=0)\nassert 15 == 16"
+          },
+          {
+            "name": "test_random_regression",
+            "message": "REQ-ALL cycle 300: count expected 0x10, got 0xf (inputs wr_en=1 din=0x5b rd_en=1 rst=0)\nassert 15 == 16"
+          }
+        ],
+        "simulator": "Icarus Verilog version 12.0 (stable) ()",
+        "sim_seconds": 0.25,
+        "suite_sha256": "4adc7da757edd72117db7a297aa7900d5744361903b2b9d1aea339da5dcc7db1",
+        "sandbox": "docker"
+      },
+      "finished_s": 2.96
+    },
+    {
+      "n": 2,
+      "started_s": 2.96,
+      "source": "model",
+      "provider": "replay",
+      "model": "replay:muse-spark-1.3",
+      "tokens_in": 0,
+      "tokens_out": 0,
+      "cost_usd": 0.0,
+      "model_seconds": 0.0,
+      "replayed_from": "live02-m1",
+      "request_matches": false,
+      "ai_interpretation": {
+        "label": "AI interpretation \u00b7 not verified",
+        "diagnosis": "`do_write` was `wr_en && !full`, so a simultaneous read+write when full dropped the write and decremented `count`; spec requires `do_write = wr_en && (!full || rd_en)` so both pointers advance and count stays at DEPTH."
+      },
+      "measured_compile": {
+        "label": "measured",
+        "ok": true,
+        "tool": "iverilog -g2001 -Wall",
+        "output": ""
+      },
+      "rtl_sha256": "2f6f0748f1a46929bb1e74c05794950958fd3bcbd034277bc1c5873c3333f464",
+      "diff_vs_prev": "--- last_simulated\n+++ attempt_2\n@@ -1,12 +1,8 @@\n-// sync_fifo.v - reference (hand-written) synchronous FIFO for DaVINCI.\n-// Spec: spec/fifo_spec.md. Single clock, synchronous active-high reset,\n-// registered read data.\n-`timescale 1ns/1ps\n module sync_fifo #(\n     parameter WIDTH     = 8,\n     parameter DEPTH     = 16,\n     parameter AF_THRESH = 14,\n-    parameter CW        = 5            // count width: must hold 0..DEPTH\n+    parameter CW        = 5\n ) (\n     input  wire             clk,\n     input  wire             rst,\n@@ -22,15 +18,15 @@\n     output reg  [CW-1:0]    count\n );\n     reg [WIDTH-1:0] mem [0:DEPTH-1];\n-    reg [CW-1:0]    wr_ptr;\n-    reg [CW-1:0]    rd_ptr;\n+    reg [CW-1:0] wr_ptr;\n+    reg [CW-1:0] rd_ptr;\n \n     assign full        = (count == DEPTH);\n     assign empty       = (count == 0);\n     assign almost_full = (count >= AF_THRESH);\n \n     wire do_read  = rd_en && !empty;\n-    wire do_write = wr_en && !full;\n+    wire do_write = wr_en && (!full || rd_en);\n \n     always @(posedge clk) begin\n         if (rst) begin\n@@ -46,16 +42,22 @@\n \n             if (do_write) begin\n                 mem[wr_ptr] <= din;\n-                wr_ptr <= (wr_ptr == DEPTH-1) ? 0 : wr_ptr + 1;\n+                if (wr_ptr == DEPTH-1)\n+                    wr_ptr <= 0;\n+                else\n+                    wr_ptr <= wr_ptr + 1'b1;\n             end\n             if (do_read) begin\n-                dout   <= mem[rd_ptr];\n-                rd_ptr <= (rd_ptr == DEPTH-1) ? 0 : rd_ptr + 1;\n+                dout <= mem[rd_ptr];\n+                if (rd_ptr == DEPTH-1)\n+                    rd_ptr <= 0;\n+                else\n+                    rd_ptr <= rd_ptr + 1'b1;\n             end\n             if (do_write && !do_read)\n-                count <= count + 1;\n+                count <= count + 1'b1;\n             else if (do_read && !do_write)\n-                count <= count - 1;\n+                count <= count - 1'b1;\n         end\n     end\n endmodule\n",
+      "status": "pass",
+      "measured": {
+        "label": "measured",
+        "status": "pass",
+        "passed": 10,
+        "total": 10,
+        "failed": [],
+        "simulator": "Icarus Verilog version 12.0 (stable) ()",
+        "sim_seconds": 0.29,
+        "suite_sha256": "4adc7da757edd72117db7a297aa7900d5744361903b2b9d1aea339da5dcc7db1",
+        "sandbox": "docker"
+      },
+      "sweep": {
+        "label": "measured",
+        "status": "pass",
+        "seconds": 0.75,
+        "sets": [
+          {
+            "params": {
+              "WIDTH": 8,
+              "DEPTH": 12,
+              "AF_THRESH": 9,
+              "CW": 4
+            },
+            "status": "pass",
+            "passed": 2,
+            "total": 2
+          },
+          {
+            "params": {
+              "WIDTH": 1,
+              "DEPTH": 2,
+              "AF_THRESH": 1,
+              "CW": 2
+            },
+            "status": "pass",
+            "passed": 2,
+            "total": 2
+          },
+          {
+            "params": {
+              "WIDTH": 32,
+              "DEPTH": 32,
+              "AF_THRESH": 32,
+              "CW": 6
+            },
+            "status": "pass",
+            "passed": 2,
+            "total": 2
+          }
+        ]
+      },
+      "finished_s": 4.74
+    }
+  ],
+  "spec_file": "spec/fifo_spec.md",
+  "requirements_file": "spec/requirements.json",
+  "sweep_sha256": "b73c1b823e400e72eaf76f91d72a90aa370f56711604f309f1037ed5710e16e2",
+  "finished": "2026-10-31T23:20:14+0700",
+  "status": "pass",
+  "attempts_total": 2,
+  "attempts_to_green": 2,
+  "first_pass": false,
+  "time_to_green_s": 4.74,
+  "wall_seconds": 4.74,
+  "cost_usd": 0.0,
+  "tokens": {
+    "in": 0,
+    "out": 0
+  },
+  "replay_check": {
+    "reproduced": true,
+    "attempts": [
+      {
+        "n": 1,
+        "status": [
+          "fail",
+          "fail"
+        ],
+        "rtl_match": true,
+        "request_match": null
+      },
+      {
+        "n": 2,
+        "status": [
+          "pass",
+          "pass"
+        ],
+        "rtl_match": true,
+        "request_match": false
+      }
+    ]
+  }
+}

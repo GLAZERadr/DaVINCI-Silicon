@@ -22,9 +22,9 @@
         "from_extraction": false
       },
       "replay": {
-        "run_id": "live01-replay-7c96",
+        "run_id": "live01-replay-c8bd",
         "status": "pass",
-        "started": "2026-10-31T17:03:03+0700",
+        "started": "2026-10-31T23:56:39+0700",
         "providers": {
           "generate": "replay",
           "repair": "replay"
@@ -33,7 +33,7 @@
         "replayed_from": "live01",
         "attempts_total": 1,
         "attempts_to_green": 1,
-        "time_to_green_s": 3.57,
+        "time_to_green_s": 4.13,
         "cost_usd": 0.0,
         "suite_sha256": "4adc7da757edd72117db7a297aa7900d5744361903b2b9d1aea339da5dcc7db1",
         "sweep_sha256": "b73c1b823e400e72eaf76f91d72a90aa370f56711604f309f1037ed5710e16e2",
@@ -60,9 +60,9 @@
         "from_extraction": false
       },
       "replay": {
-        "run_id": "live02-m1-replay-ad09",
+        "run_id": "live02-m1-replay-c7ba",
         "status": "pass",
-        "started": "2026-10-31T16:56:52+0700",
+        "started": "2026-10-31T23:20:10+0700",
         "providers": {
           "generate": "replay",
           "repair": "replay"
@@ -71,7 +71,7 @@
         "replayed_from": "live02-m1",
         "attempts_total": 2,
         "attempts_to_green": 2,
-        "time_to_green_s": 5.18,
+        "time_to_green_s": 4.74,
         "cost_usd": 0.0,
         "suite_sha256": "4adc7da757edd72117db7a297aa7900d5744361903b2b9d1aea339da5dcc7db1",
         "sweep_sha256": "b73c1b823e400e72eaf76f91d72a90aa370f56711604f309f1037ed5710e16e2",
@@ -120,9 +120,9 @@
   "reference_plan": true,
   "ledger": {
     "label": "measured",
-    "live_calls_total": 15,
-    "live_calls_ok": 13,
-    "live_spend_usd_total": 0.416413,
+    "live_calls_total": 17,
+    "live_calls_ok": 15,
+    "live_spend_usd_total": 0.47106,
     "exported_run_calls": [
       {
         "ts": "2026-10-31T15:53:49+0700",

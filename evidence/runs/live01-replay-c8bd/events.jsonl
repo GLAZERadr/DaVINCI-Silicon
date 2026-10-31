@@ -1,0 +1,7 @@
+{"t": 0.0, "type": "run_started", "run_id": "live01-replay-c8bd", "generate": "replay", "repair": "replay", "seed_bug": "-"}
+{"t": 0.0, "type": "model_call", "attempt": 1, "step": "generate", "provider": "replay"}
+{"t": 2.27, "type": "simulating", "attempt": 1}
+{"t": 3.14, "type": "verdict", "attempt": 1, "status": "pass", "passed": 10, "total": 10}
+{"t": 3.14, "type": "sweeping", "attempt": 1}
+{"t": 4.13, "type": "sweep", "attempt": 1, "status": "pass"}
+{"t": 4.13, "type": "run_finished", "status": "pass", "attempts": 1, "cost_usd": 0.0}

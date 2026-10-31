@@ -2,7 +2,7 @@ RTL ?= rtl/sync_fifo.v
 RUN ?= manual
 IMAGE = davinci-sim:latest
 
-.PHONY: sim mutate weak-demo image sandbox api evidence board plan plan-ref gaps coverage coverage-ref
+.PHONY: sim mutate weak-demo image sandbox api evidence board plan plan-ref gaps coverage coverage-ref trace trace-ref
 
 # Local run (needs iverilog + cocotb installed)
 sim:
@@ -42,6 +42,13 @@ coverage:
 
 coverage-ref:
 	python3 verify/coverage.py --reference
+
+# Per-cycle traces (waveform + FIFO views): every simulated attempt of a run, in Docker.
+trace:
+	python3 verify/trace.py --run runs/$(RUN)
+
+trace-ref:
+	python3 verify/trace.py --reference
 
 # Verification plan for a stored run: runs/$(RUN)/verification_plan.{md,json}.
 # Reads stored files only (no simulation, no model call); output is reproducible.

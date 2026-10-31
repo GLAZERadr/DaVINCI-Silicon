@@ -121,6 +121,24 @@ export function consoleRuns(id: string): { label: string; run: Run }[] {
   return out;
 }
 
+// Per-cycle traces (verify/trace.py), served as /traces/<run>__<attempt>.json.
+export function traceFiles(): string[] {
+  const idx = index();
+  const ids: string[] = idx.runs.flatMap((e: Json) => [e.live.run_id, e.replay?.run_id].filter(Boolean));
+  return ids.flatMap((id) => {
+    const dir = path.join(ROOT, "runs", id);
+    return fs.existsSync(dir) ? fs.readdirSync(dir).filter((d) => /^attempt_\d+$/.test(d))
+      .filter((d) => fs.existsSync(path.join(dir, d, "trace", "trace.json")))
+      .map((d) => `${id}__${d.slice(8)}.json`) : [];
+  });
+}
+
+export function traceText(file: string): string {
+  const m = file.match(/^(.+)__(\d+)\.json$/);
+  if (!m || !traceFiles().includes(file)) throw new Error(`no trace ${file}`);
+  return fs.readFileSync(path.join(ROOT, "runs", m[1], `attempt_${m[2]}`, "trace", "trace.json"), "utf8");
+}
+
 // Verification plans (made by verify/plan.py at export), served as /plans/<id>.md and .json.
 function planDir(id: string) {
   return id === "reference" ? path.join(ROOT, "reference") : path.join(ROOT, "runs", id);

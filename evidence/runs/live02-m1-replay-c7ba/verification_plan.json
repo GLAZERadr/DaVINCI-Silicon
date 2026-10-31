@@ -1,0 +1,609 @@
+{
+  "label": "measured",
+  "title": "Verification plan · sync_fifo · live02-m1-replay-c7ba",
+  "generator": "verify/plan.py",
+  "run": {
+    "run_id": "live02-m1-replay-c7ba",
+    "status": "pass",
+    "started": "2026-10-31T23:20:10+0700",
+    "finished": "2026-10-31T23:20:14+0700",
+    "seed_bug": "M1",
+    "replayed_from": "live02-m1",
+    "attempts_total": 2,
+    "attempts_to_green": 2,
+    "cost_usd": 0.0
+  },
+  "sources": {
+    "suite_sha256": "4adc7da757edd72117db7a297aa7900d5744361903b2b9d1aea339da5dcc7db1",
+    "sweep_sha256": "b73c1b823e400e72eaf76f91d72a90aa370f56711604f309f1037ed5710e16e2",
+    "requirements_sha256": "7ba5f39c3e28a36b9c9248e13a07dbe5944ce2e5da36589997e7d471140850da",
+    "requirements_match_run": true,
+    "mutants_sha256": "3e17913c1b2117f60c4e2a69a6b28775d8ab5e2e4116b16c8fa46957baf68da1",
+    "mutation_suite_matches": true,
+    "weak_demo_suite_matches": true,
+    "gaps_suite_matches": true,
+    "coverage_sha256": "11aa2cb731b85ec228206081c32d3a1557047e332a646e74abf69a7c07430fdc",
+    "simulator": "Icarus Verilog version 12.0 (stable) ()",
+    "final_rtl_sha256": "2f6f0748f1a46929bb1e74c05794950958fd3bcbd034277bc1c5873c3333f464",
+    "block": "sync_fifo",
+    "extraction": null,
+    "params": {
+      "WIDTH": 8,
+      "DEPTH": 16,
+      "AF_THRESH": 14
+    }
+  },
+  "gates": {
+    "G1_static_and_compile": {
+      "status": "pass"
+    },
+    "G2_frozen_suite": {
+      "status": "pass",
+      "passed": 10,
+      "total": 10
+    },
+    "G3_parameter_sweep": {
+      "status": "pass"
+    }
+  },
+  "requirements": [
+    {
+      "id": "REQ-01",
+      "text": "Synchronous reset empties the FIFO: count 0, empty 1, dout 0, overflow and underflow 0.",
+      "maps_to": null,
+      "directed_tests": [
+        "test_reset_state"
+      ],
+      "random_regression": true,
+      "mutants": [
+        {
+          "id": "M6",
+          "desc": "reset does not clear dout",
+          "result": "killed",
+          "killed_by": [
+            "test_reset_state",
+            "test_full_flag",
+            "test_empty_flag",
+            "test_wraparound_order",
+            "test_overflow",
+            "test_underflow",
+            "test_full_simultaneous_rw",
+            "test_empty_simultaneous_rw",
+            "test_almost_full",
+            "test_random_regression"
+          ]
+        }
+      ],
+      "attempt_1": {
+        "attempt": 1,
+        "status": "pass",
+        "failed_tests": []
+      },
+      "final": {
+        "attempt": 2,
+        "status": "pass",
+        "failed_tests": []
+      }
+    },
+    {
+      "id": "REQ-02",
+      "text": "Data is read out in the order it was written, including across pointer wraparound.",
+      "maps_to": null,
+      "directed_tests": [
+        "test_wraparound_order"
+      ],
+      "random_regression": true,
+      "mutants": [
+        {
+          "id": "M4",
+          "desc": "read pointer wraps one slot early",
+          "result": "killed",
+          "killed_by": [
+            "test_wraparound_order",
+            "test_overflow",
+            "test_full_simultaneous_rw",
+            "test_almost_full",
+            "test_random_regression"
+          ]
+        }
+      ],
+      "attempt_1": {
+        "attempt": 1,
+        "status": "pass",
+        "failed_tests": []
+      },
+      "final": {
+        "attempt": 2,
+        "status": "pass",
+        "failed_tests": []
+      }
+    },
+    {
+      "id": "REQ-03",
+      "text": "full is 1 exactly when DEPTH entries are stored; empty is 1 exactly when none are.",
+      "maps_to": null,
+      "directed_tests": [
+        "test_full_flag",
+        "test_empty_flag"
+      ],
+      "random_regression": true,
+      "mutants": [
+        {
+          "id": "M2",
+          "desc": "full asserts one entry early",
+          "result": "killed",
+          "killed_by": [
+            "test_full_flag",
+            "test_wraparound_order",
+            "test_overflow",
+            "test_full_simultaneous_rw",
+            "test_almost_full",
+            "test_random_regression"
+          ]
+        }
+      ],
+      "attempt_1": {
+        "attempt": 1,
+        "status": "pass",
+        "failed_tests": []
+      },
+      "final": {
+        "attempt": 2,
+        "status": "pass",
+        "failed_tests": []
+      }
+    },
+    {
+      "id": "REQ-04",
+      "text": "A write when full with no read is ignored and pulses overflow for one cycle.",
+      "maps_to": null,
+      "directed_tests": [
+        "test_overflow"
+      ],
+      "random_regression": true,
+      "mutants": [],
+      "attempt_1": {
+        "attempt": 1,
+        "status": "pass",
+        "failed_tests": []
+      },
+      "final": {
+        "attempt": 2,
+        "status": "pass",
+        "failed_tests": []
+      }
+    },
+    {
+      "id": "REQ-05",
+      "text": "A read when empty is ignored, pulses underflow for one cycle, and dout holds its value.",
+      "maps_to": null,
+      "directed_tests": [
+        "test_underflow"
+      ],
+      "random_regression": true,
+      "mutants": [
+        {
+          "id": "M5",
+          "desc": "underflow flag never raised",
+          "result": "killed",
+          "killed_by": [
+            "test_underflow",
+            "test_empty_simultaneous_rw",
+            "test_random_regression"
+          ]
+        }
+      ],
+      "attempt_1": {
+        "attempt": 1,
+        "status": "pass",
+        "failed_tests": []
+      },
+      "final": {
+        "attempt": 2,
+        "status": "pass",
+        "failed_tests": []
+      }
+    },
+    {
+      "id": "REQ-06",
+      "text": "Read and write in the same cycle when full: the oldest word is read, the new word is stored, count stays DEPTH.",
+      "maps_to": null,
+      "directed_tests": [
+        "test_full_simultaneous_rw"
+      ],
+      "random_regression": true,
+      "mutants": [
+        {
+          "id": "M1",
+          "desc": "write blocked when full even with a same-cycle read",
+          "result": "killed",
+          "killed_by": [
+            "test_full_simultaneous_rw",
+            "test_random_regression"
+          ]
+        }
+      ],
+      "attempt_1": {
+        "attempt": 1,
+        "status": "fail",
+        "failed_tests": [
+          "test_full_simultaneous_rw"
+        ]
+      },
+      "final": {
+        "attempt": 2,
+        "status": "pass",
+        "failed_tests": []
+      }
+    },
+    {
+      "id": "REQ-07",
+      "text": "Read and write in the same cycle when empty: the word is stored, the read is ignored, underflow pulses.",
+      "maps_to": null,
+      "directed_tests": [
+        "test_empty_simultaneous_rw"
+      ],
+      "random_regression": true,
+      "mutants": [
+        {
+          "id": "M7",
+          "desc": "read when empty treated as a real read",
+          "result": "killed",
+          "killed_by": [
+            "test_underflow",
+            "test_empty_simultaneous_rw",
+            "test_random_regression"
+          ]
+        }
+      ],
+      "attempt_1": {
+        "attempt": 1,
+        "status": "pass",
+        "failed_tests": []
+      },
+      "final": {
+        "attempt": 2,
+        "status": "pass",
+        "failed_tests": []
+      }
+    },
+    {
+      "id": "REQ-08",
+      "text": "almost_full is 1 exactly when count >= AF_THRESH.",
+      "maps_to": null,
+      "directed_tests": [
+        "test_almost_full"
+      ],
+      "random_regression": true,
+      "mutants": [
+        {
+          "id": "M3",
+          "desc": "almost_full threshold off by one",
+          "result": "killed",
+          "killed_by": [
+            "test_full_flag",
+            "test_wraparound_order",
+            "test_overflow",
+            "test_full_simultaneous_rw",
+            "test_almost_full",
+            "test_random_regression"
+          ]
+        }
+      ],
+      "attempt_1": {
+        "attempt": 1,
+        "status": "pass",
+        "failed_tests": []
+      },
+      "final": {
+        "attempt": 2,
+        "status": "pass",
+        "failed_tests": []
+      }
+    },
+    {
+      "id": "REQ-09",
+      "text": "count equals the number of stored entries after every cycle.",
+      "maps_to": null,
+      "directed_tests": [
+        "test_full_flag"
+      ],
+      "random_regression": true,
+      "mutants": [],
+      "attempt_1": {
+        "attempt": 1,
+        "status": "pass",
+        "failed_tests": []
+      },
+      "final": {
+        "attempt": 2,
+        "status": "pass",
+        "failed_tests": []
+      }
+    },
+    {
+      "id": "REQ-10",
+      "text": "A write when full together with a read in the same cycle is accepted: overflow stays 0.",
+      "maps_to": null,
+      "directed_tests": [
+        "test_full_simultaneous_rw"
+      ],
+      "random_regression": true,
+      "mutants": [
+        {
+          "id": "M8",
+          "desc": "overflow pulses even when a read frees a slot",
+          "result": "killed",
+          "killed_by": [
+            "test_full_simultaneous_rw",
+            "test_random_regression"
+          ]
+        }
+      ],
+      "attempt_1": {
+        "attempt": 1,
+        "status": "fail",
+        "failed_tests": [
+          "test_full_simultaneous_rw"
+        ]
+      },
+      "final": {
+        "attempt": 2,
+        "status": "pass",
+        "failed_tests": []
+      }
+    }
+  ],
+  "random_regression": {
+    "test": "test_random_regression",
+    "covers": [
+      "REQ-01",
+      "REQ-02",
+      "REQ-03",
+      "REQ-04",
+      "REQ-05",
+      "REQ-06",
+      "REQ-07",
+      "REQ-08",
+      "REQ-09",
+      "REQ-10"
+    ],
+    "attempt_1": {
+      "attempt": 1,
+      "status": "fail",
+      "failed_tests": [
+        "test_random_regression"
+      ]
+    },
+    "final": {
+      "attempt": 2,
+      "status": "pass",
+      "failed_tests": []
+    }
+  },
+  "mutation": {
+    "killed": 8,
+    "injected": 8,
+    "survivors": [],
+    "measured_against": "reference RTL",
+    "ref_rtl_sha256": "6034c49a727be76474d3ec227252b8038d6122e788fc3c3c374c3741dc56313d"
+  },
+  "weak_test_check": {
+    "tests_dropped": [
+      "test_full_simultaneous_rw",
+      "test_random_regression"
+    ],
+    "weak": {
+      "killed": 6,
+      "injected": 8,
+      "survivors": [
+        "M1",
+        "M8"
+      ]
+    },
+    "restored": {
+      "killed": 8,
+      "injected": 8,
+      "survivors": []
+    }
+  },
+  "scenarios": {
+    "rtl_sha256": "2f6f0748f1a46929bb1e74c05794950958fd3bcbd034277bc1c5873c3333f464",
+    "cycles": 3253,
+    "counts": {
+      "reset": 29,
+      "full": 67,
+      "empty": 320,
+      "almost_full": 213,
+      "write_when_full": 22,
+      "read_when_empty": 141,
+      "rw_when_full": 10,
+      "rw_when_empty": 48,
+      "overflow_pulse": 22,
+      "underflow_pulse": 141,
+      "write_pointer_wrap": 96
+    },
+    "descriptions": {
+      "reset": "rst high at the edge",
+      "full": "full high",
+      "empty": "empty high",
+      "almost_full": "almost_full high",
+      "write_when_full": "write, no read, while full (overflow case)",
+      "read_when_empty": "read while empty (underflow case)",
+      "rw_when_full": "read and write together while full",
+      "rw_when_empty": "read and write together while empty",
+      "overflow_pulse": "overflow output high",
+      "underflow_pulse": "underflow output high",
+      "write_pointer_wrap": "accepted writes since reset reach a multiple of DEPTH=16"
+    },
+    "zero": [],
+    "suite_passed": true
+  },
+  "gaps": {
+    "summary": {
+      "fragile": [
+        "M1",
+        "M8"
+      ],
+      "random_only": [],
+      "requirements_without_mutant": [
+        "REQ-04",
+        "REQ-09"
+      ],
+      "single_drops_with_survivors": [],
+      "directed_only_drops_with_survivors": [
+        "test_full_simultaneous_rw"
+      ],
+      "all_predictions_match": true
+    },
+    "mutants": [
+      {
+        "id": "M1",
+        "req": "REQ-06",
+        "directed_killers": [
+          "test_full_simultaneous_rw"
+        ],
+        "killed_by_own_req_tests": [
+          "test_full_simultaneous_rw"
+        ],
+        "fragile": true,
+        "random_only": false
+      },
+      {
+        "id": "M2",
+        "req": "REQ-03",
+        "directed_killers": [
+          "test_almost_full",
+          "test_full_flag",
+          "test_full_simultaneous_rw",
+          "test_overflow",
+          "test_wraparound_order"
+        ],
+        "killed_by_own_req_tests": [
+          "test_full_flag"
+        ],
+        "fragile": false,
+        "random_only": false
+      },
+      {
+        "id": "M3",
+        "req": "REQ-08",
+        "directed_killers": [
+          "test_almost_full",
+          "test_full_flag",
+          "test_full_simultaneous_rw",
+          "test_overflow",
+          "test_wraparound_order"
+        ],
+        "killed_by_own_req_tests": [
+          "test_almost_full"
+        ],
+        "fragile": false,
+        "random_only": false
+      },
+      {
+        "id": "M4",
+        "req": "REQ-02",
+        "directed_killers": [
+          "test_almost_full",
+          "test_full_simultaneous_rw",
+          "test_overflow",
+          "test_wraparound_order"
+        ],
+        "killed_by_own_req_tests": [
+          "test_wraparound_order"
+        ],
+        "fragile": false,
+        "random_only": false
+      },
+      {
+        "id": "M5",
+        "req": "REQ-05",
+        "directed_killers": [
+          "test_empty_simultaneous_rw",
+          "test_underflow"
+        ],
+        "killed_by_own_req_tests": [
+          "test_underflow"
+        ],
+        "fragile": false,
+        "random_only": false
+      },
+      {
+        "id": "M6",
+        "req": "REQ-01",
+        "directed_killers": [
+          "test_almost_full",
+          "test_empty_flag",
+          "test_empty_simultaneous_rw",
+          "test_full_flag",
+          "test_full_simultaneous_rw",
+          "test_overflow",
+          "test_reset_state",
+          "test_underflow",
+          "test_wraparound_order"
+        ],
+        "killed_by_own_req_tests": [
+          "test_reset_state"
+        ],
+        "fragile": false,
+        "random_only": false
+      },
+      {
+        "id": "M7",
+        "req": "REQ-07",
+        "directed_killers": [
+          "test_empty_simultaneous_rw",
+          "test_underflow"
+        ],
+        "killed_by_own_req_tests": [
+          "test_empty_simultaneous_rw"
+        ],
+        "fragile": false,
+        "random_only": false
+      },
+      {
+        "id": "M8",
+        "req": "REQ-10",
+        "directed_killers": [
+          "test_full_simultaneous_rw"
+        ],
+        "killed_by_own_req_tests": [
+          "test_full_simultaneous_rw"
+        ],
+        "fragile": true,
+        "random_only": false
+      }
+    ],
+    "drops_with_survivors": [
+      {
+        "dropped": [
+          "test_full_simultaneous_rw",
+          "test_random_regression"
+        ],
+        "killed": 6,
+        "injected": 8,
+        "survivors": [
+          "M1",
+          "M8"
+        ]
+      }
+    ],
+    "drops_total": 19
+  },
+  "attempts": [
+    {
+      "n": 1,
+      "source": "seeded",
+      "status": "fail",
+      "result": "8/10"
+    },
+    {
+      "n": 2,
+      "source": "model",
+      "status": "pass",
+      "result": "10/10"
+    }
+  ],
+  "not_verifiable": null
+}

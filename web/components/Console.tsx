@@ -1,7 +1,10 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { type Attempt, type Requirement, type Run, status } from "@/lib/run";
+import { useEffect, useMemo, useState } from "react";
+import FifoView from "./FifoView";
+import Waveform, { pickTest } from "./Waveform";
+import { apiBase } from "@/lib/api";
+import { type Attempt, type Requirement, type Run, type Trace, status } from "@/lib/run";
 
 const RANDOM = "test_random_regression";
 
@@ -88,18 +91,52 @@ function startAttempt(run: Run): number {
   return firstFail && run.attempts.length > 1 ? firstFail.n : run.attempts[run.attempts.length - 1].n;
 }
 
-export default function Console({ runs, requirements }: { runs: ConsoleRun[]; requirements: Requirement[] }) {
+// Where an attempt's trace lives: the static export, or the API for runs on the server.
+function traceUrl(source: "static" | "api", runId: string, n: number) {
+  return source === "static" ? `/traces/${runId}__${n}.json`
+    : `${apiBase()}/runs/${encodeURIComponent(runId)}/attempts/${n}/trace/trace.json`;
+}
+
+export default function Console({ runs, requirements, traceSource = "static" }:
+  { runs: ConsoleRun[]; requirements: Requirement[]; traceSource?: "static" | "api" }) {
   const [which, setWhich] = useState(0);
   const run = runs[which].run;
   const [sel, setSel] = useState(startAttempt(run));
   const [quiet, setQuiet] = useState(true);
-  const [editor, setEditor] = useState<"diff" | "rtl" | "prompt">("diff");
+  const [editor, setEditor] = useState<"wave" | "fifo" | "diff" | "rtl" | "prompt">("wave");
+  const [trace, setTrace] = useState<{ key: string; data: Trace | null } | null>(null);
+  const [wTest, setWTest] = useState("");
+  const [wCycle, setWCycle] = useState(1);
   const [panel, setPanel] = useState<"sim" | "compile" | "sweep">("sim");
 
   const a = run.attempts.find((x) => x.n === sel) ?? run.attempts[run.attempts.length - 1];
   const sim = a ? simulated(run, a) : undefined;
   const results = useMemo(() => new Map((sim?.tests ?? []).map((t) => [t.name, t])), [sim]);
+
+  // Load the trace of the design this attempt stands on (no-progress repeats share it).
+  const traceKey = sim ? `${run.id}/${sim.n}` : "";
+  useEffect(() => {
+    if (!sim || !sim.tests.length) { setTrace(null); return; }
+    let live = true;
+    fetch(traceUrl(traceSource, run.id, sim.n))
+      .then((r) => (r.ok ? r.json() : null))
+      .catch(() => null)
+      .then((d: Trace | null) => {
+        if (!live) return;
+        setTrace({ key: traceKey, data: d && d.status === "ok" ? d : null });
+        if (d && d.status === "ok") {
+          const t = pickTest(d);
+          setWTest(t);
+          setWCycle(d.tests.find((x) => x.name === t)?.first_mismatch ?? 1);
+        }
+      });
+    return () => { live = false; };
+  }, [traceKey, traceSource, run.id, sim]);
+  const tr = trace?.key === traceKey ? trace.data : null;
+  const pickWTest = (t: string) => { setWTest(t); setWCycle(tr?.tests.find((x) => x.name === t)?.first_mismatch ?? 1); };
   const editorTabs = [
+    { key: "wave" as const, label: "Waveform", disabled: !tr },
+    { key: "fifo" as const, label: "FIFO replay", disabled: !tr },
     { key: "diff" as const, label: a?.n === 1 ? "Diff (none on attempt 1)" : "Diff vs previous", disabled: !a?.diff },
     { key: "rtl" as const, label: "sync_fifo.v", disabled: !a?.rtl },
     { key: "prompt" as const, label: "Prompt", disabled: !a?.prompt },
@@ -185,6 +222,8 @@ export default function Console({ runs, requirements }: { runs: ConsoleRun[]; re
         <Tabs label="Editor" tabs={editorTabs} value={shownEditor ?? "diff"} onChange={setEditor} />
         <div className="c-scroll">
           {!a ? <p className="c-empty">No attempt to show.</p>
+            : shownEditor === "wave" && tr ? <Waveform trace={tr} test={wTest} cycle={wCycle} onTest={pickWTest} onCycle={setWCycle} />
+            : shownEditor === "fifo" && tr ? <FifoView trace={tr} test={wTest} cycle={wCycle} onTest={pickWTest} onCycle={setWCycle} />
             : shownEditor === "diff" && shownDiff ? (
               <>
                 <div className="c-diffbar">
