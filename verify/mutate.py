@@ -9,12 +9,25 @@ deliberately weakened suite), then with the full frozen suite. It shows the
 check flagging the weak suite and the restored suite killing the survivor.
 """
 import argparse
+import hashlib
 import json
 import sys
+import time
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from run_suite import ROOT, run  # noqa: E402
+from run_suite import ROOT, run, suite_hash, tool_version  # noqa: E402
+
+LABEL = "Suite mutation score vs reference RTL (hand-written mutants)"
+
+
+def provenance(src: str) -> dict:
+    """What this score was measured against, so it is only shown next to runs
+    that used the same suite. It describes the suite, not any generated RTL."""
+    return {"label": LABEL, "suite_sha256": suite_hash(),
+            "ref_rtl_sha256": hashlib.sha256(src.encode()).hexdigest(),
+            "mutants_sha256": hashlib.sha256((ROOT / "verify" / "mutants.json").read_bytes()).hexdigest(),
+            "simulator": tool_version(), "created": time.strftime("%Y-%m-%dT%H:%M:%S%z")}
 
 # REQ-06 has one directed test; the random regression also hits it, so both go.
 WEAK_DEMO_DROP = ["test_full_simultaneous_rw", "test_random_regression"]
@@ -39,7 +52,7 @@ def mutation_check(src: str, out: Path, drop=(), label="") -> dict:
         print(f'{label}{m["id"]} {m["req"]:7} {"killed " if killed else "SURVIVED"} {m["desc"]}', flush=True)
     applied = [r for r in report if r["result"] != "not_applicable"]
     killed = sum(r["result"] == "killed" for r in applied)
-    summary = {"killed": killed, "injected": len(applied), "tests_dropped": list(drop),
+    summary = {**provenance(src), "killed": killed, "injected": len(applied), "tests_dropped": list(drop),
                "survivors": [r["id"] for r in applied if r["result"] == "SURVIVED"], "mutants": report}
     out.mkdir(parents=True, exist_ok=True)
     (out / "mutation.json").write_text(json.dumps(summary, indent=2))
@@ -54,7 +67,8 @@ def weak_demo(src: str, out: Path, drop: list) -> dict:
     full = mutation_check(src, out / "restored", label="restored ")
     caught = [m for m in weak["survivors"] if m not in full["survivors"]]
     demo = {
-        "label": "measured",
+        **provenance(src),
+        "label": "measured: weakened suite vs restored suite, against the reference RTL",
         "tests_dropped": drop,
         "weak": {"killed": weak["killed"], "injected": weak["injected"], "survivors": weak["survivors"]},
         "restored": {"killed": full["killed"], "injected": full["injected"], "survivors": full["survivors"]},

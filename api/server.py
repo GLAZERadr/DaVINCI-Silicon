@@ -292,6 +292,12 @@ def mutation():
         out[key] = json.loads(f.read_text()) if f.exists() else None
     if out["mutation"] is None:
         raise HTTPException(404, "no mutation check recorded yet: run `make mutate`")
+    # A score only means something next to runs that used the same suite.
+    pinned = (ROOT / "verify" / "suite.sha256").read_text().strip()
+    out["pinned_suite_sha256"] = pinned
+    for key in ("mutation", "weak_demo"):
+        if out[key] is not None:
+            out[key]["matches_pinned_suite"] = out[key].get("suite_sha256") == pinned
     return out
 
 
