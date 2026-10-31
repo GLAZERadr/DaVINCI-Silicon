@@ -13,7 +13,9 @@ Built for the Meta Global AI Developer Hackathon 2026 (Startup Track, "Push the 
 | Frozen cocotb suite + Python golden model (`tests/`) | done |
 | Mutation check, 8 seeded bugs (`verify/mutate.py`) | done, 8/8 killed |
 | Docker sandbox (`docker/Dockerfile`, `make sandbox`) | written, not yet tested |
-| Meta model integration, repair loop, API, UI | next |
+| Model client: Meta / Baseten / replay, cost ledger, budget guard (`agent/llm.py`) | done, not yet run live |
+| Verified loop with bounded repair, evidence `run.json` (`agent/pipeline.py`) | done, dry-run verified |
+| API, UI | next |
 
 ## Run
 
@@ -22,6 +24,9 @@ pip install cocotb==2.1.0     # plus Icarus Verilog (brew install icarus-verilog
 make sim                      # run the frozen suite against rtl/sync_fifo.v
 make mutate                   # mutation score of the suite
 make image && make sandbox    # same run inside the locked-down container
+python -m agent.pipeline --run-id dry01 --provider fake          # offline loop, $0
+python -m agent.pipeline --run-id demo01 --seed-bug M1           # seeded bug → repair
+python -m agent.pipeline --run-id demo01 --provider replay       # replay a recorded run, $0
 ```
 
 Each run writes `runs/<id>/verdict.json` with RTL hash, suite hash, simulator version, per-test results and runtime.
