@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { api, apiBase, apiToken, setApiBase, setApiToken } from "@/lib/api";
+import { LOCAL_API, api, apiBase, apiToken, setApiBase, setApiToken } from "@/lib/api";
 
 // API connection: base URL, health, and the token for live model calls.
 export default function ApiPanel({ needToken, onChange }: { needToken?: string; onChange?: (ok: boolean, hasToken: boolean) => void }) {
@@ -30,7 +30,7 @@ export default function ApiPanel({ needToken, onChange }: { needToken?: string; 
   }
 
   useEffect(() => {
-    setBase(apiBase());
+    setBase(apiBase() || LOCAL_API); // prefilled: the usual local address, not a placeholder
     setToken(apiToken());
     check();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -74,11 +74,11 @@ export default function ApiPanel({ needToken, onChange }: { needToken?: string; 
         <form className="api-form" onSubmit={save}>
           <label>
             <span className="label">API URL</span>
-            <input value={base} onChange={(e) => setBase(e.target.value)} placeholder="http://127.0.0.1:8000" inputMode="url" />
+            <input value={base} onChange={(e) => setBase(e.target.value)} placeholder="https://your-api.example.com" inputMode="url" />
           </label>
           <label>
             <span className="label">API token (live model calls, approvals)</span>
-            <input value={token} onChange={(e) => setToken(e.target.value)} type="password" autoComplete="off" placeholder="DAVINCI_API_TOKEN" />
+            <input value={token} onChange={(e) => setToken(e.target.value)} type="password" autoComplete="off" placeholder="paste the DAVINCI_API_TOKEN value" />
           </label>
           <button type="submit" className="btn">Save</button>
         </form>

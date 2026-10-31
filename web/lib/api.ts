@@ -16,8 +16,19 @@ function store(kind: "local" | "session"): Storage | null {
   }
 }
 
+export const LOCAL_API = "http://127.0.0.1:8000";
+
+// A board served from this machine talks to the API on this machine by default.
+function servedLocally(): boolean {
+  try {
+    return ["127.0.0.1", "localhost", "[::1]"].includes(window.location.hostname);
+  } catch {
+    return false;
+  }
+}
+
 export function apiBase(): string {
-  return (store("local")?.getItem(BASE_KEY) || ENV_API).replace(/\/+$/, "");
+  return (store("local")?.getItem(BASE_KEY) || ENV_API || (servedLocally() ? LOCAL_API : "")).replace(/\/+$/, "");
 }
 
 export function setApiBase(url: string) {
