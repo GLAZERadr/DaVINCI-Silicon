@@ -1,6 +1,10 @@
 # DaVINCI Silicon
 
-Execution-verified RTL workflow: spec → requirements → frozen tests → mutation proof → AI-generated RTL → real simulation → bounded repair → evidence report.
+A verification plan with evidence for AI-written RTL. Every requirement is traced to frozen tests, mutation testing shows those tests catch planted bugs before any RTL is judged, and every AI attempt is simulated and counted. The model writes Verilog; it never sees, writes or grades the tests.
+
+Each run produces a verification plan (requirement → tests → mutants killed → measured result at attempt 1 and final), the plan's coverage gaps, and a full record of every attempt that replays at $0.
+
+Loop: spec → requirements (human-approved) → frozen tests → mutation proof → AI-generated RTL → real simulation → bounded repair → evidence report → replay.
 
 Built for the Meta Global AI Developer Hackathon 2026 (Startup Track, "Push the Frontier"). Everything in this repo was written during the hackathon (Oct 27 – Nov 4, 2026).
 
@@ -60,6 +64,8 @@ Run statuses: `pass` (G1–G3), `escaped` (passed the visible suite, failed the 
 
 ## Limitations
 
+- **Design breakdown is done by a person.** The requirements and the port/parameter interface (`spec/requirements.json`, `spec/interface.json`) are written and approved by a person, or extracted from a spec page and then approved. DaVINCI does not derive a microarchitecture from a spec.
+- **Coverage means mutation-based plan coverage.** It shows which of 8 hand-written bugs the tests catch and where the plan is thin (`make gaps`); it is not line, toggle or functional coverage. REQ-04 and REQ-09 have no mutant yet.
 - **The default spec contains the reference equations.** `spec/fifo_spec.md` states `do_write = wr_en && (!full || rd_en)` and the flag equations, so first-pass success on it measures spec-conformant transcription, not design from an ambiguous spec. A prose-only spec arm is planned.
 - **One block, one simulator.** A sync FIFO on Icarus Verilog; not sign-off evidence for a commercial flow.
 - **The mutation score describes the test suite**, measured against the hand-written reference RTL with 8 hand-written mutants. It is not a property of any generated RTL.

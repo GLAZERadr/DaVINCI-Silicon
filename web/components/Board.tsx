@@ -94,12 +94,14 @@ export default function Board({ data, runs }: { data: BoardData; runs: RunSummar
       <main className="board">
         <section className="hero" aria-labelledby="verdict">
           <div>
-            <p className="kicker">sync_fifo · {live.id} · {day(live.started)}</p>
+            <p className="kicker">Verification plan · sync_fifo · {live.id} · {day(live.started)}</p>
             <h1 id="verdict" className="display">{headline}</h1>
             <p className="sub">
+              Every requirement is traced to frozen tests the model can neither see nor edit, and mutation testing
+              shows those tests catch planted bugs before any RTL is judged. Every AI attempt is simulated and counted.{" "}
               {live.seedBug
                 ? `Attempt 1 is the reference RTL with seeded bug ${live.seedBug}; Muse Spark repaired it from the simulator's measured failures. `
-                : "Muse Spark wrote the RTL from the spec. "}
+                : "Here the RTL under test was written by Muse Spark from the spec. "}
               {live.extraction
                 ? `Requirements came from an image/PDF extraction (${live.extraction.extraction_id}), approved before generation. `
                 : ""}
@@ -137,7 +139,7 @@ export default function Board({ data, runs }: { data: BoardData; runs: RunSummar
         </section>
 
         <section className="card" aria-labelledby="trace">
-          <p id="trace" className="label">Traceability</p>
+          <p id="trace" className="label">Verification plan · traceability</p>
           <p className="lede">Each requirement, the frozen tests that check it, the seeded bugs those tests catch, and what the simulator measured.</p>
           {data.planId && (
             <p className="lede">
@@ -307,7 +309,7 @@ export default function Board({ data, runs }: { data: BoardData; runs: RunSummar
 
         <footer className="foot">
           Live model spend to date: ${data.ledger.liveSpendUsd.toFixed(2)} over {data.ledger.liveCallsOk} answered calls ({data.ledger.liveCallsTotal} recorded, including refusals), from <span className="mono">runs/_ledger.jsonl</span>.
-          {" "}Limitations: the default spec states the reference equations; one block, one simulator; no synthesis, timing or power results. See the README.
+          {" "}Limitations: a person writes and approves the requirements and interface (the design breakdown); coverage here is mutation-based (8 hand-written bugs), not line or functional coverage; the default spec states the reference equations; one block, one simulator; no synthesis, timing or power results. See the README.
         </footer>
       </main>
     </>

@@ -8,7 +8,7 @@ const FONTS = "https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;6
 
 export const metadata: Metadata = {
   title: "DaVINCI Evidence Board",
-  description: "Recorded runs of DaVINCI's verified RTL loop: frozen tests, mutation check, measured results.",
+  description: "Verification plan and evidence for AI-written RTL: requirements traced to frozen, mutation-tested simulations, every attempt measured.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

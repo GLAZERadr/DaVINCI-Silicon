@@ -60,6 +60,7 @@ Count how often key FIFO situations actually happened during simulation.
 - Keep the measured / AI-interpretation labels everywhere.
 - Add the two limitations from §2 to the README.
 - Respect `CLAUDE.md` §8 (no "world model", "Physical AI", speedups or PPA numbers) and the no-names rule.
+- **Done 31 Oct:** README intro leads with the plan and evidence; limitations add design breakdown (by a person) and mutation-based coverage (not line/functional, REQ-04/09 untargeted); timing was already listed. Board: kicker "Verification plan", hero lead sentence, traceability labelled as the plan, footer limitations, page description. "Proven by mutation" avoided: mutation testing shows the tests catch planted bugs, nothing more. The video script is not in this repo; it should follow the same order (plan → gaps → AI attempt measured).
 
 ## 4. Order and cut line
 
