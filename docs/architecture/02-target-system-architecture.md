@@ -85,7 +85,7 @@ flowchart LR
   GT -->|ok| V["G2 frozen suite"]
   V -->|fail| R
   V -->|pass| P["G3 parameter sweep"]
-  P -->|fail| R
+  P -->|fail| ESC["escaped<br/>(visible pass, sweep fail; no blind repair)"]
   P -->|pass| OK["Green: evidence record"]
   R -->|≤3 repairs| GT
   R -->|exhausted / no progress| NE["needs_engineer<br/>(failing tests + last diagnosis)"]
@@ -165,7 +165,7 @@ flowchart TB
   G1 --> G2["G2 frozen suite<br/>10 tests, expected names & count"]
   G2 -->|fail → measured failures| FB["Repair prompt<br/>(no sweep output shown)"]
   G2 --> G3["G3 parameter sweep<br/>≥3 sets incl. non-power-of-2 DEPTH, consistent CW"]
-  G3 -->|fail| FB
+  G3 -->|fail| ESC["escaped (final)"]
   G3 --> GR["Green"]
   FB --> G1
   GR -.post-hackathon.-> G4["G4 Yosys synth + SymbiYosys equivalence"]

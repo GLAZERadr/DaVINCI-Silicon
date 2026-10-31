@@ -69,6 +69,8 @@ Contracts for the target architecture in `02`. "Exists" means present at `5cc5c2
 - **Hash:** its own pinned hash in `verify/sweep.sha256`; it never changes the frozen suite.
 - **Output:** sweep results are never put in the model's prompt. Wording: "not shown to the model". Not "hidden": the repo is public.
 - **Known limit:** same author and golden model as the frozen suite, so a shared misreading of the spec is invisible to both.
+- **On failure:** the run ends `escaped`. There is no repair, because the model may not see why, and a blind retry would muddy the escape-rate metric.
+- **Built 31 Oct:** `tests_sweep/test_sweep.py`, `verify/run_sweep.py`, sets (8,12,9,4), (1,2,1,2), (32,32,32,6), pinned in `verify/sweep.sha256`.
 - **Validation:** the reference passes all sets; a variant with hard-coded `[3:0]` pointers fails.
 
 ### C6. Evidence store: `runs/` (exists) + `evidence/` (build)

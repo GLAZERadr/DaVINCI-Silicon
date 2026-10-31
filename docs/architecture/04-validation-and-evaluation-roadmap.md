@@ -78,7 +78,7 @@ Report **Wilson 95 % intervals** for the two N = 10 arms. With N = 10, a 10/10 r
    - `compare_digest` is used; `sandbox` is not client-selectable.
 5. **No local simulation of model RTL.** `--sandbox local` with `meta`/`baseten` exits with a clear error. The local env is scrubbed of `*_API_KEY`.
 
-**P1 (hackathon MVP):**
+**P1 (hackathon MVP).** Items 6–11 were built and tested on 31 Oct at $0. Items 12–13 (benchmark, Evidence Board) remain.
 
 6. **Parameter sweep G3.**
    - ≥3 parameter sets including a non-power-of-two DEPTH, with consistent CW. Own pinned hash.
