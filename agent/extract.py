@@ -58,8 +58,13 @@ EXTRACT_SCHEMA = _obj({
         "confidence": {"type": "string", "enum": ["high", "medium", "low"]}})},
     "unreadable": {"type": "array", "items": S},
 })
-MAP_SCHEMA = _obj({"mapping": {"type": "array", "items": _obj({
-    "id": S, "maps_to": {"anyOf": [S, {"type": "null"}]}, "reason": S})}})
+MAP_SCHEMA = _obj({
+    "mapping": {"type": "array", "items": _obj({
+        "id": S, "maps_to": {"anyOf": [S, {"type": "null"}]},
+        "relation": {"type": "string", "enum": ["same", "part_of", "none"]}, "reason": S})},
+    "coverage": {"type": "array", "items": _obj({
+        "reference": S, "coverage": {"type": "string", "enum": ["full", "partial", "none"]}, "missing": S})},
+})
 
 EXTRACT_PROMPT = """These pages describe a digital hardware block. Extract what they state.
 
@@ -70,9 +75,21 @@ EXTRACT_PROMPT = """These pages describe a digital hardware block. Extract what 
 - params and ports: as stated on the pages.
 - unreadable: anything you could not read or that looks contradictory."""
 
-MAP_PROMPT = """Pair each extracted requirement with the reference requirement it states, if any.
-maps_to is the reference id, or null if no reference requirement says the same thing.
-Several extracted items may map to one reference id. Give a one-line reason."""
+MAP_PROMPT = """Pair each extracted requirement with the reference requirement whose behaviour it states.
+
+- relation "same": the item states the whole reference requirement.
+- relation "part_of": the item states one part of a reference requirement (one flag, one case,
+  one output value). Most items are this.
+- relation "none": no reference requirement describes this behaviour. Use it only after checking
+  every reference; pin-level facts (clock edge, reset polarity, port widths) often have none.
+- maps_to is the reference id for "same" and "part_of", null for "none". When several references
+  could apply, pick the most specific one.
+
+Then judge every reference requirement from the extracted list alone:
+- "full": the extracted items together state all of it.
+- "partial": some of it is stated; say what is missing.
+- "none": no extracted item states it.
+A reference is not covered because the behaviour is usual for such blocks; an extracted item must state it."""
 
 
 def pages(path: Path) -> list[bytes]:
@@ -170,11 +187,8 @@ def extract(path: Path, provider: str = "meta", xid: str | None = None) -> dict:
     try:
         got = _json_reply(call("extract", [{"role": "user", "content": content}], EXTRACT_SCHEMA), "extract")
         rec["extracted"] = got
-        ref = json.loads(REFERENCE.read_text())["requirements"]
-        mmsg = [{"role": "user", "content": f"{MAP_PROMPT}\n\n## Extracted\n\n```json\n"
-                 f"{json.dumps([{k: r[k] for k in ('id', 'text')} for r in got['requirements']], indent=1)}\n```\n\n"
-                 f"## Reference\n\n```json\n{json.dumps([{k: r[k] for k in ('id', 'text')} for r in ref], indent=1)}\n```"}]
-        rec["mapping"] = _json_reply(call("map", mmsg, MAP_SCHEMA), "map")["mapping"]
+        m = _json_reply(call("map", map_messages(got["requirements"]), MAP_SCHEMA), "map")
+        rec["mapping"], rec["coverage"] = normalise(m)
     except (llm.BudgetError, llm.LLMError) as e:
         if rec["status"] == "running":  # the call succeeded but its reply was unusable
             rec.update(status="aborted", error=str(e)[:500])
@@ -188,18 +202,68 @@ def extract(path: Path, provider: str = "meta", xid: str | None = None) -> dict:
     return rec
 
 
-def compare(rec: dict) -> dict:
-    """Side by side with spec/requirements.json, from the model's mapping
-    (so this table is AI interpretation too)."""
+def map_messages(items: list) -> list:
     ref = json.loads(REFERENCE.read_text())["requirements"]
-    maps = {m["id"]: m.get("maps_to") for m in rec.get("mapping", [])}
-    rows = []
+    return [{"role": "user", "content": f"{MAP_PROMPT}\n\n## Extracted\n\n```json\n"
+             f"{json.dumps([{k: r[k] for k in ('id', 'text')} for r in items], indent=1)}\n```\n\n"
+             f"## Reference\n\n```json\n{json.dumps([{k: r[k] for k in ('id', 'text')} for r in ref], indent=1)}\n```"}]
+
+
+def normalise(m: dict) -> tuple[list, list]:
+    """Unknown reference ids become null; relation "none" always has maps_to null."""
+    ref_ids = {r["id"] for r in json.loads(REFERENCE.read_text())["requirements"]}
+    mapping = []
+    for x in m["mapping"]:
+        to = x.get("maps_to") if x.get("maps_to") in ref_ids and x.get("relation") != "none" else None
+        mapping.append({**x, "maps_to": to, "relation": x.get("relation") if to else "none"})
+    return mapping, [c for c in m.get("coverage", []) if c.get("reference") in ref_ids]
+
+
+def compare(rec: dict, mapping: list | None = None, coverage: list | None = None) -> dict:
+    """Side by side with spec/requirements.json, from the model's mapping and
+    coverage judgement (so this table is AI interpretation too). `checks`
+    lists where the two disagree with each other."""
+    mapping = rec.get("mapping", []) if mapping is None else mapping
+    coverage = rec.get("coverage", []) if coverage is None else coverage
+    ref = json.loads(REFERENCE.read_text())["requirements"]
+    maps = {m["id"]: m.get("maps_to") for m in mapping}
+    cov = {c["reference"]: c for c in coverage}
+    rows, checks = [], []
     for r in ref:
         hits = [e["id"] for e in rec["extracted"]["requirements"] if maps.get(e["id"]) == r["id"]]
-        rows.append({"reference": r["id"], "reference_text": r["text"], "extracted": hits, "covered": bool(hits)})
+        c = cov.get(r["id"], {})
+        level = c.get("coverage", "full" if hits else "none") if coverage else ("full" if hits else "none")
+        if level != "none" and not hits:
+            checks.append(f"{r['id']}: judged {level} but no extracted item maps to it")
+        if level == "none" and hits:
+            checks.append(f"{r['id']}: judged none but {', '.join(hits)} map to it")
+        rows.append({"reference": r["id"], "reference_text": r["text"], "extracted": hits,
+                     "coverage": level, "missing": c.get("missing", ""), "covered": level == "full"})
     unmapped = [e["id"] for e in rec["extracted"]["requirements"] if not maps.get(e["id"])]
-    return {"label": AI_LABEL, "reference_covered": sum(x["covered"] for x in rows), "reference_total": len(rows),
-            "rows": rows, "extracted_without_reference": unmapped}
+    return {"label": AI_LABEL, "reference_covered": sum(x["coverage"] == "full" for x in rows),
+            "reference_partial": sum(x["coverage"] == "partial" for x in rows), "reference_total": len(rows),
+            "rows": rows, "extracted_without_reference": unmapped, "checks": checks}
+
+
+def remap(xid: str, provider: str = "meta") -> dict:
+    """Re-run only the map step on an existing extraction, for comparing map
+    prompts. Writes remap_<time>.json beside it; extracted.json and any
+    approval are left as they were."""
+    rec = load(xid)
+    if "extracted" not in rec:
+        raise ValueError(f"extraction {xid} has no extracted list ({rec['status']})")
+    opts = {"max_tokens": MAX_OUTPUT_TOKENS,
+            "response_format": {"type": "json_schema", "json_schema": {"name": "map", "strict": True,
+                                                                       "schema": MAP_SCHEMA}}}
+    reply = llm.call(map_messages(rec["extracted"]["requirements"]), provider=provider, step="map",
+                     run_id=xid, **opts)
+    mapping, coverage = normalise(_json_reply(reply, "map"))
+    out = {"label": AI_LABEL, "extraction_id": xid, "created": time.strftime("%Y-%m-%dT%H:%M:%S%z"),
+           "map_prompt_sha256": _sha(MAP_PROMPT.encode()), "call": llm.reply_dict(reply),
+           "mapping": mapping, "coverage": coverage, "comparison": compare(rec, mapping, coverage),
+           "previous_comparison": rec.get("comparison")}
+    (EXTRACT_DIR / xid / f"remap_{time.strftime('%Y%m%d-%H%M%S')}.json").write_text(json.dumps(out, indent=2))
+    return out
 
 
 def load(xid: str) -> dict:
@@ -256,15 +320,35 @@ def approve(xid: str, approved_by: str, requirements: list | None = None) -> dic
     return load(xid)
 
 
+def print_comparison(c: dict, before: dict | None = None):
+    for row in c["rows"]:
+        print(f'  {row["reference"]} {row["coverage"]:7} ← {", ".join(row["extracted"]) or "—"}'
+              + (f'  missing: {row["missing"]}' if row["missing"] else ""))
+    print(f'reference full {c["reference_covered"]}, partial {c["reference_partial"]} of {c["reference_total"]}; '
+          f'items without reference: {len(c["extracted_without_reference"])} {c["extracted_without_reference"]}')
+    for chk in c["checks"]:
+        print(f"  check: {chk}")
+    if before:
+        print(f'before: covered {before["reference_covered"]}/{before["reference_total"]}, '
+              f'items without reference {len(before["extracted_without_reference"])}')
+    print(f"({AI_LABEL})")
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("file", nargs="?", type=Path)
     ap.add_argument("--provider", default="meta", choices=[p for p in llm.PROVIDERS if p != "replay"])
     ap.add_argument("--xid", help="extraction id to use (default: generated)")
     ap.add_argument("--approve", metavar="XID")
+    ap.add_argument("--remap", metavar="XID", help="re-run only the map step (writes remap_*.json)")
     ap.add_argument("--by", help="who approves (required with --approve)")
     ap.add_argument("--edited", type=Path, help="JSON list of {id, text[, maps_to]} to approve instead")
     a = ap.parse_args(argv)
+    if a.remap:
+        out = remap(a.remap, a.provider)
+        print_comparison(out["comparison"], out["previous_comparison"])
+        print(f'cost ${out["call"]["cost_usd"]}')
+        return 0
     if a.approve:
         edited = json.loads(a.edited.read_text()) if a.edited else None
         rec = approve(a.approve, a.by or "", edited)
@@ -283,8 +367,7 @@ def main(argv=None):
         for e in rec["extracted"]["requirements"]:
             m = next((x["maps_to"] for x in rec["mapping"] if x["id"] == e["id"]), None)
             print(f'  {e["id"]:6} → {m or "—":7} [{e["confidence"]}] {e["text"]}  ({e["source_location"]})')
-        c = rec["comparison"]
-        print(f'reference covered: {c["reference_covered"]}/{c["reference_total"]} ({AI_LABEL})')
+        print_comparison(rec["comparison"])
     return 0 if rec["status"] == "awaiting_approval" else 1
 
 

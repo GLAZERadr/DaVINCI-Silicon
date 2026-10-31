@@ -356,7 +356,9 @@ async def create_extraction(file: UploadFile = File(...), provider: str = Form("
     xid = ex.new_xid()
     up = API_DIR / "uploads" / xid
     up.mkdir(parents=True)
-    path = up / f"upload{suffix}"
+    # Keep the original name (it is recorded as the source), made safe for the filesystem.
+    stem = re.sub(r"[^A-Za-z0-9._-]+", "_", Path(file.filename or "upload").stem).strip("._")[:80] or "upload"
+    path = up / f"{stem}{suffix}"
     path.write_bytes(data)
     _extractions[xid] = {"extraction_id": xid, "status": "running", "provider": provider,
                          "source": {"name": Path(file.filename or "upload").name, "bytes": len(data)}}

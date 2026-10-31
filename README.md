@@ -32,6 +32,7 @@ python -m agent.pipeline --run-id demo01 --seed-bug M1           # seeded bug â†
 python -m agent.pipeline --run-id sbx01 --sandbox docker        # simulate inside the sandbox
 make api                                                         # HTTP API on :8000
 python -m agent.extract spec/fixtures/sf16_datasheet.pdf         # spec page â†’ requirements for approval
+python -m agent.extract --remap <xid>                            # re-run only the mapping step
 python -m agent.extract --approve <xid> --by "Name"              # approve; then run with
 #   --requirements runs/_extract/<xid>/approved.json --spec runs/_extract/<xid>/interface_spec.md
 python -m agent.pipeline --run-id demo01 --provider replay       # replay a recorded run, $0

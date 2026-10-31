@@ -191,8 +191,10 @@ def _fake(messages: list, step: str) -> Reply:
                                                        for i, r in enumerate(ref, 1)]}),
                      provider="fake", model="fake-reference", request_sha256="")
     if step == "map":
-        return Reply(text=json.dumps({"mapping": [{"id": f"EX-{i:02d}", "maps_to": r["id"], "reason": "fake"}
-                                                  for i, r in enumerate(ref, 1)]}),
+        return Reply(text=json.dumps({"mapping": [{"id": f"EX-{i:02d}", "maps_to": r["id"], "relation": "same",
+                                                   "reason": "fake"} for i, r in enumerate(ref, 1)],
+                                      "coverage": [{"reference": r["id"], "coverage": "full", "missing": ""}
+                                                   for r in ref]}),
                      provider="fake", model="fake-reference", request_sha256="")
     if step == "repair":
         text = ("DIAGNOSIS: (fake provider) the write enable ignores a same-cycle read when full; "
