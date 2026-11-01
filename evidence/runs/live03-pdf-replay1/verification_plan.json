@@ -2,6 +2,728 @@
   "label": "measured",
   "title": "Verification plan · sync_fifo · live03-pdf-replay1",
   "generator": "verify/plan.py",
+  "format": "Vplan sections (ChipVerify) · OpenTitan testpoint fields · OpenTitan-style staged sign-off",
+  "date": "2026-10-31",
+  "spec": {
+    "file": "runs/_extract/x-20261031-162122-f882/interface_spec.md",
+    "sha256": "13f46daa8c388fb4bc71732ce3224d9b157ab92fb0a81be7872965d529bf3956",
+    "matches_run": true
+  },
+  "random_seed": "20261105",
+  "scope": {
+    "in": "functional behaviour of sync_fifo per runs/_extract/x-20261031-162122-f882/interface_spec.md",
+    "out": [
+      "timing, synthesis, area and power",
+      "clock-domain crossing (single clock by design)",
+      "formal proof",
+      "gate-level simulation",
+      "code coverage (Icarus Verilog has no built-in code coverage)"
+    ]
+  },
+  "methodology": [
+    "cycle-accurate Python reference model compared on every clock (scoreboard)",
+    "directed tests per requirement",
+    "constrained-random regression, 3000 cycles, seed 20261105",
+    "mutation analysis with hand-written mutants to measure test strength",
+    "tests frozen and hash-pinned before RTL generation; the AI may only change RTL",
+    "parameter sweep at other WIDTH/DEPTH/AF_THRESH sets, never shown to the model"
+  ],
+  "testpoints": [
+    {
+      "id": "EX-01",
+      "name": "all_state_changes_occur_on",
+      "milestone": "—",
+      "desc": {
+        "goal": "All state changes occur on the rising edge of clk.",
+        "stimulus": "no test",
+        "check": "every output compared with the cycle-accurate golden model on every clock (scoreboard)"
+      },
+      "tests": [],
+      "result": "unverified",
+      "result_attempt_1": "untested",
+      "mutants": [],
+      "scenario_hits": "not measured"
+    },
+    {
+      "id": "EX-02",
+      "name": "rst_is_a_synchronous_reset",
+      "milestone": "—",
+      "desc": {
+        "goal": "rst is a synchronous reset, active high.",
+        "stimulus": "no test",
+        "check": "every output compared with the cycle-accurate golden model on every clock (scoreboard)"
+      },
+      "tests": [],
+      "result": "unverified",
+      "result_attempt_1": "untested",
+      "mutants": [],
+      "scenario_hits": "not measured"
+    },
+    {
+      "id": "EX-03",
+      "name": "dout_is_registered_pop_data",
+      "milestone": "—",
+      "desc": {
+        "goal": "dout is registered pop data, valid after the edge.",
+        "stimulus": "no test",
+        "check": "every output compared with the cycle-accurate golden model on every clock (scoreboard)"
+      },
+      "tests": [],
+      "result": "unverified",
+      "result_attempt_1": "untested",
+      "mutants": [],
+      "scenario_hits": "not measured"
+    },
+    {
+      "id": "EX-04",
+      "name": "full_empty_flags__ex04",
+      "milestone": "V1",
+      "desc": {
+        "goal": "full indicates occupancy is 16.",
+        "stimulus": "test_full_flag: full asserts exactly when DEPTH entries are stored; test_empty_flag: empty asserts exactly when the last entry is read",
+        "check": "every output compared with the cycle-accurate golden model on every clock (scoreboard)"
+      },
+      "tests": [
+        "test_full_flag",
+        "test_empty_flag",
+        "test_random_regression"
+      ],
+      "result": "pass",
+      "result_attempt_1": "pass",
+      "mutants": [
+        {
+          "id": "M2",
+          "result": "killed"
+        }
+      ],
+      "scenario_hits": {
+        "full": 67,
+        "empty": 320
+      }
+    },
+    {
+      "id": "EX-05",
+      "name": "full_empty_flags__ex05",
+      "milestone": "V1",
+      "desc": {
+        "goal": "empty indicates occupancy is 0.",
+        "stimulus": "test_full_flag: full asserts exactly when DEPTH entries are stored; test_empty_flag: empty asserts exactly when the last entry is read",
+        "check": "every output compared with the cycle-accurate golden model on every clock (scoreboard)"
+      },
+      "tests": [
+        "test_full_flag",
+        "test_empty_flag",
+        "test_random_regression"
+      ],
+      "result": "pass",
+      "result_attempt_1": "pass",
+      "mutants": [
+        {
+          "id": "M2",
+          "result": "killed"
+        }
+      ],
+      "scenario_hits": {
+        "full": 67,
+        "empty": 320
+      }
+    },
+    {
+      "id": "EX-06",
+      "name": "almost_full_threshold__ex06",
+      "milestone": "V1",
+      "desc": {
+        "goal": "almost_full indicates occupancy at or above the almost-full level.",
+        "stimulus": "test_almost_full: almost_full is high exactly when count >= AF_THRESH",
+        "check": "every output compared with the cycle-accurate golden model on every clock (scoreboard)"
+      },
+      "tests": [
+        "test_almost_full",
+        "test_random_regression"
+      ],
+      "result": "pass",
+      "result_attempt_1": "pass",
+      "mutants": [
+        {
+          "id": "M3",
+          "result": "killed"
+        }
+      ],
+      "scenario_hits": {
+        "almost_full": 213
+      }
+    },
+    {
+      "id": "EX-07",
+      "name": "overflow_indicates_push_refused_high",
+      "milestone": "—",
+      "desc": {
+        "goal": "overflow indicates push refused, high for one clock.",
+        "stimulus": "no test",
+        "check": "every output compared with the cycle-accurate golden model on every clock (scoreboard)"
+      },
+      "tests": [],
+      "result": "unverified",
+      "result_attempt_1": "untested",
+      "mutants": [],
+      "scenario_hits": "not measured"
+    },
+    {
+      "id": "EX-08",
+      "name": "underflow_indicates_pop_refused_high",
+      "milestone": "—",
+      "desc": {
+        "goal": "underflow indicates pop refused, high for one clock.",
+        "stimulus": "no test",
+        "check": "every output compared with the cycle-accurate golden model on every clock (scoreboard)"
+      },
+      "tests": [],
+      "result": "unverified",
+      "result_attempt_1": "untested",
+      "mutants": [],
+      "scenario_hits": "not measured"
+    },
+    {
+      "id": "EX-09",
+      "name": "count_tracks_occupancy__ex09",
+      "milestone": "V1",
+      "desc": {
+        "goal": "count indicates words currently held.",
+        "stimulus": "test_full_flag: full asserts exactly when DEPTH entries are stored",
+        "check": "every output compared with the cycle-accurate golden model on every clock (scoreboard)"
+      },
+      "tests": [
+        "test_full_flag",
+        "test_random_regression"
+      ],
+      "result": "pass",
+      "result_attempt_1": "pass",
+      "mutants": [],
+      "scenario_hits": "no scenario defined"
+    },
+    {
+      "id": "EX-10",
+      "name": "reset_state__ex10",
+      "milestone": "V1",
+      "desc": {
+        "goal": "At a rising edge with rst = 1, storage is emptied.",
+        "stimulus": "test_reset_state: after reset the FIFO is empty, count 0, dout 0, no flags",
+        "check": "every output compared with the cycle-accurate golden model on every clock (scoreboard)"
+      },
+      "tests": [
+        "test_reset_state",
+        "test_random_regression"
+      ],
+      "result": "pass",
+      "result_attempt_1": "pass",
+      "mutants": [
+        {
+          "id": "M6",
+          "result": "killed"
+        }
+      ],
+      "scenario_hits": {
+        "reset": 29
+      }
+    },
+    {
+      "id": "EX-11",
+      "name": "reset_state__ex11",
+      "milestone": "V1",
+      "desc": {
+        "goal": "At a rising edge with rst = 1, count becomes 0.",
+        "stimulus": "test_reset_state: after reset the FIFO is empty, count 0, dout 0, no flags",
+        "check": "every output compared with the cycle-accurate golden model on every clock (scoreboard)"
+      },
+      "tests": [
+        "test_reset_state",
+        "test_random_regression"
+      ],
+      "result": "pass",
+      "result_attempt_1": "pass",
+      "mutants": [
+        {
+          "id": "M6",
+          "result": "killed"
+        }
+      ],
+      "scenario_hits": {
+        "reset": 29
+      }
+    },
+    {
+      "id": "EX-12",
+      "name": "reset_state__ex12",
+      "milestone": "V1",
+      "desc": {
+        "goal": "At a rising edge with rst = 1, empty becomes 1.",
+        "stimulus": "test_reset_state: after reset the FIFO is empty, count 0, dout 0, no flags",
+        "check": "every output compared with the cycle-accurate golden model on every clock (scoreboard)"
+      },
+      "tests": [
+        "test_reset_state",
+        "test_random_regression"
+      ],
+      "result": "pass",
+      "result_attempt_1": "pass",
+      "mutants": [
+        {
+          "id": "M6",
+          "result": "killed"
+        }
+      ],
+      "scenario_hits": {
+        "reset": 29
+      }
+    },
+    {
+      "id": "EX-13",
+      "name": "reset_state__ex13",
+      "milestone": "V1",
+      "desc": {
+        "goal": "At a rising edge with rst = 1, dout becomes 00h.",
+        "stimulus": "test_reset_state: after reset the FIFO is empty, count 0, dout 0, no flags",
+        "check": "every output compared with the cycle-accurate golden model on every clock (scoreboard)"
+      },
+      "tests": [
+        "test_reset_state",
+        "test_random_regression"
+      ],
+      "result": "pass",
+      "result_attempt_1": "pass",
+      "mutants": [
+        {
+          "id": "M6",
+          "result": "killed"
+        }
+      ],
+      "scenario_hits": {
+        "reset": 29
+      }
+    },
+    {
+      "id": "EX-14",
+      "name": "reset_state__ex14",
+      "milestone": "V1",
+      "desc": {
+        "goal": "At a rising edge with rst = 1, overflow becomes 0.",
+        "stimulus": "test_reset_state: after reset the FIFO is empty, count 0, dout 0, no flags",
+        "check": "every output compared with the cycle-accurate golden model on every clock (scoreboard)"
+      },
+      "tests": [
+        "test_reset_state",
+        "test_random_regression"
+      ],
+      "result": "pass",
+      "result_attempt_1": "pass",
+      "mutants": [
+        {
+          "id": "M6",
+          "result": "killed"
+        }
+      ],
+      "scenario_hits": {
+        "reset": 29
+      }
+    },
+    {
+      "id": "EX-15",
+      "name": "reset_state__ex15",
+      "milestone": "V1",
+      "desc": {
+        "goal": "At a rising edge with rst = 1, underflow becomes 0.",
+        "stimulus": "test_reset_state: after reset the FIFO is empty, count 0, dout 0, no flags",
+        "check": "every output compared with the cycle-accurate golden model on every clock (scoreboard)"
+      },
+      "tests": [
+        "test_reset_state",
+        "test_random_regression"
+      ],
+      "result": "pass",
+      "result_attempt_1": "pass",
+      "mutants": [
+        {
+          "id": "M6",
+          "result": "killed"
+        }
+      ],
+      "scenario_hits": {
+        "reset": 29
+      }
+    },
+    {
+      "id": "EX-16",
+      "name": "a_push_when_not_full",
+      "milestone": "—",
+      "desc": {
+        "goal": "A push when not full stores din and increments count by 1.",
+        "stimulus": "no test",
+        "check": "every output compared with the cycle-accurate golden model on every clock (scoreboard)"
+      },
+      "tests": [],
+      "result": "unverified",
+      "result_attempt_1": "untested",
+      "mutants": [],
+      "scenario_hits": "not measured"
+    },
+    {
+      "id": "EX-17",
+      "name": "overflow_write_when_full__ex17",
+      "milestone": "V2",
+      "desc": {
+        "goal": "A push while full with no pop is dropped and overflow pulses for one clock.",
+        "stimulus": "test_overflow: a write when full (no read) is ignored and flags overflow",
+        "check": "every output compared with the cycle-accurate golden model on every clock (scoreboard)"
+      },
+      "tests": [
+        "test_overflow",
+        "test_random_regression"
+      ],
+      "result": "pass",
+      "result_attempt_1": "pass",
+      "mutants": [],
+      "scenario_hits": {
+        "write_when_full": 22,
+        "overflow_pulse": 22
+      }
+    },
+    {
+      "id": "EX-18",
+      "name": "a_pop_when_not_empty",
+      "milestone": "—",
+      "desc": {
+        "goal": "A pop when not empty makes the oldest word appear on dout and decrements count by 1.",
+        "stimulus": "no test",
+        "check": "every output compared with the cycle-accurate golden model on every clock (scoreboard)"
+      },
+      "tests": [],
+      "result": "unverified",
+      "result_attempt_1": "untested",
+      "mutants": [],
+      "scenario_hits": "not measured"
+    },
+    {
+      "id": "EX-19",
+      "name": "underflow_read_when_empty__ex19",
+      "milestone": "V2",
+      "desc": {
+        "goal": "A pop while empty is ignored and dout keeps its old value.",
+        "stimulus": "test_underflow: a read when empty is ignored, flags underflow, dout holds",
+        "check": "every output compared with the cycle-accurate golden model on every clock (scoreboard)"
+      },
+      "tests": [
+        "test_underflow",
+        "test_random_regression"
+      ],
+      "result": "pass",
+      "result_attempt_1": "pass",
+      "mutants": [
+        {
+          "id": "M5",
+          "result": "killed"
+        }
+      ],
+      "scenario_hits": {
+        "read_when_empty": 141,
+        "underflow_pulse": 141
+      }
+    },
+    {
+      "id": "EX-20",
+      "name": "underflow_read_when_empty__ex20",
+      "milestone": "V2",
+      "desc": {
+        "goal": "A pop while empty causes underflow to pulse for one clock.",
+        "stimulus": "test_underflow: a read when empty is ignored, flags underflow, dout holds",
+        "check": "every output compared with the cycle-accurate golden model on every clock (scoreboard)"
+      },
+      "tests": [
+        "test_underflow",
+        "test_random_regression"
+      ],
+      "result": "pass",
+      "result_attempt_1": "pass",
+      "mutants": [
+        {
+          "id": "M5",
+          "result": "killed"
+        }
+      ],
+      "scenario_hits": {
+        "read_when_empty": 141,
+        "underflow_pulse": 141
+      }
+    },
+    {
+      "id": "EX-21",
+      "name": "read_write_when_full__ex21",
+      "milestone": "V2",
+      "desc": {
+        "goal": "Push plus pop while full outputs the oldest word and stores the new word with count staying at 16.",
+        "stimulus": "test_full_simultaneous_rw: read + write when full reads the oldest, stores the new word",
+        "check": "every output compared with the cycle-accurate golden model on every clock (scoreboard)"
+      },
+      "tests": [
+        "test_full_simultaneous_rw",
+        "test_random_regression"
+      ],
+      "result": "pass",
+      "result_attempt_1": "pass",
+      "mutants": [
+        {
+          "id": "M1",
+          "result": "killed"
+        }
+      ],
+      "scenario_hits": {
+        "rw_when_full": 10
+      }
+    },
+    {
+      "id": "EX-22",
+      "name": "push_plus_pop_while_full",
+      "milestone": "—",
+      "desc": {
+        "goal": "Push plus pop while full causes no overflow.",
+        "stimulus": "no test",
+        "check": "every output compared with the cycle-accurate golden model on every clock (scoreboard)"
+      },
+      "tests": [],
+      "result": "unverified",
+      "result_attempt_1": "untested",
+      "mutants": [],
+      "scenario_hits": "not measured"
+    },
+    {
+      "id": "EX-23",
+      "name": "read_write_when_empty__ex23",
+      "milestone": "V2",
+      "desc": {
+        "goal": "Push plus pop while empty stores the word and the pop is ignored.",
+        "stimulus": "test_empty_simultaneous_rw: read + write when empty stores the word and flags underflow",
+        "check": "every output compared with the cycle-accurate golden model on every clock (scoreboard)"
+      },
+      "tests": [
+        "test_empty_simultaneous_rw",
+        "test_random_regression"
+      ],
+      "result": "pass",
+      "result_attempt_1": "pass",
+      "mutants": [
+        {
+          "id": "M7",
+          "result": "killed"
+        }
+      ],
+      "scenario_hits": {
+        "rw_when_empty": 48
+      }
+    },
+    {
+      "id": "EX-24",
+      "name": "read_write_when_empty__ex24",
+      "milestone": "V2",
+      "desc": {
+        "goal": "Push plus pop while empty causes underflow to pulse.",
+        "stimulus": "test_empty_simultaneous_rw: read + write when empty stores the word and flags underflow",
+        "check": "every output compared with the cycle-accurate golden model on every clock (scoreboard)"
+      },
+      "tests": [
+        "test_empty_simultaneous_rw",
+        "test_random_regression"
+      ],
+      "result": "pass",
+      "result_attempt_1": "pass",
+      "mutants": [
+        {
+          "id": "M7",
+          "result": "killed"
+        }
+      ],
+      "scenario_hits": {
+        "rw_when_empty": 48
+      }
+    },
+    {
+      "id": "EX-25",
+      "name": "read_write_when_full__ex25",
+      "milestone": "V2",
+      "desc": {
+        "goal": "When holding 16 words with push and pop both high, each edge returns the oldest word on dout and stores din with count staying 16 and full staying 1.",
+        "stimulus": "test_full_simultaneous_rw: read + write when full reads the oldest, stores the new word",
+        "check": "every output compared with the cycle-accurate golden model on every clock (scoreboard)"
+      },
+      "tests": [
+        "test_full_simultaneous_rw",
+        "test_random_regression"
+      ],
+      "result": "pass",
+      "result_attempt_1": "pass",
+      "mutants": [
+        {
+          "id": "M1",
+          "result": "killed"
+        }
+      ],
+      "scenario_hits": {
+        "rw_when_full": 10
+      }
+    },
+    {
+      "id": "EX-26",
+      "name": "when_push_and_pop_are",
+      "milestone": "—",
+      "desc": {
+        "goal": "When push and pop are both high while full, overflow stays 0 because a pop frees the slot in the same cycle.",
+        "stimulus": "no test",
+        "check": "every output compared with the cycle-accurate golden model on every clock (scoreboard)"
+      },
+      "tests": [],
+      "result": "unverified",
+      "result_attempt_1": "untested",
+      "mutants": [],
+      "scenario_hits": "not measured"
+    },
+    {
+      "id": "EX-27",
+      "name": "pop_only_causes_count_to",
+      "milestone": "—",
+      "desc": {
+        "goal": "Pop only causes count to fall to 15 and full to drop.",
+        "stimulus": "no test",
+        "check": "every output compared with the cycle-accurate golden model on every clock (scoreboard)"
+      },
+      "tests": [],
+      "result": "unverified",
+      "result_attempt_1": "untested",
+      "mutants": [],
+      "scenario_hits": "not measured"
+    },
+    {
+      "id": "EX-28",
+      "name": "fifo_order_wraparound__ex28",
+      "milestone": "V2",
+      "desc": {
+        "goal": "Words leave in the order they were pushed, including when the internal address wraps from entry 15 back to entry 0.",
+        "stimulus": "test_wraparound_order: data leaves in write order across pointer wraparound",
+        "check": "every output compared with the cycle-accurate golden model on every clock (scoreboard)"
+      },
+      "tests": [
+        "test_wraparound_order",
+        "test_random_regression"
+      ],
+      "result": "pass",
+      "result_attempt_1": "pass",
+      "mutants": [
+        {
+          "id": "M4",
+          "result": "killed"
+        }
+      ],
+      "scenario_hits": {
+        "write_pointer_wrap": 96
+      }
+    },
+    {
+      "id": "EX-29",
+      "name": "almost_full_threshold__ex29",
+      "milestone": "V1",
+      "desc": {
+        "goal": "almost_full is high whenever count is 14 or more.",
+        "stimulus": "test_almost_full: almost_full is high exactly when count >= AF_THRESH",
+        "check": "every output compared with the cycle-accurate golden model on every clock (scoreboard)"
+      },
+      "tests": [
+        "test_almost_full",
+        "test_random_regression"
+      ],
+      "result": "pass",
+      "result_attempt_1": "pass",
+      "mutants": [
+        {
+          "id": "M3",
+          "result": "killed"
+        }
+      ],
+      "scenario_hits": {
+        "almost_full": 213
+      }
+    }
+  ],
+  "coverage_summary": {
+    "functional": {
+      "hit": 11,
+      "total": 11,
+      "zero": [],
+      "partial": false
+    },
+    "mutation": {
+      "killed": 8,
+      "injected": 8,
+      "survivors": []
+    },
+    "code": "not measured (Icarus Verilog has no built-in code coverage)"
+  },
+  "signoff": [
+    {
+      "id": "tests",
+      "criterion": "Every requirement has at least one test (no \"unverified\")",
+      "status": "not met",
+      "evidence": "19/29 testpoints have tests"
+    },
+    {
+      "id": "regression",
+      "criterion": "Full regression passes (all tests, recorded seed)",
+      "status": "met",
+      "evidence": "10/10 tests at the final attempt, random seed 20261105"
+    },
+    {
+      "id": "mutation",
+      "criterion": "Mutation score 100% (no survivors)",
+      "status": "met",
+      "evidence": "8/8 killed"
+    },
+    {
+      "id": "scenarios",
+      "criterion": "All defined scenarios hit at least once",
+      "status": "met",
+      "evidence": "11/11 scenarios hit"
+    },
+    {
+      "id": "suite",
+      "criterion": "Test suite unchanged since approval (suite hash matches)",
+      "status": "met",
+      "evidence": "run suite equals the current pin"
+    }
+  ],
+  "provenance": {
+    "label": "AI interpretation · not verified (diagnoses); attempts, results and cost are measured",
+    "providers": {
+      "generate": "replay",
+      "repair": "replay"
+    },
+    "models": [
+      "replay:muse-spark-1.3"
+    ],
+    "attempts": [
+      {
+        "n": 1,
+        "source": "model",
+        "model": "replay:muse-spark-1.3",
+        "status": "pass",
+        "result": "10/10",
+        "tokens_in": 0,
+        "tokens_out": 0,
+        "cost_usd": 0.0
+      }
+    ],
+    "diagnoses": [],
+    "cost_usd": 0.0,
+    "tokens": {
+      "in": 0,
+      "out": 0
+    }
+  },
   "run": {
     "run_id": "live03-pdf-replay1",
     "status": "pass",

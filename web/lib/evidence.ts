@@ -144,16 +144,20 @@ function planDir(id: string) {
   return id === "reference" ? path.join(ROOT, "reference") : path.join(ROOT, "runs", id);
 }
 
+// Plan outputs per run: <id>.md, .json, .csv (testpoints) and .hjson (OpenTitan-style testplan).
+const PLAN_FILE: Record<string, string> = { md: "verification_plan.md", json: "verification_plan.json",
+                                           csv: "verification_plan.csv", hjson: "testplan.hjson" };
+
 export function planFiles(): string[] {
   const idx = index();
   const ids = ["reference", ...idx.runs.flatMap((e: Json) => [e.live.run_id, e.replay?.run_id].filter(Boolean))];
-  return ids.filter((id) => fs.existsSync(path.join(planDir(id), "verification_plan.md")))
-    .flatMap((id) => [`${id}.md`, `${id}.json`]);
+  return ids.flatMap((id) => Object.entries(PLAN_FILE)
+    .filter(([, f]) => fs.existsSync(path.join(planDir(id), f))).map(([ext]) => `${id}.${ext}`));
 }
 
 export function planText(file: string): string {
   if (!planFiles().includes(file)) throw new Error(`no plan ${file}`);
-  const id = file.replace(/\.(md|json)$/, "");
-  return fs.readFileSync(path.join(planDir(id), `verification_plan.${file.endsWith(".md") ? "md" : "json"}`), "utf8");
+  const m = file.match(/^(.+)\.(md|json|csv|hjson)$/)!;
+  return fs.readFileSync(path.join(planDir(m[1]), PLAN_FILE[m[2]]), "utf8");
 }
 

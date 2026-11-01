@@ -2,6 +2,336 @@
   "label": "measured",
   "title": "Verification plan · sync_fifo · live02-m1",
   "generator": "verify/plan.py",
+  "format": "Vplan sections (ChipVerify) · OpenTitan testpoint fields · OpenTitan-style staged sign-off",
+  "date": "2026-10-31",
+  "spec": {
+    "file": "spec/fifo_spec.md",
+    "sha256": "cc9459ba56ef28436ebf8b18b15e1f770a95cb7cb53bd462fdd18d4d1574d156",
+    "matches_run": false
+  },
+  "random_seed": "20261105",
+  "scope": {
+    "in": "functional behaviour of sync_fifo per spec/fifo_spec.md",
+    "out": [
+      "timing, synthesis, area and power",
+      "clock-domain crossing (single clock by design)",
+      "formal proof",
+      "gate-level simulation",
+      "code coverage (Icarus Verilog has no built-in code coverage)"
+    ]
+  },
+  "methodology": [
+    "cycle-accurate Python reference model compared on every clock (scoreboard)",
+    "directed tests per requirement",
+    "constrained-random regression, 3000 cycles, seed 20261105",
+    "mutation analysis with hand-written mutants to measure test strength",
+    "tests frozen and hash-pinned before RTL generation; the AI may only change RTL",
+    "parameter sweep at other WIDTH/DEPTH/AF_THRESH sets, never shown to the model"
+  ],
+  "testpoints": [
+    {
+      "id": "REQ-01",
+      "name": "reset_state",
+      "milestone": "V1",
+      "desc": {
+        "goal": "Synchronous reset empties the FIFO: count 0, empty 1, dout 0, overflow and underflow 0.",
+        "stimulus": "test_reset_state: after reset the FIFO is empty, count 0, dout 0, no flags",
+        "check": "every output compared with the cycle-accurate golden model on every clock (scoreboard)"
+      },
+      "tests": [
+        "test_reset_state",
+        "test_random_regression"
+      ],
+      "result": "pass",
+      "result_attempt_1": "pass",
+      "mutants": [
+        {
+          "id": "M6",
+          "result": "unknown"
+        }
+      ],
+      "scenario_hits": "not measured"
+    },
+    {
+      "id": "REQ-02",
+      "name": "fifo_order_wraparound",
+      "milestone": "V2",
+      "desc": {
+        "goal": "Data is read out in the order it was written, including across pointer wraparound.",
+        "stimulus": "test_wraparound_order: data leaves in write order across pointer wraparound",
+        "check": "every output compared with the cycle-accurate golden model on every clock (scoreboard)"
+      },
+      "tests": [
+        "test_wraparound_order",
+        "test_random_regression"
+      ],
+      "result": "pass",
+      "result_attempt_1": "pass",
+      "mutants": [
+        {
+          "id": "M4",
+          "result": "unknown"
+        }
+      ],
+      "scenario_hits": "not measured"
+    },
+    {
+      "id": "REQ-03",
+      "name": "full_empty_flags",
+      "milestone": "V1",
+      "desc": {
+        "goal": "full is 1 exactly when DEPTH entries are stored; empty is 1 exactly when none are.",
+        "stimulus": "test_full_flag: full asserts exactly when DEPTH entries are stored; test_empty_flag: empty asserts exactly when the last entry is read",
+        "check": "every output compared with the cycle-accurate golden model on every clock (scoreboard)"
+      },
+      "tests": [
+        "test_full_flag",
+        "test_empty_flag",
+        "test_random_regression"
+      ],
+      "result": "pass",
+      "result_attempt_1": "pass",
+      "mutants": [
+        {
+          "id": "M2",
+          "result": "unknown"
+        }
+      ],
+      "scenario_hits": "not measured"
+    },
+    {
+      "id": "REQ-04",
+      "name": "overflow_write_when_full",
+      "milestone": "V2",
+      "desc": {
+        "goal": "A write when full with no read is ignored and pulses overflow for one cycle.",
+        "stimulus": "test_overflow: a write when full (no read) is ignored and flags overflow",
+        "check": "every output compared with the cycle-accurate golden model on every clock (scoreboard)"
+      },
+      "tests": [
+        "test_overflow",
+        "test_random_regression"
+      ],
+      "result": "pass",
+      "result_attempt_1": "pass",
+      "mutants": [],
+      "scenario_hits": "not measured"
+    },
+    {
+      "id": "REQ-05",
+      "name": "underflow_read_when_empty",
+      "milestone": "V2",
+      "desc": {
+        "goal": "A read when empty is ignored, pulses underflow for one cycle, and dout holds its value.",
+        "stimulus": "test_underflow: a read when empty is ignored, flags underflow, dout holds",
+        "check": "every output compared with the cycle-accurate golden model on every clock (scoreboard)"
+      },
+      "tests": [
+        "test_underflow",
+        "test_random_regression"
+      ],
+      "result": "pass",
+      "result_attempt_1": "pass",
+      "mutants": [
+        {
+          "id": "M5",
+          "result": "unknown"
+        }
+      ],
+      "scenario_hits": "not measured"
+    },
+    {
+      "id": "REQ-06",
+      "name": "read_write_when_full",
+      "milestone": "V2",
+      "desc": {
+        "goal": "Read and write in the same cycle when full: the oldest word is read, the new word is stored, count stays DEPTH.",
+        "stimulus": "test_full_simultaneous_rw: read + write when full reads the oldest, stores the new word",
+        "check": "every output compared with the cycle-accurate golden model on every clock (scoreboard)"
+      },
+      "tests": [
+        "test_full_simultaneous_rw",
+        "test_random_regression"
+      ],
+      "result": "pass",
+      "result_attempt_1": "fail",
+      "mutants": [
+        {
+          "id": "M1",
+          "result": "unknown"
+        }
+      ],
+      "scenario_hits": "not measured"
+    },
+    {
+      "id": "REQ-07",
+      "name": "read_write_when_empty",
+      "milestone": "V2",
+      "desc": {
+        "goal": "Read and write in the same cycle when empty: the word is stored, the read is ignored, underflow pulses.",
+        "stimulus": "test_empty_simultaneous_rw: read + write when empty stores the word and flags underflow",
+        "check": "every output compared with the cycle-accurate golden model on every clock (scoreboard)"
+      },
+      "tests": [
+        "test_empty_simultaneous_rw",
+        "test_random_regression"
+      ],
+      "result": "pass",
+      "result_attempt_1": "pass",
+      "mutants": [
+        {
+          "id": "M7",
+          "result": "unknown"
+        }
+      ],
+      "scenario_hits": "not measured"
+    },
+    {
+      "id": "REQ-08",
+      "name": "almost_full_threshold",
+      "milestone": "V1",
+      "desc": {
+        "goal": "almost_full is 1 exactly when count >= AF_THRESH.",
+        "stimulus": "test_almost_full: almost_full is high exactly when count >= AF_THRESH",
+        "check": "every output compared with the cycle-accurate golden model on every clock (scoreboard)"
+      },
+      "tests": [
+        "test_almost_full",
+        "test_random_regression"
+      ],
+      "result": "pass",
+      "result_attempt_1": "pass",
+      "mutants": [
+        {
+          "id": "M3",
+          "result": "unknown"
+        }
+      ],
+      "scenario_hits": "not measured"
+    },
+    {
+      "id": "REQ-09",
+      "name": "count_tracks_occupancy",
+      "milestone": "V1",
+      "desc": {
+        "goal": "count equals the number of stored entries after every cycle.",
+        "stimulus": "test_full_flag: full asserts exactly when DEPTH entries are stored",
+        "check": "every output compared with the cycle-accurate golden model on every clock (scoreboard)"
+      },
+      "tests": [
+        "test_full_flag",
+        "test_random_regression"
+      ],
+      "result": "pass",
+      "result_attempt_1": "pass",
+      "mutants": [],
+      "scenario_hits": "not measured"
+    },
+    {
+      "id": "REQ-10",
+      "name": "no_overflow_read_write_when_full",
+      "milestone": "V2",
+      "desc": {
+        "goal": "A write when full together with a read in the same cycle is accepted: overflow stays 0.",
+        "stimulus": "test_full_simultaneous_rw: read + write when full reads the oldest, stores the new word",
+        "check": "every output compared with the cycle-accurate golden model on every clock (scoreboard)"
+      },
+      "tests": [
+        "test_full_simultaneous_rw",
+        "test_random_regression"
+      ],
+      "result": "pass",
+      "result_attempt_1": "fail",
+      "mutants": [
+        {
+          "id": "M8",
+          "result": "unknown"
+        }
+      ],
+      "scenario_hits": "not measured"
+    }
+  ],
+  "coverage_summary": {
+    "functional": "not measured",
+    "mutation": "not measured",
+    "code": "not measured (Icarus Verilog has no built-in code coverage)"
+  },
+  "signoff": [
+    {
+      "id": "tests",
+      "criterion": "Every requirement has at least one test (no \"unverified\")",
+      "status": "met",
+      "evidence": "10/10 testpoints have tests"
+    },
+    {
+      "id": "regression",
+      "criterion": "Full regression passes (all tests, recorded seed)",
+      "status": "met",
+      "evidence": "10/10 tests at the final attempt, random seed 20261105"
+    },
+    {
+      "id": "mutation",
+      "criterion": "Mutation score 100% (no survivors)",
+      "status": "not measured",
+      "evidence": "no mutation check for this suite hash"
+    },
+    {
+      "id": "scenarios",
+      "criterion": "All defined scenarios hit at least once",
+      "status": "not measured",
+      "evidence": "scenario counts not taken for this RTL"
+    },
+    {
+      "id": "suite",
+      "criterion": "Test suite unchanged since approval (suite hash matches)",
+      "status": "not met",
+      "evidence": "run used 7d3b6b582d0a…, current pin 4adc7da757ed… (suite changed after this run)"
+    }
+  ],
+  "provenance": {
+    "label": "AI interpretation · not verified (diagnoses); attempts, results and cost are measured",
+    "providers": {
+      "generate": "meta",
+      "repair": "meta"
+    },
+    "models": [
+      "muse-spark-1.3"
+    ],
+    "attempts": [
+      {
+        "n": 1,
+        "source": "seeded",
+        "model": null,
+        "status": "fail",
+        "result": "8/10",
+        "tokens_in": null,
+        "tokens_out": null,
+        "cost_usd": null
+      },
+      {
+        "n": 2,
+        "source": "model",
+        "model": "muse-spark-1.3",
+        "status": "pass",
+        "result": "10/10",
+        "tokens_in": 2131,
+        "tokens_out": 1241,
+        "cost_usd": 0.007938
+      }
+    ],
+    "diagnoses": [
+      {
+        "attempt": 2,
+        "model": "muse-spark-1.3",
+        "text": "`do_write` was `wr_en && !full`, so a simultaneous read+write when full dropped the write and decremented `count`; spec requires `do_write = wr_en && (!full || rd_en)` so both pointers advance and count stays at DEPTH."
+      }
+    ],
+    "cost_usd": 0.007938,
+    "tokens": {
+      "in": 2131,
+      "out": 1241
+    }
+  },
   "run": {
     "run_id": "live02-m1",
     "status": "pass",

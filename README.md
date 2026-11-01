@@ -30,7 +30,7 @@ Built for the Meta Global AI Developer Hackathon 2026 (Startup Track, "Push the 
 | Coverage gaps: mutation check with each test left out, single-test kills, requirements no mutant targets (`verify/gaps.py`, `make gaps`) | done; directed tests alone miss M1/M8 without `test_full_simultaneous_rw`; REQ-04 and REQ-09 have no mutant |
 | Scenario counters: how often the frozen suite reaches full, empty, overflow/underflow cases, simultaneous read+write, wraparound (`verify/coverage.py`, `make coverage`) | done; every scenario reached on the reference and all exported RTLs |
 | Waveform and FIFO replay of every attempt: per-cycle trace of the frozen tests with the golden model's expected values, drawn in the Run Console (`verify/trace.py`, `make trace`) | done; measured from the simulator, model RTL traced in Docker |
-| Verification plan per run: requirement → tests → mutants → measured result, from stored files only (`verify/plan.py`, `make plan`, `make plan-ref`) | done; in the evidence bundle and downloadable from the board |
+| Verification plan per run in the industry shape (Vplan sections, OpenTitan-style testpoints and sign-off, plus mutation evidence and AI provenance) as `.md`, `.csv` and `testplan.hjson`, from stored files only (`verify/plan.py`, `make plan`; format in `docs/verification-plan-format.md`) | done; in the evidence bundle and downloadable from the board |
 
 ## Run
 

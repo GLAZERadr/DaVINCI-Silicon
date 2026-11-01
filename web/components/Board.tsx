@@ -314,7 +314,7 @@ export default function Board({ data, runs }: { data: BoardData; runs: RunSummar
             <h2>About</h2>
             <p className="side-text">A verification plan with evidence for AI-written RTL: requirements traced to frozen, mutation-tested simulations; every attempt measured.</p>
             <ul className="side-links">
-              {data.planId && <li><a href={`/plans/${data.planId}.md`} download>Verification plan (.md)</a> · <a href={`/plans/${data.planId}.json`} download>.json</a></li>}
+              {data.planId && <li>Verification plan: <a href={`/plans/${data.planId}.md`} download>.md</a> · <a href={`/plans/${data.planId}.csv`} download>.csv</a> · <a href={`/plans/${data.planId}.hjson`} download>testplan.hjson</a> · <a href={`/plans/${data.planId}.json`} download>.json</a></li>}
               {data.referencePlan && <li><a href="/plans/reference.md" download>Reference RTL plan</a></li>}
               <li><a href="https://github.com/GLAZERadr/DaVINCI-Silicon/tree/main/evidence">Raw evidence on GitHub</a></li>
             </ul>

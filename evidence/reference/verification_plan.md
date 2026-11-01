@@ -1,57 +1,64 @@
 # Verification plan · sync_fifo · reference
 
-Every result below is **measured** (simulator output from stored files). No AI interpretation appears in this plan.
+Every result below is **measured** from stored simulator output, except the golden model's expected values (the reference) and the diagnoses in §7, which are labelled *AI interpretation · not verified*. Anything not measured says so.
 
-## Sources
+Format: Vplan sections (ChipVerify) · OpenTitan testpoint fields · OpenTitan-style staged sign-off.
+
+## 1. Header
 
 | | |
 | --- | --- |
-| Run | `reference` · status `pass` · attempts 1 |
+| Block | `sync_fifo` · WIDTH=8, DEPTH=16, AF_THRESH=14 |
+| Spec | `spec/fifo_spec.md` · sha256 `6e04e4641dc412f506396b1271441ba94d847eac5ec86a121431dbc465444126` |
 | Frozen suite | `4adc7da757edd72117db7a297aa7900d5744361903b2b9d1aea339da5dcc7db1` |
+| Simulator | Icarus Verilog version 13.0 (stable) (v13_0) |
+| Date | — |
+| Run | `reference` · status `pass` · attempts 1 |
 | Parameter sweep | `b73c1b823e400e72eaf76f91d72a90aa370f56711604f309f1037ed5710e16e2` |
 | Requirements | `7ba5f39c3e28a36b9c9248e13a07dbe5944ce2e5da36589997e7d471140850da` |
 | Mutant set | `3e17913c1b2117f60c4e2a69a6b28775d8ab5e2e4116b16c8fa46957baf68da1` |
 | Final RTL | `6034c49a727be76474d3ec227252b8038d6122e788fc3c3c374c3741dc56313d` |
-| Simulator | Icarus Verilog version 13.0 (stable) (v13_0) |
-| Parameters | WIDTH=8, DEPTH=16, AF_THRESH=14 |
 
-## Gates at the final attempt
+## 2. Scope
 
-- **G1** static checks + `iverilog -g2001 -Wall`: ○ Not recorded
-- **G2** frozen suite: ✓ Pass 10/10
-- **G3** parameter sweep (never shown to the model): ✓ Pass
+- **In scope:** functional behaviour of sync_fifo per spec/fifo_spec.md.
+- **Out of scope:** timing, synthesis, area and power; clock-domain crossing (single clock by design); formal proof; gate-level simulation; code coverage (Icarus Verilog has no built-in code coverage).
 
-## Requirements → tests → mutants → result
+## 3. Methodology
 
-| Req | Requirement | Directed tests | Mutants targeting it | Attempt 1 | Final |
-| --- | --- | --- | --- | --- | --- |
-| REQ-01 | Synchronous reset empties the FIFO: count 0, empty 1, dout 0, overflow and underflow 0. | `test_reset_state` | M6 ✓ killed | ✓ Pass | ✓ Pass |
-| REQ-02 | Data is read out in the order it was written, including across pointer wraparound. | `test_wraparound_order` | M4 ✓ killed | ✓ Pass | ✓ Pass |
-| REQ-03 | full is 1 exactly when DEPTH entries are stored; empty is 1 exactly when none are. | `test_full_flag`<br>`test_empty_flag` | M2 ✓ killed | ✓ Pass | ✓ Pass |
-| REQ-04 | A write when full with no read is ignored and pulses overflow for one cycle. | `test_overflow` | — | ✓ Pass | ✓ Pass |
-| REQ-05 | A read when empty is ignored, pulses underflow for one cycle, and dout holds its value. | `test_underflow` | M5 ✓ killed | ✓ Pass | ✓ Pass |
-| REQ-06 | Read and write in the same cycle when full: the oldest word is read, the new word is stored, count stays DEPTH. | `test_full_simultaneous_rw` | M1 ✓ killed | ✓ Pass | ✓ Pass |
-| REQ-07 | Read and write in the same cycle when empty: the word is stored, the read is ignored, underflow pulses. | `test_empty_simultaneous_rw` | M7 ✓ killed | ✓ Pass | ✓ Pass |
-| REQ-08 | almost_full is 1 exactly when count >= AF_THRESH. | `test_almost_full` | M3 ✓ killed | ✓ Pass | ✓ Pass |
-| REQ-09 | count equals the number of stored entries after every cycle. | `test_full_flag` | — | ✓ Pass | ✓ Pass |
-| REQ-10 | A write when full together with a read in the same cycle is accepted: overflow stays 0. | `test_full_simultaneous_rw` | M8 ✓ killed | ✓ Pass | ✓ Pass |
+- cycle-accurate Python reference model compared on every clock (scoreboard)
+- directed tests per requirement
+- constrained-random regression, 3000 cycles, seed 20261105
+- mutation analysis with hand-written mutants to measure test strength
+- tests frozen and hash-pinned before RTL generation; the AI may only change RTL
+- parameter sweep at other WIDTH/DEPTH/AF_THRESH sets, never shown to the model
 
-Results are per test: a test shared by two requirements marks both rows.
+## 4. Testpoints
 
-`test_random_regression` runs 3000 random cycles against the golden model and covers REQ-01, REQ-02, REQ-03, REQ-04, REQ-05, REQ-06, REQ-07, REQ-08, REQ-09, REQ-10. It is reported once here rather than in every row.
+Milestones: **V1** reset and basic flags · **V2** corner cases (full with read/write, wraparound, overflow/underflow). Result is the final attempt; a different attempt-1 result is noted.
 
-- Attempt 1: ✓ Pass
-- Final: ✓ Pass
+| ID | Name | MS | Goal · stimulus · check | Tests | Result | Mutants | Scenario hits |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| REQ-01 | `reset_state` | V1 | **Goal:** Synchronous reset empties the FIFO: count 0, empty 1, dout 0, overflow and underflow 0.<br>**Stimulus:** test_reset_state: after reset the FIFO is empty, count 0, dout 0, no flags<br>**Check:** every output compared with the cycle-accurate golden model on every clock (scoreboard) | `test_reset_state`<br>`test_random_regression` | ✓ Pass | M6 ✓ killed | reset 29 |
+| REQ-02 | `fifo_order_wraparound` | V2 | **Goal:** Data is read out in the order it was written, including across pointer wraparound.<br>**Stimulus:** test_wraparound_order: data leaves in write order across pointer wraparound<br>**Check:** every output compared with the cycle-accurate golden model on every clock (scoreboard) | `test_wraparound_order`<br>`test_random_regression` | ✓ Pass | M4 ✓ killed | write_pointer_wrap 96 |
+| REQ-03 | `full_empty_flags` | V1 | **Goal:** full is 1 exactly when DEPTH entries are stored; empty is 1 exactly when none are.<br>**Stimulus:** test_full_flag: full asserts exactly when DEPTH entries are stored; test_empty_flag: empty asserts exactly when the last entry is read<br>**Check:** every output compared with the cycle-accurate golden model on every clock (scoreboard) | `test_full_flag`<br>`test_empty_flag`<br>`test_random_regression` | ✓ Pass | M2 ✓ killed | full 67, empty 320 |
+| REQ-04 | `overflow_write_when_full` | V2 | **Goal:** A write when full with no read is ignored and pulses overflow for one cycle.<br>**Stimulus:** test_overflow: a write when full (no read) is ignored and flags overflow<br>**Check:** every output compared with the cycle-accurate golden model on every clock (scoreboard) | `test_overflow`<br>`test_random_regression` | ✓ Pass | — | write_when_full 22, overflow_pulse 22 |
+| REQ-05 | `underflow_read_when_empty` | V2 | **Goal:** A read when empty is ignored, pulses underflow for one cycle, and dout holds its value.<br>**Stimulus:** test_underflow: a read when empty is ignored, flags underflow, dout holds<br>**Check:** every output compared with the cycle-accurate golden model on every clock (scoreboard) | `test_underflow`<br>`test_random_regression` | ✓ Pass | M5 ✓ killed | read_when_empty 141, underflow_pulse 141 |
+| REQ-06 | `read_write_when_full` | V2 | **Goal:** Read and write in the same cycle when full: the oldest word is read, the new word is stored, count stays DEPTH.<br>**Stimulus:** test_full_simultaneous_rw: read + write when full reads the oldest, stores the new word<br>**Check:** every output compared with the cycle-accurate golden model on every clock (scoreboard) | `test_full_simultaneous_rw`<br>`test_random_regression` | ✓ Pass | M1 ✓ killed | rw_when_full 10 |
+| REQ-07 | `read_write_when_empty` | V2 | **Goal:** Read and write in the same cycle when empty: the word is stored, the read is ignored, underflow pulses.<br>**Stimulus:** test_empty_simultaneous_rw: read + write when empty stores the word and flags underflow<br>**Check:** every output compared with the cycle-accurate golden model on every clock (scoreboard) | `test_empty_simultaneous_rw`<br>`test_random_regression` | ✓ Pass | M7 ✓ killed | rw_when_empty 48 |
+| REQ-08 | `almost_full_threshold` | V1 | **Goal:** almost_full is 1 exactly when count >= AF_THRESH.<br>**Stimulus:** test_almost_full: almost_full is high exactly when count >= AF_THRESH<br>**Check:** every output compared with the cycle-accurate golden model on every clock (scoreboard) | `test_almost_full`<br>`test_random_regression` | ✓ Pass | M3 ✓ killed | almost_full 213 |
+| REQ-09 | `count_tracks_occupancy` | V1 | **Goal:** count equals the number of stored entries after every cycle.<br>**Stimulus:** test_full_flag: full asserts exactly when DEPTH entries are stored<br>**Check:** every output compared with the cycle-accurate golden model on every clock (scoreboard) | `test_full_flag`<br>`test_random_regression` | ✓ Pass | — | no scenario defined |
+| REQ-10 | `no_overflow_read_write_when_full` | V2 | **Goal:** A write when full together with a read in the same cycle is accepted: overflow stays 0.<br>**Stimulus:** test_full_simultaneous_rw: read + write when full reads the oldest, stores the new word<br>**Check:** every output compared with the cycle-accurate golden model on every clock (scoreboard) | `test_full_simultaneous_rw`<br>`test_random_regression` | ✓ Pass | M8 ✓ killed | rw_when_full 10 |
 
-## Mutation check (qualifies the suite, measured against the reference RTL)
+`test_random_regression` (3000 random cycles, seed 20261105) covers REQ-01, REQ-02, REQ-03, REQ-04, REQ-05, REQ-06, REQ-07, REQ-08, REQ-09, REQ-10; a test shared by several requirements marks each of them. Attempt 1: ✓ Pass · final: ✓ Pass.
 
-8/8 hand-written mutants killed.
+## 5. Coverage summary
 
-Weak-test check: with `test_full_simultaneous_rw`, `test_random_regression` left out, 6/8 killed (survivors: M1, M8); restored suite 8/8.
+- **Functional (scenario) coverage:** 11/11 scenarios hit; at 0 hits: none
+- **Mutation score:** 8/8 killed; survivors: none (hand-written mutants in the reference RTL; describes the suite, not this RTL)
+- **Code coverage:** not measured (Icarus Verilog has no built-in code coverage).
 
-## Scenario coverage (final RTL)
-
-How often the frozen suite drove the final RTL into each situation, counted at every rising clock edge over 3253 cycles from a waveform of the same tests (`verify/coverage.py`, flags as the design reported them).
+### 5.1 Scenario counts (final RTL, 3253 cycles, `verify/coverage.py`)
 
 | Scenario | Count |
 | --- | --- |
@@ -67,34 +74,36 @@ How often the frozen suite drove the final RTL into each situation, counted at e
 | underflow output high | 141 |
 | accepted writes since reset reach a multiple of DEPTH=16 | 96 |
 
-Never reached: none.
+### 5.2 Weak-test check
 
-## Plan gaps (measured against the reference RTL)
+With `test_full_simultaneous_rw`, `test_random_regression` left out, 6/8 killed (survivors: M1, M8); restored suite 8/8.
+
+### 5.3 Test-plan gaps (mutation analysis with tests left out)
 
 - Mutants caught by only one directed test: M1, M8
 - Mutants caught only by the random regression: none
-- Requirements no mutant targets (nothing shows their tests would catch a bug): REQ-04, REQ-09
-- Re-simulated with tests left out: 19 suites; prediction from the full run's killers matched every one.
+- Requirements no mutant targets: REQ-04, REQ-09
+- 19 suites re-simulated with tests left out; prediction from the full run's killers matched every one.
+- Without `test_full_simultaneous_rw`, `test_random_regression`: 6/8 killed, ✕ M1, M8 survive
 
-| Mutant | Targets | Directed tests that kill it | Killed by its own requirement's tests |
-| --- | --- | --- | --- |
-| M1 | REQ-06 | `test_full_simultaneous_rw` ○ only one | `test_full_simultaneous_rw` |
-| M2 | REQ-03 | `test_almost_full`, `test_full_flag`, `test_full_simultaneous_rw`, `test_overflow`, `test_wraparound_order` | `test_full_flag` |
-| M3 | REQ-08 | `test_almost_full`, `test_full_flag`, `test_full_simultaneous_rw`, `test_overflow`, `test_wraparound_order` | `test_almost_full` |
-| M4 | REQ-02 | `test_almost_full`, `test_full_simultaneous_rw`, `test_overflow`, `test_wraparound_order` | `test_wraparound_order` |
-| M5 | REQ-05 | `test_empty_simultaneous_rw`, `test_underflow` | `test_underflow` |
-| M6 | REQ-01 | `test_almost_full`, `test_empty_flag`, `test_empty_simultaneous_rw`, `test_full_flag`, `test_full_simultaneous_rw`, `test_overflow`, `test_reset_state`, `test_underflow`, `test_wraparound_order` | `test_reset_state` |
-| M7 | REQ-07 | `test_empty_simultaneous_rw`, `test_underflow` | `test_empty_simultaneous_rw` |
-| M8 | REQ-10 | `test_full_simultaneous_rw` ○ only one | `test_full_simultaneous_rw` |
+## 6. Sign-off status
 
-Suites that let a mutant survive:
+DaVINCI-scaled, modelled on OpenTitan's V2 checklist. Each line is met / not met from stored data, or not measured.
 
-| Left out | Killed | Survivors |
+| Criterion | Status | Evidence |
 | --- | --- | --- |
-| `test_full_simultaneous_rw`, `test_random_regression` | 6/8 | ✕ M1, M8 |
+| Every requirement has at least one test (no "unverified") | ✓ met | 10/10 testpoints have tests |
+| Full regression passes (all tests, recorded seed) | ✓ met | 10/10 tests at the final attempt, random seed 20261105 |
+| Mutation score 100% (no survivors) | ✓ met | 8/8 killed |
+| All defined scenarios hit at least once | ✓ met | 11/11 scenarios hit |
+| Test suite unchanged since approval (suite hash matches) | ✓ met | run suite equals the current pin |
 
-## Every attempt
+Run gates at the final attempt: **G1** static checks + `iverilog -g2001 -Wall` ○ Not recorded · **G2** frozen suite ✓ Pass 10/10 · **G3** parameter sweep (never shown to the model) ✓ Pass.
 
-| # | Source | Status | Frozen suite |
-| --- | --- | --- | --- |
-| 1 | reference | pass | 10/10 |
+## 7. AI provenance
+
+Model(s): none (no model call) · providers: generate `—`, repair `—` · total cost $0.0000 (measured, from the ledger).
+
+| # | Source | Model | Status | Frozen suite | Tokens in/out | Cost |
+| --- | --- | --- | --- | --- | --- | --- |
+| 1 | reference | — | pass | 10/10 | — | — |

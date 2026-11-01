@@ -39,6 +39,8 @@ A generated plan document per run, and one for the reference RTL.
 - Output: `verification_plan.md` and `verification_plan.json` next to `run.json`, a `make plan` target, included in the evidence bundle, and a download link on the Evidence Board.
 - Done when: the export is reproducible byte-for-byte from the stored run, and a hand check on `live02-m1` matches the board.
 
+- **Format update (1 Nov):** the plan now follows `docs/verification-plan-format.md` (Vplan sections, OpenTitan testpoints, staged sign-off, AI provenance) and is also written as `verification_plan.csv` and `testplan.hjson`.
+
 ### P2 – Coverage-gap mode
 Show where the plan is weak instead of only where the RTL fails.
 - For each requirement: which mutants only one test kills (a single point of failure), and which requirements have no directed test of their own (covered only by the random regression).
