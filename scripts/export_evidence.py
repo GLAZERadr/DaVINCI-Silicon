@@ -21,6 +21,8 @@ sys.path.insert(0, str(ROOT / "verify"))
 import plan  # noqa: E402
 RUNS = ROOT / "runs"
 LIVE = {"meta", "baseten"}
+# S6/S10 physical estimates: only the small summaries (never netlists, GDS or flow logs).
+PHYSICAL_FILES = ["sta/sta.json", "layout/summary.json"]
 ATTEMPT_FILES = ["prompt.json", "response.md", "sync_fifo.v", "sim/verdict.json", "sweep/sweep.json", "trace/trace.json"]
 
 
@@ -58,6 +60,9 @@ def export_run(run_id: str, out: Path) -> dict:
         copy_text(src / "area" / "area.json", dst / "area" / "area.json")
     if (src / "formal" / "formal.json").exists():  # S5/S9 formal checks (verify/formal.py)
         copy_text(src / "formal" / "formal.json", dst / "formal" / "formal.json")
+    for f in PHYSICAL_FILES:
+        if (src / f).exists():
+            copy_text(src / f, dst / f)
     for a in r["attempts"]:
         for f in ATTEMPT_FILES:
             p = src / f"attempt_{a['n']}" / f
@@ -131,6 +136,9 @@ def main():
             copy_text(RUNS / "reference" / "coverage" / "coverage.json", out / "reference" / "coverage" / "coverage.json")
         if (RUNS / "reference" / "area" / "area.json").exists():
             copy_text(RUNS / "reference" / "area" / "area.json", out / "reference" / "area" / "area.json")
+        for f in PHYSICAL_FILES:
+            if (RUNS / "reference" / f).exists():
+                copy_text(RUNS / "reference" / f, out / "reference" / f)
         plan.write(json.loads(scrub(json.dumps(plan.plan_for(RUNS / "reference", reference=True)))), out / "reference")
         index["reference_plan"] = True
     else:

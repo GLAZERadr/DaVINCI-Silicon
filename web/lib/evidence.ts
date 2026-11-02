@@ -52,7 +52,18 @@ export type Board = {
   gaps: Json | null; // coverage-gap check (verify/gaps.py), only when measured on the pinned suite
   area: Area | null; // S2: Yosys generic cell counts (verify/area.py), when stored
   formal: { run: Json | null; reference: Json | null }; // S5/S9 formal checks (verify/formal.py), when stored
+  physical: Physical | null; // S6/S10 summaries (verify/sta.py, verify/layout.py), only when stored
 };
+
+// S6 pre-layout (sta/sta.json) and S10 post-layout (layout/summary.json): reference RTL vs this run's final RTL.
+export type Physical = { runId: string; staRef: Json | null; staFinal: Json | null; layoutRef: Json | null; layoutFinal: Json | null };
+
+function physical(id: string, replayId?: string): Physical | null {
+  const pick = (f: string) => read(`runs/${id}/${f}`) ?? (replayId ? read(`runs/${replayId}/${f}`) : null);
+  const p = { runId: id, staRef: read("reference/sta/sta.json"), staFinal: pick("sta/sta.json"),
+              layoutRef: read("reference/layout/summary.json"), layoutFinal: pick("layout/summary.json") };
+  return p.staRef || p.staFinal || p.layoutRef || p.layoutFinal ? p : null;
+}
 
 export type RunSummary = { id: string; status: string; seedBug: string | null; fromExtraction: boolean };
 
@@ -106,6 +117,7 @@ export function board(id: string): Board {
       run: read(`runs/${id}/formal/formal.json`) ?? (entry.replay ? read(`runs/${entry.replay.run_id}/formal/formal.json`) : null),
       reference: read("reference/formal/formal.json"),
     },
+    physical: physical(id, entry.replay?.run_id),
     pinnedSuite: idx.pinned_suite_sha256,
     pinnedSweep: idx.pinned_sweep_sha256,
     ledger: {

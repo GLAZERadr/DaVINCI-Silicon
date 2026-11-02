@@ -2,7 +2,7 @@ RTL ?= rtl/sync_fifo.v
 RUN ?= manual
 IMAGE = davinci-sim:latest
 
-.PHONY: sim mutate weak-demo image sandbox api evidence board plan plan-ref gaps coverage coverage-ref trace trace-ref triage formal-image formal formal-ref formal-mutants
+.PHONY: sim mutate weak-demo image sandbox api evidence board plan plan-ref gaps coverage coverage-ref trace trace-ref triage formal-image formal formal-ref formal-mutants sta sta-ref layout layout-ref
 
 # Local run (needs iverilog + cocotb installed)
 sim:
@@ -48,6 +48,25 @@ coverage-ref:
 # gaps and trace-ref.
 triage:
 	python3 verify/triage.py
+
+# S6 pre-layout timing/power estimate on SKY130 hd (typical corner, no wire parasitics,
+# default activity): Yosys + OpenSTA in a no-network container. Needs the LibreLane
+# image (docker pull ghcr.io/librelane/librelane:3.0.17) and the SKY130 PDK
+# (pip install ciel && ciel fetch --pdk sky130 8afc8346a57fe1ab7934ba5a6056ea8b43078e71).
+sta:
+	python3 verify/sta.py --run runs/$(RUN)
+
+sta-ref:
+	python3 verify/sta.py --reference
+
+# S10 post-layout, multi-corner (ss/tt/ff) STA and power from the open-source LibreLane
+# (OpenLane 2) Classic flow on SKY130: a separate heavy job, once per design (about 70 s
+# here). Full flow reports + GDS stay in runs/<id>/layout/ (gitignored); summary.json is small.
+layout:
+	python3 verify/layout.py --run runs/$(RUN)
+
+layout-ref:
+	python3 verify/layout.py --reference
 
 # Per-cycle traces (waveform + FIFO views): every simulated attempt of a run, in Docker.
 trace:
