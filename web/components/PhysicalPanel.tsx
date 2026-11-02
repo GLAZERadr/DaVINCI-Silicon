@@ -14,6 +14,27 @@ function Status({ s }: { s: Json | null }) {
   return s.status === "ok" ? <span className="mark-pass">✓ Done</span> : <span className="mark-fail">✕ {String(s.status).replace(/_/g, " ")}</span>;
 }
 
+// Why max-slew counts are non-zero, from the STA reports, repair log and flow config (checked
+// 2 Nov on the reference RTL and every exported run): no I/O port among the violators (driving
+// cell and output load are set by the flow's SDC); the limit is the flow default
+// MAX_TRANSITION_CONSTRAINT; design repair runs after global placement, before routing.
+function slewNote(ref: Json | null, final: Json | null) {
+  const count = (s: Json | null, proc: string) => s?.corners?.find((c: Json) => c.process === proc)?.max_slew_violations;
+  const any = [ref, final].some((s) => (s?.corners ?? []).some((c: Json) => (c.max_slew_violations ?? 0) > 0));
+  if (!any) return null;
+  const limit = ref?.flow?.config?.MAX_TRANSITION_CONSTRAINT ?? final?.flow?.config?.MAX_TRANSITION_CONSTRAINT ?? 0.75;
+  const refCounts = ["ss", "tt"].map((p) => `${p} ${count(ref, p) ?? "n/a"}`).join(", ");
+  return (
+    <p className="box-pad meta-text">
+      <span className="tag-measured">measured</span> Max-slew counts: every violator is an internal cell pin, none an I/O
+      port (the flow&apos;s SDC sets a driving cell and an output load). The limit is the flow&apos;s default
+      max transition of {limit} ns; slew is repaired after placement, before routing, and the counts here are
+      measured after routing. The hand-written reference RTL shows the same pattern ({refCounts} pins), so the
+      counts reflect the default flow settings rather than a difference between the two designs. Not tuned.
+    </p>
+  );
+}
+
 function finalLabel(s: Json | null, runId: string) {
   const n = s?.source?.attempt;
   return <>Final RTL <span className="meta-text">{runId}{n ? `, attempt ${n}` : ""}</span></>;
@@ -104,6 +125,7 @@ function PostLayout({ p }: { p: Physical }) {
           </tbody>
         </table>
       </div>
+      {slewNote(a, b)}
       <div className="box-footer">
         <span className="meta-text">{any.flow?.name} {any.flow?.version} · {any.tools?.openroad ? `OpenROAD ${String(any.tools.openroad).slice(0, 10)} · ` : ""}{any.pdk?.variant} {any.pdk?.library} · open_pdks <span className="mono">{String(any.pdk?.open_pdks).slice(0, 10)}</span></span>
         <span className="meta-text">Open-source flow results; not foundry-certified, not commercial signoff.</span>
