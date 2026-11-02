@@ -28,7 +28,7 @@ export function Icon({ name }: { name: keyof typeof ICON }) {
 }
 
 export default function SiteHeader({ active, crumbs = [], children }:
-  { active: Section; crumbs?: { label: string; href?: string }[]; children?: React.ReactNode }) {
+  { active?: Section; crumbs?: { label: string; href?: string }[]; children?: React.ReactNode }) {
   return (
     <header className="header">
       <div className="topbar">
@@ -43,7 +43,10 @@ export default function SiteHeader({ active, crumbs = [], children }:
             </span>
           ))}
         </nav>
-        <div className="header-actions">{children}</div>
+        <div className="header-actions">
+          {children}
+          <Link href="/access/" className="btn btn-quiet btn-sm">Request access</Link>
+        </div>
       </div>
       <nav className="tabs" aria-label="Sections">
         {NAV.map((n) => (

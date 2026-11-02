@@ -20,9 +20,15 @@ usage: uvicorn api.server:app --port 8000
   POST /runs {extraction_id}     run from an approved list
 
 Live providers (meta, baseten) cost money. A run or extraction that uses one,
-and approving an extraction, needs `Authorization: Bearer <DAVINCI_API_TOKEN>`.
-If DAVINCI_API_TOKEN is not set, those requests are refused (fail closed);
-replay and fake runs stay open. The server, not the client, decides where a
+and approving an extraction, needs `Authorization: Bearer <token>`: the admin
+DAVINCI_API_TOKEN or a per-user token from `python -m api.tokens issue` (S8).
+With neither configured, those requests are refused (fail closed); replay and
+fake runs stay open. The owner of a run, extraction, breakdown or approval is
+taken from the token, never from the request body (runs/_api/owners.jsonl).
+
+  GET  /me                       who the token belongs to
+  GET  /runs?mine=1              only the caller's runs
+  POST /access-requests          ask for a token (S11, api/access.py) The server, not the client, decides where a
 simulation runs: model-written RTL only ever runs in the Docker sandbox.
 """
 import asyncio
@@ -44,6 +50,8 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from agent import extract as ex
 from agent import llm
+from api import tokens as tk
+from api.access import router as access_router
 
 ROOT = llm.ROOT
 RUNS = llm.RUNS
@@ -64,6 +72,7 @@ app.add_middleware(
     # own machine; browsers ask for this before calling localhost. Origins above still apply.
     allow_private_network=True,
 )
+app.include_router(access_router)
 
 
 class RunRequest(BaseModel):
@@ -133,14 +142,15 @@ def _worker():
 threading.Thread(target=_worker, daemon=True).start()
 
 
-def _enqueue(run_id: str, argv: list, kind: str) -> dict:
+def _enqueue(run_id: str, argv: list, kind: str, owner: "tk.Identity | None" = None) -> dict:
     with _lock:
         if run_id in _jobs or (RUNS / run_id).exists():
             raise HTTPException(409, f"run {run_id} already exists")
         _jobs[run_id] = {"run_id": run_id, "kind": kind, "state": "queued", "argv": argv,
                          "queued": time.time()}
         ahead = sum(j["state"] in ("queued", "running") for j in _jobs.values()) - 1
-    _log_job(_jobs[run_id])
+    tk.record_owner("run", run_id, owner, via=kind)
+    _log_job({**_jobs[run_id], "owner": owner.owner if owner else None})
     _queue.put(run_id)
     return {"run_id": run_id, "state": "queued", "runs_ahead": ahead}
 
@@ -154,14 +164,29 @@ def _check_id(run_id: str):
         raise HTTPException(400, "bad run id")
 
 
-def _require_token(providers: set, authorization: str | None):
+def _caller(authorization: str | None) -> "tk.Identity | None":
+    """Who sent the request: None without a token; a wrong token is refused, never ignored."""
+    try:
+        return tk.authenticate(authorization)
+    except PermissionError as e:
+        raise HTTPException(401, str(e)) from None
+
+
+def _require_token(providers: set, authorization: str | None) -> "tk.Identity | None":
     if not providers & set(llm.LIVE):
-        return
-    token = os.environ.get("DAVINCI_API_TOKEN")
-    if not token:
-        raise HTTPException(403, "live model calls are disabled: DAVINCI_API_TOKEN is not set on the server")
-    if not secrets.compare_digest((authorization or "").encode(), f"Bearer {token}".encode()):
-        raise HTTPException(401, "live model runs need the API token; replay and fake runs are open")
+        return _caller(authorization)
+    if not tk.configured():
+        raise HTTPException(403, "live model calls are disabled: no API token is configured on the server")
+    ident = _caller(authorization)
+    if ident is None:
+        raise HTTPException(401, "live model calls and approvals need an API token; replay and fake runs are open")
+    return ident
+
+
+def _require_owner(kind: str, obj_id: str, ident: "tk.Identity"):
+    """Only the owner of an extraction/breakdown (or the admin token) may approve it."""
+    if not ident.admin and tk.owners((kind,)).get(obj_id) != ident.owner:
+        raise HTTPException(403, f"only the owner of {kind} {obj_id} or the admin can approve it")
 
 
 # ---- endpoints ------------------------------------------------------------------
@@ -174,7 +199,7 @@ def create_run(req: RunRequest, authorization: str | None = Header(None)):
         raise HTTPException(422, f"provider must be one of {allowed} (use POST /runs/{{id}}/replay to replay)")
     if req.seed_bug and req.seed_bug not in MUTANTS:
         raise HTTPException(422, f"seed_bug must be one of {sorted(MUTANTS)}")
-    _require_token(providers, authorization)
+    ident = _require_token(providers, authorization)
 
     run_id = _new_id("run")
     # No --sandbox: the pipeline puts any model-written RTL in the Docker sandbox.
@@ -207,17 +232,18 @@ def create_run(req: RunRequest, authorization: str | None = Header(None)):
         if req.requirements is not None:
             (inputs / "requirements.json").write_text(json.dumps(req.requirements, indent=2))
             argv += ["--requirements", str(inputs / "requirements.json")]
-    return _enqueue(run_id, argv, "run")
+    return _enqueue(run_id, argv, "run", ident)
 
 
 @app.post("/runs/{run_id}/replay", status_code=202)
-def replay_run(run_id: str):
+def replay_run(run_id: str, authorization: str | None = Header(None)):
     _check_id(run_id)
+    ident = _caller(authorization)
     src = RUNS / run_id
     if not (src / "run.json").exists() or not (src / "calls.jsonl").exists():
         raise HTTPException(404, f"no finished run {run_id} with recorded model calls")
     new_id = f"{run_id[:40]}-replay-{secrets.token_hex(2)}"
-    return _enqueue(new_id, ["--run-id", new_id, "--provider", "replay", "--replay-from", run_id], "replay")
+    return _enqueue(new_id, ["--run-id", new_id, "--provider", "replay", "--replay-from", run_id], "replay", ident)
 
 
 def _summary(d: Path) -> dict:
@@ -227,12 +253,32 @@ def _summary(d: Path) -> dict:
 
 
 @app.get("/runs")
-def list_runs():
+def list_runs(mine: bool = False, authorization: str | None = Header(None)):
+    ident = _caller(authorization)
+    if mine and ident is None:
+        raise HTTPException(401, "mine=1 needs an API token")
     done = [_summary(d) for d in RUNS.iterdir() if (d / "run.json").exists()] if RUNS.exists() else []
     done.sort(key=lambda r: r.get("started") or "", reverse=True)
     with _lock:
         jobs = [{k: v for k, v in j.items() if k != "argv"} for j in _jobs.values()]
-    return {"jobs": jobs, "runs": done}
+    if ident is None:
+        return {"jobs": jobs, "runs": done}
+    # Owner names are never listed; a token holder only learns which runs are theirs.
+    own = tk.owners(("run",))
+    for r in (*done, *jobs):
+        r["mine"] = own.get(r["run_id"]) == ident.owner
+    if mine:
+        done, jobs = [r for r in done if r["mine"]], [j for j in jobs if j["mine"]]
+    return {"jobs": jobs, "runs": done, "owner": ident.owner}
+
+
+@app.get("/me")
+def me(authorization: str | None = Header(None)):
+    """Who the token belongs to. Without a token: whether live calls are enabled at all."""
+    ident = _caller(authorization)
+    if ident is None:
+        return {"owner": None, "admin": False, "live_enabled": tk.configured()}
+    return {"owner": ident.owner, "token_id": ident.token_id, "admin": ident.admin, "live_enabled": True}
 
 
 @app.get("/runs/{run_id}")
@@ -369,7 +415,7 @@ async def create_extraction(file: UploadFile = File(...), provider: str = Form("
                             authorization: str | None = Header(None)):
     if provider not in ("meta", "baseten", "fake"):
         raise HTTPException(422, "provider must be meta, baseten or fake")
-    _require_token({provider}, authorization)
+    ident = _require_token({provider}, authorization)
     suffix = Path(file.filename or "").suffix.lower()
     if suffix != ".pdf" and suffix not in ex.IMAGE_MIME:
         raise HTTPException(422, f"file must be PDF or one of {sorted(ex.IMAGE_MIME)}")
@@ -385,7 +431,8 @@ async def create_extraction(file: UploadFile = File(...), provider: str = Form("
     path.write_bytes(data)
     _extractions[xid] = {"extraction_id": xid, "status": "running", "provider": provider,
                          "source": {"name": Path(file.filename or "upload").name, "bytes": len(data)}}
-    _log_job({"run_id": xid, "kind": "extraction", **_extractions[xid]})
+    tk.record_owner("extraction", xid, ident)
+    _log_job({"run_id": xid, "kind": "extraction", **_extractions[xid], "owner": ident.owner if ident else None})
     threading.Thread(target=_run_extraction, args=(xid, path, provider), daemon=True).start()
     return {"extraction_id": xid, "status": "running"}
 
@@ -426,15 +473,17 @@ def extraction_page(xid: str, n: int):
 
 @app.post("/extractions/{xid}/approve")
 def approve_extraction(xid: str, body: Approval, authorization: str | None = Header(None)):
-    _require_token(set(llm.LIVE), authorization)  # approval is a trust decision: same gate as live runs
+    ident = _require_token(set(llm.LIVE), authorization)  # approval is a trust decision: same gate as live runs
     _extraction(xid)
+    _require_owner("extraction", xid, ident)
     try:
         rec = ex.approve(xid, body.approved_by, body.requirements)
     except ValueError as e:
         code = 409 if "already approved" in str(e) or "is running" in str(e) or "is aborted" in str(e) else 422
         raise HTTPException(code, str(e)) from None
+    tk.record_owner("approval", xid, ident, approved_by=body.approved_by)
     _log_job({"run_id": xid, "kind": "approval", "status": "approved", "approved_by": body.approved_by,
-              "approved_sha256": rec["approved_sha256"]})
+              "owner": ident.owner, "approved_sha256": rec["approved_sha256"]})
     return rec
 
 
@@ -483,7 +532,7 @@ def _run_breakdown(bid: str, argv: list):
 def create_breakdown(req: BreakdownRequest, authorization: str | None = Header(None)):
     if req.provider not in ("meta", "baseten", "fake"):
         raise HTTPException(422, "provider must be meta, baseten or fake")
-    _require_token({req.provider}, authorization)
+    ident = _require_token({req.provider}, authorization)
     argv = ["--provider", req.provider]
     if req.extraction_id:
         rec = _extraction(req.extraction_id)
@@ -494,7 +543,8 @@ def create_breakdown(req: BreakdownRequest, authorization: str | None = Header(N
     bid = bd.new_bid()
     _breakdowns[bid] = {"breakdown_id": bid, "status": "running", "provider": req.provider,
                         "extraction_id": req.extraction_id}
-    _log_job({"run_id": bid, "kind": "breakdown", **_breakdowns[bid]})
+    tk.record_owner("breakdown", bid, ident)
+    _log_job({"run_id": bid, "kind": "breakdown", **_breakdowns[bid], "owner": ident.owner if ident else None})
     threading.Thread(target=_run_breakdown, args=(bid, argv), daemon=True).start()
     return {"breakdown_id": bid, "status": "running"}
 
@@ -519,14 +569,16 @@ def get_breakdown(bid: str):
 
 @app.post("/breakdowns/{bid}/approve")
 def approve_breakdown(bid: str, body: BreakdownApproval, authorization: str | None = Header(None)):
-    _require_token(set(llm.LIVE), authorization)  # a trust decision: same gate as approvals of requirements
+    ident = _require_token(set(llm.LIVE), authorization)  # a trust decision: same gate as approvals of requirements
     _breakdown(bid)
+    _require_owner("breakdown", bid, ident)
     try:
         rec = bd.approve(bid, body.approved_by)
     except ValueError as e:
         raise HTTPException(409 if "already" in str(e) or "is " in str(e) else 422, str(e)) from None
+    tk.record_owner("breakdown_approval", bid, ident, approved_by=body.approved_by)
     _log_job({"run_id": bid, "kind": "breakdown_approval", "status": "approved", "approved_by": body.approved_by,
-              "approved_sha256": rec["approved_sha256"]})
+              "owner": ident.owner, "approved_sha256": rec["approved_sha256"]})
     return rec
 
 

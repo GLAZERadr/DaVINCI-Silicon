@@ -12,6 +12,8 @@ type Recorded = { id: string; status: string; seedBug: string | null; fromExtrac
 // Run Console entry: recorded runs (static) and, with the API, any run on the server.
 export default function ConsoleIndex({ recorded, requirements, triage }: { recorded: Recorded[]; requirements: Requirement[]; triage: Json | null }) {
   const [apiOk, setApiOk] = useState(false);
+  const [hasToken, setHasToken] = useState(false);
+  const [mine, setMine] = useState(false); // S8: only runs started with this tab's token
   const [runs, setRuns] = useState<Json[]>([]);
   const [jobs, setJobs] = useState<Json[]>([]);
   const [open, setOpen] = useState<string | null>(null);
@@ -42,10 +44,14 @@ export default function ConsoleIndex({ recorded, requirements, triage }: { recor
 
   useEffect(() => {
     if (!apiOk) return;
-    api("/runs").then((r) => { setRuns(r.runs); setJobs(r.jobs); }).catch(() => {});
     const id = new URLSearchParams(window.location.search).get("run");
     if (id) load(id);
   }, [apiOk, load]);
+
+  useEffect(() => {
+    if (!apiOk) return;
+    api(mine && hasToken ? "/runs?mine=1" : "/runs").then((r) => { setRuns(r.runs); setJobs(r.jobs); }).catch(() => {});
+  }, [apiOk, mine, hasToken]);
 
   function pick(id: string) {
     window.history.replaceState(null, "", `?run=${encodeURIComponent(id)}`);
@@ -92,11 +98,17 @@ export default function ConsoleIndex({ recorded, requirements, triage }: { recor
         </ul>
       </section>
 
-      <ApiPanel onChange={setApiOk} />
+      <ApiPanel onChange={(ok, tok) => { setApiOk(ok); setHasToken(tok); }} />
 
       {apiOk && (
         <section className="card">
           <p className="label">Runs on the API server</p>
+          {hasToken && (
+            <label className="choice" style={{ marginBottom: 8 }}>
+              <input type="checkbox" checked={mine} onChange={(e) => setMine(e.target.checked)} />
+              <span>My runs only · started with this tab&apos;s token</span>
+            </label>
+          )}
           {note && <p className="lede" role="status">{note}</p>}
           {active.length > 0 && (
             <p className="lede">In progress: {active.map((j) => <Link key={j.run_id} href={`/new/?watch=${encodeURIComponent(j.run_id)}`} className="mono">{j.run_id} ({j.state}) </Link>)}</p>
@@ -120,7 +132,7 @@ export default function ConsoleIndex({ recorded, requirements, triage }: { recor
                     </tr>
                   );
                 })}
-                {runs.length === 0 && <tr><td colSpan={6} className="mark-neutral">○ No runs on the server yet.</td></tr>}
+                {runs.length === 0 && <tr><td colSpan={6} className="mark-neutral">○ {mine ? "No runs started with your token yet." : "No runs on the server yet."}</td></tr>}
               </tbody>
             </table>
           </div>

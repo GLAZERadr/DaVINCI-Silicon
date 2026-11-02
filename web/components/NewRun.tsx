@@ -113,7 +113,7 @@ export default function NewRun({ mutants, recorded }: { mutants: Mutant[]; recor
               </label>
             </div>
           )}
-          {needsToken && <p className="mark-neutral">○ Add the API token under Connection settings to start a live run.</p>}
+          {needsToken && <p className="mark-neutral">○ Add your API token under Connection settings to start a live run. No token yet? <a href="/access/">Request access</a>.</p>}
           {error && <p className="mark-fail" role="alert">✕ {error}</p>}
           <div>
             <button type="submit" className={`btn ${mode === "live" ? "btn-live" : ""}`} disabled={!apiOk || busy || needsToken || (mode === "replay" && !source)}>
