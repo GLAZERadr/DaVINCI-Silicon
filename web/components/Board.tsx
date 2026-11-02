@@ -1,5 +1,6 @@
 import Link from "next/link";
 import BreakdownView from "./BreakdownView";
+import FormalPanel from "./FormalPanel";
 import ModelAvatar from "./ModelAvatar";
 import TestTriage from "./TestTriage";
 import SiteHeader from "./SiteHeader";
@@ -197,6 +198,8 @@ export default function Board({ data, runs }: { data: BoardData; runs: RunSummar
             </div>
           </section>
         )}
+
+        <FormalPanel run={data.formal.run} reference={data.formal.reference} />
 
           <h2 className="group-title">Verification plan a lead can sign off</h2>
           {data.signoff && (

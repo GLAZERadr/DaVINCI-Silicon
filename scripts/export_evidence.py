@@ -54,6 +54,8 @@ def export_run(run_id: str, out: Path) -> dict:
     r = json.loads((src / "run.json").read_text())
     if (src / "coverage" / "coverage.json").exists():
         copy_text(src / "coverage" / "coverage.json", dst / "coverage" / "coverage.json")
+    if (src / "formal" / "formal.json").exists():  # S5/S9 formal checks (verify/formal.py)
+        copy_text(src / "formal" / "formal.json", dst / "formal" / "formal.json")
     for a in r["attempts"]:
         for f in ATTEMPT_FILES:
             p = src / f"attempt_{a['n']}" / f
@@ -130,6 +132,8 @@ def main():
     else:
         print("no runs/reference/verdict.json: run `make plan-ref` to include the reference plan")
         index["reference_plan"] = False
+    if (RUNS / "reference" / "formal" / "formal.json").exists():  # S5/S9 formal, with mutant results
+        copy_text(RUNS / "reference" / "formal" / "formal.json", out / "reference" / "formal" / "formal.json")
 
     exported = {e["live"]["run_id"] for e in index["runs"]}
     index["ledger"] = {

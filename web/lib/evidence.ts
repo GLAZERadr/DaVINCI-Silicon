@@ -49,6 +49,7 @@ export type Board = {
   triage: Json | null; // test credibility (verify/triage.py)
   breakdown: { approved: Json; check: Json | null; model?: string } | null; // S1, when the run used one
   gaps: Json | null; // coverage-gap check (verify/gaps.py), only when measured on the pinned suite
+  formal: { run: Json | null; reference: Json | null }; // S5/S9 formal checks (verify/formal.py), when stored
 };
 
 export type RunSummary = { id: string; status: string; seedBug: string | null; fromExtraction: boolean };
@@ -98,6 +99,10 @@ export function board(id: string): Board {
       const check = read(`runs/${entry.replay?.run_id ?? id}/breakdown_check.json`) ?? read(`runs/${id}/breakdown_check.json`);
       return { approved, check, model: read(`runs/${id}/run.json`)?.attempts?.find((a: Json) => a.model)?.model };
     })(),
+    formal: {
+      run: read(`runs/${id}/formal/formal.json`) ?? (entry.replay ? read(`runs/${entry.replay.run_id}/formal/formal.json`) : null),
+      reference: read("reference/formal/formal.json"),
+    },
     pinnedSuite: idx.pinned_suite_sha256,
     pinnedSweep: idx.pinned_sweep_sha256,
     ledger: {
