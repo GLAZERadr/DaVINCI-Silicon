@@ -48,7 +48,7 @@ def latest_replay(source: str, suite: str, sweep: str) -> str | None:
 
 def export_run(run_id: str, out: Path) -> dict:
     src, dst = RUNS / run_id, out / "runs" / run_id
-    for name in ("run.json", "calls.jsonl", "events.jsonl"):
+    for name in ("run.json", "calls.jsonl", "events.jsonl", "breakdown.json", "breakdown_check.json"):
         if (src / name).exists():
             copy_text(src / name, dst / name)
     r = json.loads((src / "run.json").read_text())

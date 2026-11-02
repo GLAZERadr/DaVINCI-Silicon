@@ -47,6 +47,7 @@ export type Board = {
   scenarios: Json | null; // scenario counts from the linked plan (already checked against pins there)
   signoff: Json[] | null; // sign-off lines from the linked plan (met / not met / not measured)
   triage: Json | null; // test credibility (verify/triage.py)
+  breakdown: { approved: Json; check: Json | null; model?: string } | null; // S1, when the run used one
   gaps: Json | null; // coverage-gap check (verify/gaps.py), only when measured on the pinned suite
 };
 
@@ -91,6 +92,12 @@ export function board(id: string): Board {
     scenarios: planId ? read(`runs/${planId}/verification_plan.json`)?.scenarios ?? null : null,
     signoff: planId ? read(`runs/${planId}/verification_plan.json`)?.signoff ?? null : null,
     triage: read("triage.json"),
+    breakdown: (() => {
+      const approved = read(`runs/${id}/breakdown.json`);
+      if (!approved) return null;
+      const check = read(`runs/${entry.replay?.run_id ?? id}/breakdown_check.json`) ?? read(`runs/${id}/breakdown_check.json`);
+      return { approved, check, model: read(`runs/${id}/run.json`)?.attempts?.find((a: Json) => a.model)?.model };
+    })(),
     pinnedSuite: idx.pinned_suite_sha256,
     pinnedSweep: idx.pinned_sweep_sha256,
     ledger: {

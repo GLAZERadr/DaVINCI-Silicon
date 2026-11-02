@@ -1,4 +1,5 @@
 import Link from "next/link";
+import BreakdownView from "./BreakdownView";
 import ModelAvatar from "./ModelAvatar";
 import TestTriage from "./TestTriage";
 import SiteHeader from "./SiteHeader";
@@ -264,6 +265,19 @@ export default function Board({ data, runs }: { data: BoardData; runs: RunSummar
               </table>
             </div>
           </section>
+
+          {data.breakdown && (
+            <section className="box" aria-labelledby="breakdown">
+              <div className="box-header">
+                <h2 id="breakdown">Design breakdown before RTL</h2>
+                <span className="meta-text">proposed by the model, approved by {data.breakdown.approved.approved_by}, passed into the RTL prompt</span>
+              </div>
+              <div className="box-pad">
+                <BreakdownView breakdown={data.breakdown.approved.breakdown} model={data.breakdown.model}
+                  approvedBy={data.breakdown.approved.approved_by} check={data.breakdown.check} />
+              </div>
+            </section>
+          )}
 
           <h2 className="group-title">Where and why it failed</h2>
           <section className="box" aria-labelledby="timeline">

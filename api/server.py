@@ -78,6 +78,7 @@ class RunRequest(BaseModel):
     spec: str | None = Field(None, description="spec markdown; default spec/fifo_spec.md", max_length=100_000)
     requirements: dict | None = Field(None, description="approved requirements; default spec/requirements.json")
     extraction_id: str | None = Field(None, description="run from an approved image/PDF extraction")
+    breakdown_id: str | None = Field(None, description="approved design breakdown passed into the RTL prompt (S1)")
 
 
 class Approval(BaseModel):
@@ -184,6 +185,11 @@ def create_run(req: RunRequest, authorization: str | None = Header(None)):
         argv += ["--repair-provider", req.repair_provider]
     if req.seed_bug:
         argv += ["--seed-bug", req.seed_bug]
+    if req.breakdown_id:
+        rec_b = _breakdown(req.breakdown_id)
+        if "approved" not in rec_b:
+            raise HTTPException(409, f"breakdown {req.breakdown_id} is not approved ({rec_b['status']})")
+        argv += ["--breakdown", req.breakdown_id]
     if req.extraction_id:
         if req.spec is not None or req.requirements is not None:
             raise HTTPException(422, "give extraction_id or spec/requirements, not both")
@@ -430,3 +436,107 @@ def approve_extraction(xid: str, body: Approval, authorization: str | None = Hea
     _log_job({"run_id": xid, "kind": "approval", "status": "approved", "approved_by": body.approved_by,
               "approved_sha256": rec["approved_sha256"]})
     return rec
+
+
+# ---- design breakdown before RTL (S1) -------------------------------------------
+
+from agent import breakdown as bd  # noqa: E402
+
+_breakdowns: dict[str, dict] = {}
+
+
+class BreakdownRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    provider: str = "meta"
+    extraction_id: str | None = Field(None, description="break down an approved extraction instead of the default spec")
+
+
+class BreakdownApproval(BaseModel):
+    approved_by: str = Field(..., min_length=1, max_length=200)
+
+
+def _breakdown(bid: str) -> dict:
+    try:
+        return bd.load(bid)
+    except ValueError:
+        raise HTTPException(400, "bad breakdown id") from None
+    except FileNotFoundError:
+        job = _breakdowns.get(bid)
+        if not job:
+            raise HTTPException(404, f"no breakdown {bid}") from None
+        return dict(job)
+
+
+def _run_breakdown(bid: str, argv: list):
+    log = API_DIR / "logs" / f"{bid}.log"
+    log.parent.mkdir(parents=True, exist_ok=True)
+    with log.open("w") as f:
+        p = subprocess.run([sys.executable, "-m", "agent.breakdown", "--create", "--bid", bid, *argv],
+                           cwd=ROOT, stdout=f, stderr=subprocess.STDOUT)
+    done = (bd.BREAKDOWN_DIR / bid / "breakdown.json").exists()
+    _breakdowns[bid].update(status="done" if done else "error", exit_code=p.returncode,
+                            error=None if done else log.read_text()[-2000:])
+    _log_job({"run_id": bid, "kind": "breakdown", **_breakdowns[bid]})
+
+
+@app.post("/breakdowns", status_code=202)
+def create_breakdown(req: BreakdownRequest, authorization: str | None = Header(None)):
+    if req.provider not in ("meta", "baseten", "fake"):
+        raise HTTPException(422, "provider must be meta, baseten or fake")
+    _require_token({req.provider}, authorization)
+    argv = ["--provider", req.provider]
+    if req.extraction_id:
+        rec = _extraction(req.extraction_id)
+        if "approved" not in rec:
+            raise HTTPException(409, f"extraction {req.extraction_id} is not approved ({rec['status']})")
+        d = ex.EXTRACT_DIR / req.extraction_id
+        argv += ["--requirements", str(d / "approved.json"), "--spec", str(d / "interface_spec.md")]
+    bid = bd.new_bid()
+    _breakdowns[bid] = {"breakdown_id": bid, "status": "running", "provider": req.provider,
+                        "extraction_id": req.extraction_id}
+    _log_job({"run_id": bid, "kind": "breakdown", **_breakdowns[bid]})
+    threading.Thread(target=_run_breakdown, args=(bid, argv), daemon=True).start()
+    return {"breakdown_id": bid, "status": "running"}
+
+
+@app.get("/breakdowns")
+def list_breakdowns():
+    out = []
+    if bd.BREAKDOWN_DIR.exists():
+        for d in sorted(bd.BREAKDOWN_DIR.iterdir(), reverse=True):
+            if (d / "breakdown.json").exists():
+                r = bd.load(d.name)
+                out.append({k: r.get(k) for k in ("breakdown_id", "status", "created", "provider", "cost_usd",
+                                                  "requirements_file")} | {"approved": "approved" in r})
+    running = [j for j in _breakdowns.values() if j["status"] == "running"]
+    return {"running": running, "breakdowns": out}
+
+
+@app.get("/breakdowns/{bid}")
+def get_breakdown(bid: str):
+    return _breakdown(bid)
+
+
+@app.post("/breakdowns/{bid}/approve")
+def approve_breakdown(bid: str, body: BreakdownApproval, authorization: str | None = Header(None)):
+    _require_token(set(llm.LIVE), authorization)  # a trust decision: same gate as approvals of requirements
+    _breakdown(bid)
+    try:
+        rec = bd.approve(bid, body.approved_by)
+    except ValueError as e:
+        raise HTTPException(409 if "already" in str(e) or "is " in str(e) else 422, str(e)) from None
+    _log_job({"run_id": bid, "kind": "breakdown_approval", "status": "approved", "approved_by": body.approved_by,
+              "approved_sha256": rec["approved_sha256"]})
+    return rec
+
+
+@app.get("/runs/{run_id}/breakdown")
+def run_breakdown(run_id: str):
+    """The approved breakdown a run used and the measured check of its final RTL."""
+    _check_id(run_id)
+    d = RUNS / run_id
+    if not (d / "breakdown.json").exists():
+        raise HTTPException(404, f"run {run_id} used no design breakdown")
+    chk = d / "breakdown_check.json"
+    return {"approved": json.loads((d / "breakdown.json").read_text()),
+            "check": json.loads(chk.read_text()) if chk.exists() else None}
