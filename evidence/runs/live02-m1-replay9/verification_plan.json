@@ -1,6 +1,6 @@
 {
   "label": "measured",
-  "title": "Verification plan · sync_fifo · live02-m1-replay8",
+  "title": "Verification plan · sync_fifo · live02-m1-replay9",
   "generator": "verify/plan.py",
   "format": "Vplan sections (ChipVerify) · OpenTitan testpoint fields · OpenTitan-style staged sign-off",
   "date": "2026-11-02",
@@ -363,10 +363,10 @@
     }
   },
   "run": {
-    "run_id": "live02-m1-replay8",
+    "run_id": "live02-m1-replay9",
     "status": "pass",
-    "started": "2026-11-02T15:15:22+0700",
-    "finished": "2026-11-02T15:15:27+0700",
+    "started": "2026-11-02T15:46:38+0700",
+    "finished": "2026-11-02T15:46:42+0700",
     "seed_bug": "M1",
     "replayed_from": "live02-m1",
     "attempts_total": 2,

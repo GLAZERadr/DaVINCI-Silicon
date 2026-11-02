@@ -1,6 +1,6 @@
 {
-  "run_id": "live02-m1-replay8",
-  "started": "2026-11-02T15:15:22+0700",
+  "run_id": "live02-m1-replay9",
+  "started": "2026-11-02T15:46:38+0700",
   "providers": {
     "generate": "replay",
     "repair": "replay"
@@ -50,15 +50,15 @@
           }
         ],
         "simulator": "Icarus Verilog version 12.0 (stable) ()",
-        "sim_seconds": 0.52,
+        "sim_seconds": 0.25,
         "suite_sha256": "4adc7da757edd72117db7a297aa7900d5744361903b2b9d1aea339da5dcc7db1",
         "sandbox": "docker"
       },
-      "finished_s": 1.72
+      "finished_s": 2.57
     },
     {
       "n": 2,
-      "started_s": 1.72,
+      "started_s": 2.57,
       "source": "model",
       "provider": "replay",
       "model": "replay:muse-spark-1.3",
@@ -88,14 +88,14 @@
         "total": 10,
         "failed": [],
         "simulator": "Icarus Verilog version 12.0 (stable) ()",
-        "sim_seconds": 0.62,
+        "sim_seconds": 0.29,
         "suite_sha256": "4adc7da757edd72117db7a297aa7900d5744361903b2b9d1aea339da5dcc7db1",
         "sandbox": "docker"
       },
       "sweep": {
         "label": "measured",
         "status": "pass",
-        "seconds": 1.3,
+        "seconds": 0.71,
         "sets": [
           {
             "params": {
@@ -132,19 +132,19 @@
           }
         ]
       },
-      "finished_s": 5.15
+      "finished_s": 4.27
     }
   ],
   "spec_file": "spec/fifo_spec.md",
   "requirements_file": "spec/requirements.json",
   "sweep_sha256": "b73c1b823e400e72eaf76f91d72a90aa370f56711604f309f1037ed5710e16e2",
-  "finished": "2026-11-02T15:15:27+0700",
+  "finished": "2026-11-02T15:46:42+0700",
   "status": "pass",
   "attempts_total": 2,
   "attempts_to_green": 2,
   "first_pass": false,
-  "time_to_green_s": 5.15,
-  "wall_seconds": 5.15,
+  "time_to_green_s": 4.27,
+  "wall_seconds": 4.27,
   "cost_usd": 0.0,
   "tokens": {
     "in": 0,

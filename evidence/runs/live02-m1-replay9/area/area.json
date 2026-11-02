@@ -34,6 +34,6 @@
   "wires": 249,
   "wire_bits": 402,
   "status": "ok",
-  "seconds": 0.19,
+  "seconds": 0.15,
   "sandbox": "davinci-sim:latest"
 }

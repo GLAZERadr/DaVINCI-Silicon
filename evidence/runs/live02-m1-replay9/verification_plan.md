@@ -1,4 +1,4 @@
-# Verification plan · sync_fifo · live02-m1-replay8
+# Verification plan · sync_fifo · live02-m1-replay9
 
 Every result below is **measured** from stored simulator output, except the golden model's expected values (the reference) and the diagnoses in §7, which are labelled *AI interpretation · not verified*. Anything not measured says so.
 
@@ -13,7 +13,7 @@ Format: Vplan sections (ChipVerify) · OpenTitan testpoint fields · OpenTitan-s
 | Frozen suite | `4adc7da757edd72117db7a297aa7900d5744361903b2b9d1aea339da5dcc7db1` |
 | Simulator | Icarus Verilog version 12.0 (stable) () |
 | Date | 2026-11-02 |
-| Run | `live02-m1-replay8` · status `pass` · attempts 2 |
+| Run | `live02-m1-replay9` · status `pass` · attempts 2 |
 | Seeded bug | M1 (attempt 1 is the seeded RTL, not model output) |
 | Replay of | `live02-m1` |
 | Parameter sweep | `b73c1b823e400e72eaf76f91d72a90aa370f56711604f309f1037ed5710e16e2` |
