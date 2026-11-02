@@ -54,6 +54,8 @@ def export_run(run_id: str, out: Path) -> dict:
     r = json.loads((src / "run.json").read_text())
     if (src / "coverage" / "coverage.json").exists():
         copy_text(src / "coverage" / "coverage.json", dst / "coverage" / "coverage.json")
+    if (src / "area" / "area.json").exists():  # S2: Yosys cell counts (verify/area.py)
+        copy_text(src / "area" / "area.json", dst / "area" / "area.json")
     for a in r["attempts"]:
         for f in ATTEMPT_FILES:
             p = src / f"attempt_{a['n']}" / f
@@ -125,6 +127,8 @@ def main():
             copy_text(RUNS / "reference" / "trace" / "trace.json", out / "reference" / "trace" / "trace.json")
         if (RUNS / "reference" / "coverage" / "coverage.json").exists():
             copy_text(RUNS / "reference" / "coverage" / "coverage.json", out / "reference" / "coverage" / "coverage.json")
+        if (RUNS / "reference" / "area" / "area.json").exists():
+            copy_text(RUNS / "reference" / "area" / "area.json", out / "reference" / "area" / "area.json")
         plan.write(json.loads(scrub(json.dumps(plan.plan_for(RUNS / "reference", reference=True)))), out / "reference")
         index["reference_plan"] = True
     else:
