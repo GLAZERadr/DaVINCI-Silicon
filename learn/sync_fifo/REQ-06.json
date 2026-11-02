@@ -1,0 +1,30 @@
+{
+  "id": "REQ-06",
+  "block": "sync_fifo",
+  "requirement": "Read and write in the same cycle when full: the oldest word is read, the new word is stored, count stays DEPTH.",
+  "test": "test_full_simultaneous_rw",
+  "label": "AI interpretation · not verified",
+  "content": {
+    "explanation": "(fake provider) stand-in text for REQ-06, not written by a model. Regenerate with --provider meta. The requirement says what the FIFO must do; the directed test test_full_simultaneous_rw drives exactly that situation.",
+    "question": "(fake provider) At cycle 19 of test_full_simultaneous_rw, wr_en=1 and rd_en=1. What should count be just after this edge, and why?",
+    "answer": "(fake provider) 16. Before this edge count was 16; a write adds one entry and a read removes one, so the golden model expects 16.",
+    "signal": "count",
+    "cycle": 19,
+    "expected_value": 16
+  },
+  "check": {
+    "label": "measured · golden model on the reference trace",
+    "reference_trace_sha256": "8bd68467e479361450f4bbb409ea10e455a0c596b4c98dcb88fc192bb0964aff",
+    "cycle_in_test": true,
+    "golden_value": 16,
+    "answer_matches_golden": true
+  },
+  "provider": "fake",
+  "model": "fake-reference",
+  "tokens_in": 0,
+  "tokens_out": 0,
+  "cost_usd": 0.0,
+  "request_sha256": "a8a7c54b780fcda5913b6d833dc73c1092e9d3c15bc1291b626e1253cde0c0c7",
+  "response_sha256": "ce20618abb9a5cb9bc3b44f470d0fd6775454ef700c65cc00b7d188f1bd96087",
+  "requirements_sha256": "7ba5f39c3e28a36b9c9248e13a07dbe5944ce2e5da36589997e7d471140850da"
+}

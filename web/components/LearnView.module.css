@@ -1,0 +1,20 @@
+.learn { padding: 14px 16px 24px; display: flex; flex-direction: column; gap: 18px; background: var(--surface); min-height: 100%; }
+.picker { display: flex; flex-wrap: wrap; gap: 6px; }
+.picker > button { width: auto; }
+.step { display: flex; flex-direction: column; gap: 8px; }
+.h { margin: 0; font-size: 15px; font-weight: 700; letter-spacing: -0.01em; color: var(--text); }
+.p { margin: 4px 0 0; line-height: 1.55; }
+.q { margin: 4px 0 0; line-height: 1.55; font-weight: 600; }
+.wave { border: 1px solid var(--border); border-radius: var(--radius-sm); overflow: hidden; background: var(--code-bg); }
+.reveal { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.answer { display: flex; flex-direction: column; gap: 8px; outline: none; }
+
+.toggleRow { display: flex; flex-direction: column; gap: 6px; }
+.toggle { font: inherit; font-size: 13px; font-weight: 700; color: var(--text); background: var(--surface); border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm); padding: 8px 10px; min-height: 40px; cursor: pointer; display: inline-flex; align-items: center; gap: 10px; width: 100%; }
+.toggle:hover { background: var(--surface-2); }
+.toggleOn { border-color: var(--purple); background: var(--accent-soft); }
+.knob { width: 30px; height: 18px; border-radius: 999px; background: var(--surface-3); border: 1px solid var(--border-strong); position: relative; flex: none; }
+.knob::after { content: ""; position: absolute; top: 2px; left: 2px; width: 12px; height: 12px; border-radius: 50%; background: var(--muted); transition: left 0.15s; }
+.toggleOn .knob { background: var(--brand); border-color: transparent; }
+.toggleOn .knob::after { left: 14px; background: #fff; }

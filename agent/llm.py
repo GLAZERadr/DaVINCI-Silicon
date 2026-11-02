@@ -213,6 +213,24 @@ def _fake(messages: list, step: str) -> Reply:
                                       "coverage": [{"reference": r["id"], "coverage": "full", "missing": ""}
                                                    for r in ref]}),
                      provider="fake", model="fake-reference", request_sha256="")
+    if step == "learn":  # scripted lesson from the prompt's CONTEXT; a stand-in, not model text
+        msg = messages[-1]["content"]
+        rid = msg.split("Requirement ", 1)[1].split(" ", 1)[0]
+        ctx = json.loads(msg.split("CONTEXT ", 1)[1].split("\n", 1)[0])
+        cyc = ctx["cycles"]
+        pick = next((c for c in cyc if c["in"].get("wr_en") and c["in"].get("rd_en")), cyc[-1])
+        prev = next((c for c in reversed(cyc) if c["k"] < pick["k"]), pick)
+        return Reply(text=json.dumps({
+            "explanation": f"(fake provider) stand-in text for {rid}, not written by a model. "
+                           f"Regenerate with --provider meta. The requirement says what the FIFO must do; "
+                           f"the directed test {ctx['test']} drives exactly that situation.",
+            "question": f"(fake provider) At cycle {pick['k']} of {ctx['test']}, wr_en={pick['in'].get('wr_en')} "
+                        f"and rd_en={pick['in'].get('rd_en')}. What should count be just after this edge, and why?",
+            "answer": f"(fake provider) {pick['exp']['count']}. Before this edge count was {prev['exp']['count']}; "
+                      f"a write adds one entry and a read removes one, so the golden model expects "
+                      f"{pick['exp']['count']}.",
+            "signal": "count", "cycle": pick["k"], "expected_value": pick["exp"]["count"]}),
+            provider="fake", model="fake-reference", request_sha256="")
     if step == "repair":
         # Neutral on purpose: the stand-in fixes any seeded bug by returning the
         # reference, so it must not describe one particular bug.

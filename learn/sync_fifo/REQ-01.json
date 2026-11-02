@@ -1,0 +1,30 @@
+{
+  "id": "REQ-01",
+  "block": "sync_fifo",
+  "requirement": "Synchronous reset empties the FIFO: count 0, empty 1, dout 0, overflow and underflow 0.",
+  "test": "test_reset_state",
+  "label": "AI interpretation · not verified",
+  "content": {
+    "explanation": "(fake provider) stand-in text for REQ-01, not written by a model. Regenerate with --provider meta. The requirement says what the FIFO must do; the directed test test_reset_state drives exactly that situation.",
+    "question": "(fake provider) At cycle 6 of test_reset_state, wr_en=0 and rd_en=0. What should count be just after this edge, and why?",
+    "answer": "(fake provider) 0. Before this edge count was 3; a write adds one entry and a read removes one, so the golden model expects 0.",
+    "signal": "count",
+    "cycle": 6,
+    "expected_value": 0
+  },
+  "check": {
+    "label": "measured · golden model on the reference trace",
+    "reference_trace_sha256": "8bd68467e479361450f4bbb409ea10e455a0c596b4c98dcb88fc192bb0964aff",
+    "cycle_in_test": true,
+    "golden_value": 0,
+    "answer_matches_golden": true
+  },
+  "provider": "fake",
+  "model": "fake-reference",
+  "tokens_in": 0,
+  "tokens_out": 0,
+  "cost_usd": 0.0,
+  "request_sha256": "eaa6129ffe4cb9fbe5c574d027df1c0964eb17f8d679b4becb8e0bd5f8255ca8",
+  "response_sha256": "50c777f0f4e784a1bc59ca71d522ad0ff5881015f88e4b877b476003fc070cd1",
+  "requirements_sha256": "7ba5f39c3e28a36b9c9248e13a07dbe5944ce2e5da36589997e7d471140850da"
+}
