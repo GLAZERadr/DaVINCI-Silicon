@@ -146,7 +146,7 @@ export default function Console({ runs, requirements, traceSource = "static", tr
     { key: "wave" as const, label: "Waveform", disabled: !tr },
     { key: "fifo" as const, label: "FIFO replay", disabled: !tr },
     { key: "diff" as const, label: a?.n === 1 ? "Diff (none on attempt 1)" : "Diff vs previous", disabled: !a?.diff },
-    { key: "rtl" as const, label: "sync_fifo.v", disabled: !a?.rtl },
+    { key: "rtl" as const, label: `${run.block ?? "sync_fifo"}.v`, disabled: !a?.rtl },
     { key: "prompt" as const, label: "Prompt", disabled: !a?.prompt },
   ];
   const shownEditor = editorTabs.find((t) => t.key === editor && !t.disabled)?.key ?? editorTabs.find((t) => !t.disabled)?.key;
