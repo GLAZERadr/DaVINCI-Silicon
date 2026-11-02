@@ -98,7 +98,7 @@ B=http://127.0.0.1:8000; T='Authorization: Bearer tes-lokal-123'; J='Content-Typ
 | Run live tanpa token ditolak | `curl -s -o /dev/null -w '%{http_code}' -X POST $B/runs -H "$J" -d '{"provider":"meta"}'` | `401` (atau `403` jika API berjalan tanpa token sama sekali) |
 | Field asing ditolak | `... -d '{"provider":"fake","sandbox":"local"}'` | `422` |
 | Run fake | `curl -s -X POST $B/runs -H "$J" -d '{"provider":"fake","seed_bug":"M1"}'` | `run_id`; lalu `curl -s $B/runs/<run_id>` → `"status": "pass"`, 2 attempt |
-| Progres langsung | `curl -sN $B/runs/<run_id>/events` | event `run_started` … `run_finished`, lalu `end` |
+| Progres langsung | `curl -sN $B/runs/<run_id>/events` | event `run_started` … `run_finished`, lalu `end` dengan status yang sama seperti `GET /runs/<run_id>` |
 | Replay | `curl -s -X POST $B/runs/live02-m1/replay` | run baru; status `pass`, `replay_check.reproduced: true`, sandbox `docker` |
 | Upload spec | `curl -s -X POST $B/extractions -F file=@spec/fixtures/sf16_datasheet.png -F provider=fake` | `extraction_id`; beberapa detik kemudian status `awaiting_approval` |
 | Approve tanpa token ditolak | `curl -s -o /dev/null -w '%{http_code}' -X POST $B/extractions/<xid>/approve -H "$J" -d '{"approved_by":"Nama"}'` | `401` |
@@ -160,7 +160,7 @@ Run live dengan RTL buatan model otomatis memakai sandbox Docker. Setiap hasil d
 
 ## Masalah yang diketahui (ditemukan saat menyusun panduan ini, 2 Nov)
 
-- Saat menonton run yang sedang berjalan, event SSE `end` kadang membawa `"status": null` walaupun run lulus. Status yang benar ada di `GET /runs/<id>` (dan muncul kalau stream dibuka ulang). Kemungkinan stream ditutup sebelum worker mencatat status. Belum diperbaiki.
+- ~~Event SSE `end` membawa `"status": null` walaupun run lulus.~~ Diperbaiki 2 Nov: status akhir kini diambil dari event `run_finished`, jadi `end` selalu sama dengan `GET /runs/<id>` dan `run_finished` selalu terkirim lebih dulu (dicek pada run fake, replay, `not_verifiable`, run lama, resume dengan Last-Event-ID, dan run yang crash → `error`).
 - Connection settings hanya ada di halaman yang butuh login, jadi token tidak bisa dimasukkan sebelum masuk dengan akun (jalan pintas DevTools di atas).
 - Replay run lama menunjukkan `request_matches: false` karena spec dan requirements berubah setelah run direkam (misalnya REQ-10). Replay tetap memakai jawaban yang direkam dan tetap memeriksa hasilnya.
 

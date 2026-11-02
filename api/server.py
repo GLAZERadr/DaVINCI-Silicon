@@ -343,18 +343,37 @@ async def run_events(run_id: str, request: Request):
         raise HTTPException(404, f"no run {run_id}")
     start = int(request.headers.get("last-event-id", "-1")) + 1
 
+    def final_status(lines: list, job: dict | None, quiet: bool):
+        """The run's status once it is over, else None. The pipeline writes
+        run.json before its last event and the API worker records the status
+        later still, so the run_finished event (written last, in order) decides."""
+        for line in reversed(lines):
+            d = json.loads(line)
+            if d.get("type") == "run_finished":
+                return d.get("status")
+        if job:  # a job that ended without run_finished crashed; the worker says "error"
+            return job.get("status") if job["state"] == "done" else None
+        rj = RUNS / run_id / "run.json"  # a run started outside this API (CLI)
+        if quiet and rj.exists():
+            try:
+                return json.loads(rj.read_text())["status"]
+            except (json.JSONDecodeError, KeyError):  # still being written
+                return None
+        return None
+
     async def stream():
-        sent, ev, said_queued = start, RUNS / run_id / "events.jsonl", False
+        sent, ev, said_queued, last_change = start, RUNS / run_id / "events.jsonl", False, time.time()
         while True:
             lines = ev.read_text().splitlines() if ev.exists() else []
             for i in range(sent, len(lines)):
                 kind = json.loads(lines[i]).get("type", "message")
                 yield f"id: {i}\nevent: {kind}\ndata: {lines[i]}\n\n"
+            if len(lines) > sent:
+                last_change = time.time()
             sent = max(sent, len(lines))
             job = _jobs.get(run_id)
-            finished = (RUNS / run_id / "run.json").exists() or (job and job["state"] == "done")
-            if finished and sent >= len(ev.read_text().splitlines() if ev.exists() else []):
-                status = job.get("status") if job else json.loads((RUNS / run_id / "run.json").read_text())["status"]
+            status = final_status(lines, job, quiet=time.time() - last_change > 2)
+            if status is not None:
                 yield f"event: end\ndata: {json.dumps({'status': status})}\n\n"
                 return
             if job and job["state"] == "queued" and not said_queued:
