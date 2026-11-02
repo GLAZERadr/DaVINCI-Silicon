@@ -1,0 +1,24 @@
+# DaVINCI formal sandbox: Yosys + SymbiYosys + solvers. Checks untrusted RTL
+# against the frozen property wrapper in formal/. Built only as
+# davinci-sim:formal (`make formal-image`); the simulation image
+# davinci-sim:latest is separate and untouched.
+FROM debian:trixie-slim AS sby
+# SymbiYosys tag v0.52 (commit 1b36b27), pure Python.
+ADD https://github.com/YosysHQ/sby/archive/1b36b27d90c99f4bd8c732532ccd88e361d5b5d9.tar.gz /sby.tar.gz
+RUN mkdir /sby && tar -xzf /sby.tar.gz -C /sby --strip-components=1
+
+FROM debian:trixie-slim
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends yosys yosys-abc z3 python3 python3-click make \
+ && rm -rf /var/lib/apt/lists/*
+COPY --from=sby /sby /tmp/sby
+RUN make -C /tmp/sby install PREFIX=/usr/local && rm -rf /tmp/sby
+
+RUN useradd --create-home --uid 1000 sim
+WORKDIR /work
+COPY formal/ /work/formal/
+COPY verify/formal.py /work/verify/formal.py
+RUN chmod -R a-w /work/formal /work/verify
+USER sim
+# The RTL under check is mounted at /work/in/dut.v, results go to /work/out.
+ENTRYPOINT ["timeout", "600", "python3", "verify/formal.py", "/work/in/dut.v", "--out", "/work/out"]

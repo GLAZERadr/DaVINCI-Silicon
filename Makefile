@@ -2,7 +2,7 @@ RTL ?= rtl/sync_fifo.v
 RUN ?= manual
 IMAGE = davinci-sim:latest
 
-.PHONY: sim mutate weak-demo image sandbox api evidence board plan plan-ref gaps coverage coverage-ref trace trace-ref triage
+.PHONY: sim mutate weak-demo image sandbox api evidence board plan plan-ref gaps coverage coverage-ref trace trace-ref triage formal-image formal formal-ref formal-mutants
 
 # Local run (needs iverilog + cocotb installed)
 sim:
@@ -83,3 +83,19 @@ evidence:
 # Static Evidence Board from evidence/ -> web/out (set NEXT_PUBLIC_DAVINCI_API for live replay).
 board:
 	cd web && npm ci --no-audit --no-fund && npx next build
+
+# Formal checks (SymbiYosys, own image davinci-sim:formal): per property BMC to
+# depth 20, then an unbounded attempt (k-induction, then abc pdr). Frozen
+# properties in formal/ (pinned in formal/props.sha256). Always inside Docker.
+FORMAL_IMAGE = davinci-sim:formal
+formal-image:
+	docker build -f docker/Dockerfile.formal -t $(FORMAL_IMAGE) .
+
+formal:
+	python3 verify/formal.py --run runs/$(RUN)
+
+formal-ref:
+	python3 verify/formal.py --reference
+
+formal-mutants:
+	python3 verify/formal.py --mutants
