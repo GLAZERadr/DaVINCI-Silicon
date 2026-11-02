@@ -1,0 +1,12 @@
+{
+  "block": "sat_gain",
+  "params": {},
+  "requirements": [
+    {"id": "REQ-01", "text": "Synchronous active-high reset: on a rising edge with rst = 1, y becomes 0 and sat becomes 0.", "tests": ["test_reset_state", "test_random_regression"]},
+    {"id": "REQ-02", "text": "y and sat are registered: they show the result for the x and g sampled at the previous rising edge (latency 1 cycle).", "tests": ["test_latency", "test_random_regression"]},
+    {"id": "REQ-03", "text": "The product of two Q1.7 values is formed at full precision before any rounding: 127 x 127 gives y = 0x7e (126/128) with sat = 0.", "tests": ["test_max_positive", "test_random_regression"]},
+    {"id": "REQ-04", "text": "A result above the Q1.7 maximum saturates: y = 0x7f and sat = 1 for that cycle (-1 x -1 = +1 gives 0x7f). sat is 0 whenever the result fits.", "tests": ["test_neg_one_squared_saturates", "test_random_regression"]},
+    {"id": "REQ-05", "text": "The 14 fractional bits of the product are truncated to 7 by dropping the 7 LSBs (arithmetic shift: toward minus infinity, never rounded, never toward zero).", "tests": ["test_truncation_negative", "test_truncation_positive", "test_random_regression"]},
+    {"id": "REQ-06", "text": "x and g are two's complement signed Q1.7; the result is correct in all four sign combinations.", "tests": ["test_sign_combinations", "test_random_regression"]}
+  ]
+}

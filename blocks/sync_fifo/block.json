@@ -1,0 +1,18 @@
+{
+  "name": "sync_fifo",
+  "title": "Synchronous FIFO",
+  "top": "sync_fifo",
+  "note": "The FIFO does not live under blocks/: its files stay where they were, because those paths are inside the pinned suite hash (verify/suite.sha256).",
+  "spec": "spec/fifo_spec.md",
+  "requirements": "spec/requirements.json",
+  "interface": "spec/interface.json",
+  "reference_rtl": "rtl/sync_fifo.v",
+  "tests_dir": "tests",
+  "test_module": "test_sync_fifo",
+  "golden_model": "tests/golden_model.py",
+  "mutants": "verify/mutants.json",
+  "runner": "verify/run_suite.py",
+  "suite_lock": "verify/suite.sha256",
+  "frozen": ["tests/test_sync_fifo.py", "tests/golden_model.py", "verify/run_suite.py", "verify/mutants.json"],
+  "sweep": {"runner": "verify/run_sweep.py", "lock": "verify/sweep.sha256"}
+}

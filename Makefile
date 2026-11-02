@@ -83,3 +83,27 @@ evidence:
 # Static Evidence Board from evidence/ -> web/out (set NEXT_PUBLIC_DAVINCI_API for live replay).
 board:
 	cd web && npm ci --no-audit --no-fund && npx next build
+
+# Registered blocks other than the FIFO (blocks/<name>/block.json, S3/S7): reference
+# verdict, mutation check, candidate tests and triage, under runs/blocks/$(BLOCK)/.
+# The FIFO keeps its own targets above (sim, mutate, triage).
+BLOCK ?= sat_gain
+.PHONY: block-sim block-mutate block-triage block-evidence model-demo
+block-sim:
+	python3 verify/run_block.py $(BLOCK) blocks/$(BLOCK)/rtl/$(BLOCK).v --out runs/blocks/$(BLOCK)/reference
+
+block-mutate:
+	python3 verify/mutate_block.py $(BLOCK)
+
+# S3: float model vs bit-accurate model against the sat_gain reference RTL (measured).
+model-demo:
+	python3 verify/model_demo.py --n 1000 --seed 2026
+
+# Candidate (unfrozen) tests, when the block has them, run on the reference RTL; then triage.
+block-triage:
+	if [ -d blocks/$(BLOCK)/candidate ]; then \
+	  python3 verify/run_block.py $(BLOCK) blocks/$(BLOCK)/rtl/$(BLOCK).v --candidate \
+	    --out runs/blocks/$(BLOCK)/candidate || true; fi
+	python3 verify/triage_block.py $(BLOCK)
+
+block-evidence: block-sim block-mutate block-triage

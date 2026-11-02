@@ -1,0 +1,13 @@
+{
+  "block": "sat_gain",
+  "note": "What the frozen testbench fixes: module name and port names/directions. A spec or requirements list that disagrees cannot be verified by this suite.",
+  "params": {},
+  "ports": [
+    {"name": "clk", "dir": "input"},
+    {"name": "rst", "dir": "input"},
+    {"name": "x", "dir": "input"},
+    {"name": "g", "dir": "input"},
+    {"name": "y", "dir": "output"},
+    {"name": "sat", "dir": "output"}
+  ]
+}
