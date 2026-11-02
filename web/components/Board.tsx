@@ -2,6 +2,7 @@ import Link from "next/link";
 import BreakdownView from "./BreakdownView";
 import ModelAvatar from "./ModelAvatar";
 import TestTriage from "./TestTriage";
+import AreaBox from "./AreaBox";
 import SiteHeader from "./SiteHeader";
 import ReplayButton from "./ReplayButton";
 import { type Attempt, type Board as BoardData, type RunSummary, simShort, status } from "@/lib/evidence";
@@ -146,6 +147,8 @@ export default function Board({ data, runs }: { data: BoardData; runs: RunSummar
             {!data.scenarios.suite_passed && <p className="box-lede">The suite did not pass on this RTL, so the counts are partial.</p>}
           </section>
         )}
+
+        {data.area && <AreaBox area={data.area} />}
 
         {data.gaps && (
           <section className="box" aria-labelledby="gaps">
@@ -412,7 +415,7 @@ export default function Board({ data, runs }: { data: BoardData; runs: RunSummar
 
       <footer className="site-foot">
         Live model spend to date: ${data.ledger.liveSpendUsd.toFixed(2)} over {data.ledger.liveCallsOk} answered calls ({data.ledger.liveCallsTotal} recorded, including refusals), from <span className="mono">runs/_ledger.jsonl</span>.
-        {" "}Limitations: a person writes and approves the requirements and interface (the design breakdown); coverage here is mutation-based (8 hand-written bugs), not line or functional coverage; the default spec states the reference equations; one block, one simulator; no synthesis, timing or power results. See the README.
+        {" "}Limitations: a person writes and approves the requirements and interface (the design breakdown); coverage here is mutation-based (8 hand-written bugs), not line or functional coverage; the default spec states the reference equations; one block, one simulator; no timing or power results; area, where shown, is a generic Yosys cell count, not silicon area. See the README.
       </footer>
     </>
   );

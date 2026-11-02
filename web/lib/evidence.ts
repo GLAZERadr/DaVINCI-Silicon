@@ -1,5 +1,6 @@
 // Build-time reader for the committed evidence/ bundle. Every number the board
 // shows comes from these files; nothing is computed from model text.
+import { createHash } from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 import { type Json, type Requirement, type Run, toRun } from "./run";
@@ -49,6 +50,7 @@ export type Board = {
   triage: Json | null; // test credibility (verify/triage.py)
   breakdown: { approved: Json; check: Json | null; model?: string } | null; // S1, when the run used one
   gaps: Json | null; // coverage-gap check (verify/gaps.py), only when measured on the pinned suite
+  area: Area | null; // S2: Yosys generic cell counts (verify/area.py), when stored
 };
 
 export type RunSummary = { id: string; status: string; seedBug: string | null; fromExtraction: boolean };
@@ -92,6 +94,7 @@ export function board(id: string): Board {
     scenarios: planId ? read(`runs/${planId}/verification_plan.json`)?.scenarios ?? null : null,
     signoff: planId ? read(`runs/${planId}/verification_plan.json`)?.signoff ?? null : null,
     triage: read("triage.json"),
+    area: area([entry.replay?.run_id, id]),
     breakdown: (() => {
       const approved = read(`runs/${id}/breakdown.json`);
       if (!approved) return null;
@@ -187,5 +190,33 @@ export function planText(file: string): string {
   if (!planFiles().includes(file)) throw new Error(`no plan ${file}`);
   const m = file.match(/^(.+)\.(md|json|csv|hjson)$/)!;
   return fs.readFileSync(path.join(planDir(m[1]), PLAN_FILE[m[2]]), "utf8");
+}
+
+// S2: generic Yosys cell / flip-flop counts (verify/area.py) for a run's final simulated RTL
+// and the reference RTL. Shown only when the stored area.json is ok and its RTL hash matches
+// the RTL in the bundle.
+export type AreaCount = { cells: number; flops: number; yosys: string; kind: string; timing: string; power: string };
+export type Area = { runId: string; final: AreaCount; reference: AreaCount | null };
+
+function areaOk(a: Json | null): AreaCount | null {
+  return a && a.status === "ok" && typeof a.cells === "number" && typeof a.flops === "number"
+    ? { cells: a.cells, flops: a.flops, yosys: a.yosys, kind: a.kind, timing: a.timing, power: a.power }
+    : null;
+}
+
+export function area(ids: (string | null | undefined)[]): Area | null {
+  for (const id of ids) {
+    if (!id) continue;
+    const a = read(`runs/${id}/area/area.json`);
+    const r = read(`runs/${id}/run.json`);
+    const count = areaOk(a);
+    if (!count || !r) continue;
+    const last = [...r.attempts].reverse().find((x: Json) => ["pass", "fail"].includes(x.measured?.status));
+    const f = last && path.join(ROOT, "runs", id, `attempt_${last.n}`, "sync_fifo.v");
+    if (!f || !fs.existsSync(f)) continue;
+    if (createHash("sha256").update(fs.readFileSync(f)).digest("hex") !== a!.rtl_sha256) continue;
+    return { runId: id, final: count, reference: areaOk(read("reference/area/area.json")) };
+  }
+  return null;
 }
 
