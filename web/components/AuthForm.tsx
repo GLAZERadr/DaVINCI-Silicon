@@ -124,13 +124,13 @@ export default function AuthForm({ mode }: { mode: Mode }) {
 
           <form className="auth-form" onSubmit={submit}>
             {reg && (
-              <label><span className="label">Name</span>
-                <input value={form.name} onChange={set("name")} required maxLength={80} autoComplete="name" placeholder="Ada Lovelace" /></label>
+              <label htmlFor="auth-name"><span className="label">Name</span>
+                <input id="auth-name" name="name" aria-label="Name" value={form.name} onChange={set("name")} required maxLength={80} autoComplete="name" placeholder="Ada Lovelace" /></label>
             )}
-            <label><span className="label">Email</span>
-              <input type="email" value={form.email} onChange={set("email")} required maxLength={254} autoComplete="email" placeholder="you@company.com" /></label>
-            <label><span className="label">Password</span>
-              <input type="password" value={form.password} onChange={set("password")} required minLength={reg ? 10 : 1} maxLength={128}
+            <label htmlFor="auth-email"><span className="label">Email</span>
+              <input id="auth-email" name="email" aria-label="Email" type="email" value={form.email} onChange={set("email")} required maxLength={254} autoComplete="email" placeholder="you@company.com" /></label>
+            <label htmlFor="auth-password"><span className="label">Password</span>
+              <input id="auth-password" name="password" aria-label="Password" type="password" value={form.password} onChange={set("password")} required minLength={reg ? 10 : 1} maxLength={128}
                 autoComplete={reg ? "new-password" : "current-password"} aria-describedby={reg ? "pw-hint" : undefined} />
               {reg && <span id="pw-hint" className="meta-text">At least 10 characters.</span>}
             </label>
