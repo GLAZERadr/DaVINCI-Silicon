@@ -5,6 +5,10 @@ code flow with PKCE, run by this API, so the static board needs no server).
   POST /auth/register {name, email, password}  → {token, user}
   POST /auth/login    {email, password}        → {token, user}
   POST /auth/logout                             revokes the session token sent
+  GET  /auth/account                          your account, sessions and what you own
+  POST /auth/account  {name}                  rename
+  POST /auth/password {new, current?}         change (or add) a password
+  POST /auth/sessions/{token_id}/revoke       sign one of your sessions out
   GET  /auth/{google|github}/start?return_to=<board page>
   GET  /auth/{google|github}/callback           → redirect to return_to#dv_session=<token>
 
@@ -143,6 +147,79 @@ def logout(authorization: str | None = Header(None)):
         return {"ok": True}
     if ident and ident.token_id.startswith("s_"):
         tk.revoke(ident.token_id)
+    return {"ok": True}
+
+
+# ---- account (profile page) ----------------------------------------------------------
+
+def _account_caller(authorization: str | None) -> tuple["tk.Identity", dict]:
+    try:
+        ident = tk.authenticate(authorization)
+    except PermissionError as e:
+        raise HTTPException(401, str(e)) from None
+    if ident is None or ident.user_id is None:
+        raise HTTPException(401, "sign in to see your account")
+    u = users.get(ident.user_id)
+    if u is None:
+        raise HTTPException(401, "unknown account")
+    return ident, u
+
+
+class Rename(BaseModel):
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+    name: str = Field(..., min_length=1, max_length=80)
+
+
+class Password(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    new: str = Field(..., min_length=10, max_length=128)
+    current: str | None = Field(None, max_length=128)
+
+
+@router.get("/auth/account")
+def account(authorization: str | None = Header(None)):
+    ident, u = _account_caller(authorization)
+    now = time.time()
+    sessions = [{"token_id": t["token_id"], "created": t["created"], "expires": t["expires"],
+                 "current": t["token_id"] == ident.token_id}
+                for t in tk.active() if t.get("user_id") == u["user_id"] and t.get("expires", 0) > now]
+    return {**users.public(u), "created": u["created"], "email_verified": bool(u.get("email_verified")),
+            "sessions": sorted(sessions, key=lambda s: s["created"], reverse=True),
+            "owned": {k: sum(1 for o in tk.owners((k,)).values() if o == u["email"])
+                      for k in ("run", "extraction", "breakdown")}}
+
+
+@router.post("/auth/account")
+def rename(body: Rename, authorization: str | None = Header(None)):
+    _, u = _account_caller(authorization)
+    try:
+        return users.public(users.set_name(u["user_id"], body.name))
+    except ValueError as e:
+        raise HTTPException(422, str(e)) from None
+
+
+@router.post("/auth/password")
+def password(body: Password, request: Request, authorization: str | None = Header(None)):
+    _, u = _account_caller(authorization)
+    key = f"pw:{u['user_id']}"
+    if _limited(key, LOGIN_TRIES, LOGIN_WINDOW, count=False):
+        raise HTTPException(429, "too many attempts; try again in 15 minutes")
+    try:
+        return users.public(users.set_password(u["user_id"], body.new, body.current))
+    except PermissionError as e:
+        _limited(key, LOGIN_TRIES, LOGIN_WINDOW)
+        raise HTTPException(403, str(e)) from None
+    except ValueError as e:
+        raise HTTPException(422, str(e)) from None
+
+
+@router.post("/auth/sessions/{token_id}/revoke")
+def revoke_session(token_id: str, authorization: str | None = Header(None)):
+    _, u = _account_caller(authorization)
+    t = next((t for t in tk.active() if t["token_id"] == token_id and t.get("user_id") == u["user_id"]), None)
+    if t is None:
+        raise HTTPException(404, "no such session on your account")
+    tk.revoke(token_id)
     return {"ok": True}
 
 

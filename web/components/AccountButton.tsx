@@ -39,10 +39,10 @@ export default function AccountButton({ landing = false }: { landing?: boolean }
   if (landing) return <Link href="/evidence/" className="btn btn-sm">Open DaVINCI</Link>;
   return (
     <>
-      <span className="account-name" title={me.live ? "live model runs enabled" : "read-only: live runs not granted yet"}>
+      <Link href="/account/" className="account-name" title={me.live ? "Your account · live model runs enabled" : "Your account · read-only: live runs not granted yet"}>
         <span className="account-dot" aria-hidden="true">{me.name.slice(0, 1).toUpperCase()}</span>{me.name}
         <span className="meta-text">{me.live ? " · live" : " · read-only"}</span>
-      </span>
+      </Link>
       <button type="button" className="btn btn-quiet btn-sm" onClick={signOut}>Sign out</button>
     </>
   );

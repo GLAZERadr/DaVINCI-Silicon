@@ -97,3 +97,17 @@ python -m api.users revoke-live <email>
   OAuth redirect URLs + PKCE + state reuse/expiry + foreign `return_to` (400), and the
   callback with the provider call stubbed. Not tested: a real Google/GitHub sign-in
   (no client ids yet). Test accounts were removed afterwards.
+
+## Profile page (2 Nov) — `/account/`, `/auth/account`, `/auth/password`, `/auth/sessions/{id}/revoke`
+
+Opened from the name in the header. Shows the account (name, email, member since),
+whether live runs are on (read-only accounts get a Request live access link), the
+caller's runs (`GET /runs?mine=1`, linked to the Run Console), the signed-in sessions
+with sign-out per session, the name (editable), and the sign-in methods. A password
+can be changed (current one required) or added to a Google/GitHub account. Password
+changes share the sign-in rate limit. Tested 2 Nov with a temporary account (rename,
+wrong current password 403, change, sign-in with the new one, revoke another session
+→ 401, anonymous 401), then removed.
+
+Accounts start read-only by design. The lead's account (Google + GitHub linked) was
+granted live access on 2 Nov at Adrian's request.

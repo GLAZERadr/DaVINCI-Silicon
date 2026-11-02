@@ -552,6 +552,7 @@ tr.row-muted td { color: var(--muted); }
   .auth-points, .auth-legal, .auth-pitch .lp-eyebrow { display: none; }
   .auth-main { border-left: 0; padding: 16px 16px 40px; place-items: start center; background: var(--bg); }
 }
+.account-name, .account-name:hover { color: var(--text); text-decoration: none; }
 .account-name { display: inline-flex; align-items: center; gap: 8px; font-weight: 600; max-width: 260px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .account-dot { width: 24px; height: 24px; border-radius: 50%; background: var(--brand); color: #fff; display: inline-grid; place-items: center; font-size: 12px; flex: none; }
 @media (max-width: 640px) { .account-name .meta-text { display: none; } .account-name { max-width: 120px; } }
@@ -705,3 +706,17 @@ tr.row-muted td { color: var(--muted); }
   .lp-mock-table td:last-child { display: none; }
   .lp-proof strong { font-size: 22px; }
 }
+
+/* Profile page (/account/) */
+.account-head { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+.account-head > div { min-width: 0; flex: 1; }
+.account-head .meta-text { margin: 4px 0 0; overflow-wrap: anywhere; }
+.account-avatar { width: 64px; height: 64px; border-radius: 50%; background: var(--brand); color: #fff; display: grid; place-items: center; font-size: 26px; font-weight: 700; flex: none; }
+.account-name-h { margin: 0; font-size: 28px; letter-spacing: -0.02em; }
+.account-grid { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 24px; align-items: start; }
+.account-main, .account-side { display: grid; gap: 16px; min-width: 0; }
+.account-p { margin: 0 0 12px; color: var(--secondary); line-height: 1.55; }
+.account-form { display: grid; gap: 12px; }
+.account-form label { display: grid; gap: 6px; }
+.account-form p { margin: 0; }
+@media (max-width: 900px) { .account-grid { grid-template-columns: 1fr; } }

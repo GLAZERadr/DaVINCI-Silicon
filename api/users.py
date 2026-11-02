@@ -137,6 +137,41 @@ def from_provider(provider: str, subject: str, email: str, name: str) -> dict:
     return u
 
 
+def _update(user_id: str, fn) -> dict:
+    with _lock:
+        users = _load()
+        u = next((x for x in users if x["user_id"] == user_id), None)
+        if u is None:
+            raise KeyError(user_id)
+        fn(u)
+        _save(users)
+    return u
+
+
+def set_name(user_id: str, name: str) -> dict:
+    name = name.strip()
+    if not NAME.match(name):
+        raise ValueError("name must be 1-80 printable characters")
+    return _update(user_id, lambda u: u.__setitem__("name", name))
+
+
+def set_password(user_id: str, new: str, current: str | None) -> dict:
+    """Change a password (the current one is required), or add one to a Google/GitHub
+    account, whose email the provider verified."""
+    if not 10 <= len(new) <= 128:
+        raise ValueError("password must be 10-128 characters")
+    u = get(user_id)
+    if u is None:
+        raise KeyError(user_id)
+    if u.get("password"):
+        if not current or not check_password(current, u["password"]):
+            raise PermissionError("current password is wrong")
+    elif not u.get("email_verified"):
+        raise PermissionError("add a password only after signing in with Google or GitHub")
+    pw = hash_password(new)
+    return _update(user_id, lambda x: x.__setitem__("password", pw))
+
+
 def set_live(email: str, live: bool) -> dict:
     with _lock:
         users = _load()
