@@ -4,8 +4,9 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { ApiError, api, sessionToken, setSessionToken } from "@/lib/api";
 
-// Header account control: Sign in / Sign up, or the signed-in name with Sign out.
-export default function AccountButton({ landing = false }: { landing?: boolean }) {
+// Account control: Sign in / Get started on the landing page; in the app sidebar the
+// signed-in profile with sign-out.
+export default function AccountButton({ landing = false, active = false }: { landing?: boolean; active?: boolean }) {
   const [me, setMe] = useState<{ name: string; live: boolean } | null | undefined>(undefined);
 
   useEffect(() => {
@@ -39,13 +40,19 @@ export default function AccountButton({ landing = false }: { landing?: boolean }
     </>
   ) : null;
   if (landing) return <Link href="/evidence/" className="btn btn-sm">Open DaVINCI</Link>;
+  // Sidebar profile: avatar, name and access, linking to /account/, with sign-out next to it.
   return (
-    <>
-      <Link href="/account/" className="account-name" title={me.live ? "Your account · live model runs enabled" : "Your account · read-only: live runs not granted yet"}>
-        <span className="account-dot" aria-hidden="true">{me.name.slice(0, 1).toUpperCase()}</span>{me.name}
-        <span className="meta-text">{me.live ? " · live" : " · read-only"}</span>
+    <div className="sb-account">
+      <Link href="/account/" className="sb-account-link" aria-current={active ? "page" : undefined}
+        title={me.live ? "Your account · live model runs enabled" : "Your account · read-only: live runs not granted yet"}>
+        <span className="account-dot" aria-hidden="true">{me.name.slice(0, 1).toUpperCase()}</span>
+        <span className="sb-account-text"><strong>{me.name}</strong><span className="meta-text">{me.live ? "Live runs enabled" : "Read-only"}</span></span>
       </Link>
-      <button type="button" className="btn btn-quiet btn-sm" onClick={signOut}>Sign out</button>
-    </>
+      <button type="button" className="sb-signout" onClick={signOut} aria-label="Sign out" title="Sign out">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <path d="M6 2.5H3.5v11H6M10.5 5l3 3-3 3M13.5 8H6.5" />
+        </svg>
+      </button>
+    </div>
   );
 }
