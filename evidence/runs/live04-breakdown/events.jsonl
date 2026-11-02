@@ -1,0 +1,10 @@
+{"t": 0.0, "type": "run_started", "run_id": "live04-breakdown", "generate": "meta", "repair": "meta", "seed_bug": "-"}
+{"t": 0.0, "type": "model_call", "attempt": 1, "step": "generate", "provider": "meta"}
+{"t": 34.09, "type": "rejected", "attempt": 1, "reason": "port list does not match the spec interface (missing [], extra ['v'], wrong direction [])"}
+{"t": 34.09, "type": "model_call", "attempt": 2, "step": "repair", "provider": "meta"}
+{"t": 58.37, "type": "diagnosis", "attempt": 2, "label": "AI interpretation \u00b7 not verified", "text": "The prior RTL altered the fixed interface \u2014 dropping required vector ranges, adding an extra port, and changing directions \u2014 so its port list no longer matched the spec."}
+{"t": 59.98, "type": "simulating", "attempt": 2}
+{"t": 60.67, "type": "verdict", "attempt": 2, "status": "pass", "passed": 10, "total": 10}
+{"t": 60.67, "type": "sweeping", "attempt": 2}
+{"t": 61.58, "type": "sweep", "attempt": 2, "status": "pass"}
+{"t": 61.59, "type": "run_finished", "status": "pass", "attempts": 2, "cost_usd": 0.060425}

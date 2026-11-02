@@ -313,6 +313,7 @@ export default function Board({ data, runs }: { data: BoardData; runs: RunSummar
                           <span className="tag-measured">measured</span>{" "}
                           <span className={ok === null ? "mark-neutral" : ok ? "mark-pass" : "mark-fail"}>{a.total ? `${ok ? "✓" : "✕"} ${a.passed}/${a.total} frozen tests` : `○ ${status(a.status).word}`}</span>
                           {failed.length > 0 && <> · failing <span className="mono">{failed.join(", ")}</span></>}
+                          {a.rejection && <> · rejected before simulation by G1: <span className="mono">{a.rejection}</span></>}
                         </p>
                         {failed.map((f) => (
                           <div key={f} className="tl-triage"><span className="mono">{f}</span><TestTriage test={f} triage={data.triage} runStarted={live.started} /></div>

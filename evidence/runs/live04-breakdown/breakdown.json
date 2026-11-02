@@ -1,0 +1,178 @@
+{
+  "breakdown_id": "b-20261102-144417-fce9",
+  "approved_by": "Claude (integration test, not a human review)",
+  "approved_at": "2026-11-02T14:46:05+0700",
+  "spec_sha256": "6e04e4641dc412f506396b1271441ba94d847eac5ec86a121431dbc465444126",
+  "requirements_sha256": "7ba5f39c3e28a36b9c9248e13a07dbe5944ce2e5da36589997e7d471140850da",
+  "breakdown": {
+    "block": "sync_fifo",
+    "control": [
+      "do_read qualify: rd_en && !empty",
+      "do_write qualify: wr_en && (!full || rd_en) so write-when-full succeeds only with same-cycle read",
+      "overflow next: wr_en && full && !rd_en, registered for one cycle",
+      "underflow next: rd_en && empty, registered for one cycle",
+      "count next select: +1 on write-only, -1 on read-only, hold on both-or-neither",
+      "full comparator: count == DEPTH, empty comparator: count == 0, almost_full comparator: count >= AF_THRESH",
+      "synchronous active-high rst override with priority over read/write/count/flags"
+    ],
+    "datapath": [
+      "DEPTH x WIDTH storage array mem written as mem[wr_ptr] <= din on do_write",
+      "registered read path mem[rd_ptr] -> dout on do_read else dout holds value",
+      "wr_ptr binary increment on do_write with modulo-DEPTH wrap to 0",
+      "rd_ptr binary increment on do_read with modulo-DEPTH wrap to 0",
+      "count occupancy register update driving full/empty/almost_full status"
+    ],
+    "elements": [
+      {
+        "kind": "memory",
+        "name": "mem",
+        "reqs": [
+          "REQ-02",
+          "REQ-04",
+          "REQ-06",
+          "REQ-07"
+        ],
+        "role": "DEPTH entries of WIDTH bits circular buffer holding queued words in arrival order",
+        "width": "WIDTH"
+      },
+      {
+        "kind": "pointer",
+        "name": "wr_ptr",
+        "reqs": [
+          "REQ-02",
+          "REQ-06",
+          "REQ-07"
+        ],
+        "role": "write index 0..DEPTH-1 pointing to next free slot for din",
+        "width": "$clog2(DEPTH)"
+      },
+      {
+        "kind": "pointer",
+        "name": "rd_ptr",
+        "reqs": [
+          "REQ-02",
+          "REQ-06",
+          "REQ-07"
+        ],
+        "role": "read index 0..DEPTH-1 pointing to oldest stored word for dout",
+        "width": "$clog2(DEPTH)"
+      },
+      {
+        "kind": "counter",
+        "name": "count",
+        "reqs": [
+          "REQ-01",
+          "REQ-03",
+          "REQ-06",
+          "REQ-07",
+          "REQ-08",
+          "REQ-09"
+        ],
+        "role": "occupancy count 0..DEPTH driving full/empty/almost_full combinational status",
+        "width": "CW"
+      },
+      {
+        "kind": "register",
+        "name": "dout",
+        "reqs": [
+          "REQ-01",
+          "REQ-02",
+          "REQ-05",
+          "REQ-06",
+          "REQ-07"
+        ],
+        "role": "registered read data holding oldest word on do_read else holding previous value, reset to 0",
+        "width": "WIDTH"
+      },
+      {
+        "kind": "flag",
+        "name": "full",
+        "reqs": [
+          "REQ-03",
+          "REQ-04",
+          "REQ-06",
+          "REQ-10"
+        ],
+        "role": "combinational status 1 when count==DEPTH gating do_write and overflow",
+        "width": "1"
+      },
+      {
+        "kind": "flag",
+        "name": "empty",
+        "reqs": [
+          "REQ-03",
+          "REQ-05",
+          "REQ-07"
+        ],
+        "role": "combinational status 1 when count==0 gating do_read",
+        "width": "1"
+      },
+      {
+        "kind": "flag",
+        "name": "almost_full",
+        "reqs": [
+          "REQ-08"
+        ],
+        "role": "combinational status 1 when count>=AF_THRESH",
+        "width": "1"
+      },
+      {
+        "kind": "flag",
+        "name": "overflow",
+        "reqs": [
+          "REQ-01",
+          "REQ-04",
+          "REQ-10"
+        ],
+        "role": "registered one-cycle pulse for write-ignored-when-full without same-cycle read",
+        "width": "1"
+      },
+      {
+        "kind": "flag",
+        "name": "underflow",
+        "reqs": [
+          "REQ-01",
+          "REQ-05",
+          "REQ-07"
+        ],
+        "role": "registered one-cycle pulse for any rd_en when empty including empty simultaneous RW",
+        "width": "1"
+      },
+      {
+        "kind": "wire",
+        "name": "do_read",
+        "reqs": [
+          "REQ-05",
+          "REQ-06",
+          "REQ-07",
+          "REQ-09"
+        ],
+        "role": "internal qualified read enable rd_en && !empty",
+        "width": "1"
+      },
+      {
+        "kind": "wire",
+        "name": "do_write",
+        "reqs": [
+          "REQ-04",
+          "REQ-06",
+          "REQ-07",
+          "REQ-09",
+          "REQ-10"
+        ],
+        "role": "internal qualified write enable wr_en && (!full || rd_en)",
+        "width": "1"
+      }
+    ],
+    "fsm_states": [],
+    "pointer_scheme": "Binary wr_ptr and rd_ptr over 0..DEPTH-1 with modulo-DEPTH wrap to 0 after DEPTH-1; wr_ptr advances by 1 only on do_write, rd_ptr advances by 1 only on do_read, both advance together on simultaneous read-write including full case so count stays DEPTH and order is preserved across wrap; occupancy tracked separately by count (+1 write-only, -1 read-only, hold both-or-neither) with full/empty decoded from count not pointer equality, so no extra full/empty pointer ambiguity.",
+    "summary": "Circular-buffer single-clock FIFO with DEPTHxWIDTH memory, binary wrap pointers, occupancy counter for combinational full/empty/almost_full, registered dout with hold on empty read, and one-cycle overflow/underflow pulses; no FSM.",
+    "timing_assumptions": [
+      "Inputs clk, rst, wr_en, rd_en, din sampled at rising edge of clk",
+      "Synchronous active-high rst takes priority and empties FIFO with count 0 and dout/overflow/underflow 0 on that edge",
+      "Registered outputs dout, count, overflow, underflow change just after rising edge using pre-edge full/empty/count",
+      "Combinational outputs full, empty, almost_full continuously decode current count as full=(count==DEPTH), empty=(count==0), almost_full=(count>=AF_THRESH)",
+      "Simultaneous read-write ordering resolved in same cycle using pre-edge status per do_read/do_write equations"
+    ]
+  }
+}

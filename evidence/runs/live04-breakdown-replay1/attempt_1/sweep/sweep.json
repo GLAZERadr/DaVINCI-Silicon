@@ -1,0 +1,77 @@
+{
+  "rtl_sha256": "ea8fc5843c0c258e1875d3e46c9cd55ace7673e87b22c81a560475dc2602e722",
+  "sweep_sha256": "b73c1b823e400e72eaf76f91d72a90aa370f56711604f309f1037ed5710e16e2",
+  "sets": [
+    {
+      "params": {
+        "WIDTH": 8,
+        "DEPTH": 12,
+        "AF_THRESH": 9,
+        "CW": 4
+      },
+      "tests": [
+        {
+          "name": "test_sweep_directed",
+          "passed": true,
+          "message": ""
+        },
+        {
+          "name": "test_sweep_random",
+          "passed": true,
+          "message": ""
+        }
+      ],
+      "passed": 2,
+      "total": 2,
+      "status": "pass"
+    },
+    {
+      "params": {
+        "WIDTH": 1,
+        "DEPTH": 2,
+        "AF_THRESH": 1,
+        "CW": 2
+      },
+      "tests": [
+        {
+          "name": "test_sweep_directed",
+          "passed": true,
+          "message": ""
+        },
+        {
+          "name": "test_sweep_random",
+          "passed": true,
+          "message": ""
+        }
+      ],
+      "passed": 2,
+      "total": 2,
+      "status": "pass"
+    },
+    {
+      "params": {
+        "WIDTH": 32,
+        "DEPTH": 32,
+        "AF_THRESH": 32,
+        "CW": 6
+      },
+      "tests": [
+        {
+          "name": "test_sweep_directed",
+          "passed": true,
+          "message": ""
+        },
+        {
+          "name": "test_sweep_random",
+          "passed": true,
+          "message": ""
+        }
+      ],
+      "passed": 2,
+      "total": 2,
+      "status": "pass"
+    }
+  ],
+  "status": "pass",
+  "seconds": 0.68
+}

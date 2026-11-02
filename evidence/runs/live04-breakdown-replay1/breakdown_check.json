@@ -1,0 +1,208 @@
+{
+  "label": "measured",
+  "breakdown_id": "b-20261102-144417-fce9",
+  "rtl_sha256": "ea8fc5843c0c258e1875d3e46c9cd55ace7673e87b22c81a560475dc2602e722",
+  "params": {
+    "WIDTH": 8,
+    "DEPTH": 16,
+    "AF_THRESH": 14,
+    "CW": 5
+  },
+  "elements": [
+    {
+      "name": "mem",
+      "kind": "memory",
+      "width_planned": "WIDTH",
+      "width_planned_bits": 8,
+      "declared": true,
+      "present": true,
+      "width_declared_bits": 8,
+      "width": "match",
+      "reqs": [
+        "REQ-02",
+        "REQ-04",
+        "REQ-06",
+        "REQ-07"
+      ]
+    },
+    {
+      "name": "wr_ptr",
+      "kind": "pointer",
+      "width_planned": "$clog2(DEPTH)",
+      "width_planned_bits": 4,
+      "declared": true,
+      "present": true,
+      "width_declared_bits": null,
+      "width": "not checked",
+      "reqs": [
+        "REQ-02",
+        "REQ-06",
+        "REQ-07"
+      ]
+    },
+    {
+      "name": "rd_ptr",
+      "kind": "pointer",
+      "width_planned": "$clog2(DEPTH)",
+      "width_planned_bits": 4,
+      "declared": true,
+      "present": true,
+      "width_declared_bits": null,
+      "width": "not checked",
+      "reqs": [
+        "REQ-02",
+        "REQ-06",
+        "REQ-07"
+      ]
+    },
+    {
+      "name": "count",
+      "kind": "counter",
+      "width_planned": "CW",
+      "width_planned_bits": 5,
+      "declared": true,
+      "present": true,
+      "width_declared_bits": 5,
+      "width": "match",
+      "reqs": [
+        "REQ-01",
+        "REQ-03",
+        "REQ-06",
+        "REQ-07",
+        "REQ-08",
+        "REQ-09"
+      ]
+    },
+    {
+      "name": "dout",
+      "kind": "register",
+      "width_planned": "WIDTH",
+      "width_planned_bits": 8,
+      "declared": true,
+      "present": true,
+      "width_declared_bits": 8,
+      "width": "match",
+      "reqs": [
+        "REQ-01",
+        "REQ-02",
+        "REQ-05",
+        "REQ-06",
+        "REQ-07"
+      ]
+    },
+    {
+      "name": "full",
+      "kind": "flag",
+      "width_planned": "1",
+      "width_planned_bits": 1,
+      "declared": true,
+      "present": true,
+      "width_declared_bits": 1,
+      "width": "match",
+      "reqs": [
+        "REQ-03",
+        "REQ-04",
+        "REQ-06",
+        "REQ-10"
+      ]
+    },
+    {
+      "name": "empty",
+      "kind": "flag",
+      "width_planned": "1",
+      "width_planned_bits": 1,
+      "declared": true,
+      "present": true,
+      "width_declared_bits": 1,
+      "width": "match",
+      "reqs": [
+        "REQ-03",
+        "REQ-05",
+        "REQ-07"
+      ]
+    },
+    {
+      "name": "almost_full",
+      "kind": "flag",
+      "width_planned": "1",
+      "width_planned_bits": 1,
+      "declared": true,
+      "present": true,
+      "width_declared_bits": 1,
+      "width": "match",
+      "reqs": [
+        "REQ-08"
+      ]
+    },
+    {
+      "name": "overflow",
+      "kind": "flag",
+      "width_planned": "1",
+      "width_planned_bits": 1,
+      "declared": true,
+      "present": true,
+      "width_declared_bits": 1,
+      "width": "match",
+      "reqs": [
+        "REQ-01",
+        "REQ-04",
+        "REQ-10"
+      ]
+    },
+    {
+      "name": "underflow",
+      "kind": "flag",
+      "width_planned": "1",
+      "width_planned_bits": 1,
+      "declared": true,
+      "present": true,
+      "width_declared_bits": 1,
+      "width": "match",
+      "reqs": [
+        "REQ-01",
+        "REQ-05",
+        "REQ-07"
+      ]
+    },
+    {
+      "name": "do_read",
+      "kind": "wire",
+      "width_planned": "1",
+      "width_planned_bits": 1,
+      "declared": true,
+      "present": true,
+      "width_declared_bits": 1,
+      "width": "match",
+      "reqs": [
+        "REQ-05",
+        "REQ-06",
+        "REQ-07",
+        "REQ-09"
+      ]
+    },
+    {
+      "name": "do_write",
+      "kind": "wire",
+      "width_planned": "1",
+      "width_planned_bits": 1,
+      "declared": true,
+      "present": true,
+      "width_declared_bits": 1,
+      "width": "match",
+      "reqs": [
+        "REQ-04",
+        "REQ-06",
+        "REQ-07",
+        "REQ-09",
+        "REQ-10"
+      ]
+    }
+  ],
+  "present": 12,
+  "total": 12,
+  "width_match": 10,
+  "width_differs": [],
+  "missing": [],
+  "reqs_without_element": [],
+  "attempt": 1
+}

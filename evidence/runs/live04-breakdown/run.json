@@ -1,0 +1,146 @@
+{
+  "run_id": "live04-breakdown",
+  "started": "2026-11-02T14:46:06+0700",
+  "providers": {
+    "generate": "meta",
+    "repair": "meta"
+  },
+  "seed_bug": null,
+  "replayed_from": null,
+  "max_repairs": 3,
+  "sandbox": {
+    "backend": "docker",
+    "image": "davinci-sim:latest",
+    "image_id": "sha256:eb80719d8ebb80ef2a87f718a5b3a14be76e2bc2a9f3ab0c4eca8e2a18df5e21"
+  },
+  "suite_sha256": "4adc7da757edd72117db7a297aa7900d5744361903b2b9d1aea339da5dcc7db1",
+  "spec_sha256": "6e04e4641dc412f506396b1271441ba94d847eac5ec86a121431dbc465444126",
+  "requirements_sha256": "7ba5f39c3e28a36b9c9248e13a07dbe5944ce2e5da36589997e7d471140850da",
+  "attempts": [
+    {
+      "n": 1,
+      "started_s": 0.0,
+      "source": "model",
+      "provider": "meta",
+      "model": "muse-spark-1.3",
+      "tokens_in": 3045,
+      "tokens_out": 7339,
+      "cost_usd": 0.034997,
+      "model_seconds": 34.08,
+      "finish_reason": "stop",
+      "status": "rejected",
+      "measured": {
+        "label": "measured",
+        "rejection": "port list does not match the spec interface (missing [], extra ['v'], wrong direction [])"
+      }
+    },
+    {
+      "n": 2,
+      "started_s": 34.09,
+      "source": "model",
+      "provider": "meta",
+      "model": "muse-spark-1.3",
+      "tokens_in": 3108,
+      "tokens_out": 5069,
+      "cost_usd": 0.025428,
+      "model_seconds": 24.28,
+      "finish_reason": "stop",
+      "ai_interpretation": {
+        "label": "AI interpretation \u00b7 not verified",
+        "diagnosis": "The prior RTL altered the fixed interface \u2014 dropping required vector ranges, adding an extra port, and changing directions \u2014 so its port list no longer matched the spec."
+      },
+      "measured_compile": {
+        "label": "measured",
+        "ok": true,
+        "tool": "iverilog -g2001 -Wall",
+        "output": ""
+      },
+      "rtl_sha256": "47442dc77a0d5daaadab7fc97ee707fed9b6754c89ba3a78801eed3a0f352aae",
+      "status": "pass",
+      "measured": {
+        "label": "measured",
+        "status": "pass",
+        "passed": 10,
+        "total": 10,
+        "failed": [],
+        "simulator": "Icarus Verilog version 12.0 (stable) ()",
+        "sim_seconds": 0.31,
+        "suite_sha256": "4adc7da757edd72117db7a297aa7900d5744361903b2b9d1aea339da5dcc7db1",
+        "sandbox": "docker"
+      },
+      "sweep": {
+        "label": "measured",
+        "status": "pass",
+        "seconds": 0.66,
+        "sets": [
+          {
+            "params": {
+              "WIDTH": 8,
+              "DEPTH": 12,
+              "AF_THRESH": 9,
+              "CW": 4
+            },
+            "status": "pass",
+            "passed": 2,
+            "total": 2
+          },
+          {
+            "params": {
+              "WIDTH": 1,
+              "DEPTH": 2,
+              "AF_THRESH": 1,
+              "CW": 2
+            },
+            "status": "pass",
+            "passed": 2,
+            "total": 2
+          },
+          {
+            "params": {
+              "WIDTH": 32,
+              "DEPTH": 32,
+              "AF_THRESH": 32,
+              "CW": 6
+            },
+            "status": "pass",
+            "passed": 2,
+            "total": 2
+          }
+        ]
+      },
+      "finished_s": 61.58
+    }
+  ],
+  "spec_file": "spec/fifo_spec.md",
+  "requirements_file": "spec/requirements.json",
+  "breakdown": {
+    "breakdown_id": "b-20261102-144417-fce9",
+    "approved_sha256": "ce5f205f74de3567a93577b74089721b561056f07fd12503b63e54deca89f743",
+    "approved_by": "Claude (integration test, not a human review)",
+    "approved_at": "2026-11-02T14:46:05+0700",
+    "cost_usd": 0.022174,
+    "provider": "meta"
+  },
+  "sweep_sha256": "b73c1b823e400e72eaf76f91d72a90aa370f56711604f309f1037ed5710e16e2",
+  "finished": "2026-11-02T14:47:07+0700",
+  "status": "pass",
+  "attempts_total": 2,
+  "attempts_to_green": 2,
+  "first_pass": false,
+  "time_to_green_s": 61.58,
+  "wall_seconds": 61.58,
+  "cost_usd": 0.060425,
+  "tokens": {
+    "in": 6153,
+    "out": 12408
+  },
+  "breakdown_check": {
+    "attempt": 2,
+    "present": 12,
+    "total": 12,
+    "width_match": 10,
+    "width_differs": [],
+    "missing": [],
+    "reqs_without_element": []
+  }
+}

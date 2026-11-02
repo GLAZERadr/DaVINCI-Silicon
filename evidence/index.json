@@ -115,14 +115,52 @@
         "sweep_sha256": "b73c1b823e400e72eaf76f91d72a90aa370f56711604f309f1037ed5710e16e2",
         "from_extraction": true
       }
+    },
+    {
+      "live": {
+        "run_id": "live04-breakdown",
+        "status": "pass",
+        "started": "2026-11-02T14:46:06+0700",
+        "providers": {
+          "generate": "meta",
+          "repair": "meta"
+        },
+        "seed_bug": null,
+        "replayed_from": null,
+        "attempts_total": 2,
+        "attempts_to_green": 2,
+        "time_to_green_s": 61.58,
+        "cost_usd": 0.060425,
+        "suite_sha256": "4adc7da757edd72117db7a297aa7900d5744361903b2b9d1aea339da5dcc7db1",
+        "sweep_sha256": "b73c1b823e400e72eaf76f91d72a90aa370f56711604f309f1037ed5710e16e2",
+        "from_extraction": false
+      },
+      "replay": {
+        "run_id": "live04-breakdown-replay1",
+        "status": "pass",
+        "started": "2026-11-02T14:47:45+0700",
+        "providers": {
+          "generate": "replay",
+          "repair": "replay"
+        },
+        "seed_bug": null,
+        "replayed_from": "live04-breakdown",
+        "attempts_total": 1,
+        "attempts_to_green": 1,
+        "time_to_green_s": 1.75,
+        "cost_usd": 0.0,
+        "suite_sha256": "4adc7da757edd72117db7a297aa7900d5744361903b2b9d1aea339da5dcc7db1",
+        "sweep_sha256": "b73c1b823e400e72eaf76f91d72a90aa370f56711604f309f1037ed5710e16e2",
+        "from_extraction": false
+      }
     }
   ],
   "reference_plan": true,
   "ledger": {
     "label": "measured",
-    "live_calls_total": 17,
-    "live_calls_ok": 15,
-    "live_spend_usd_total": 0.47106,
+    "live_calls_total": 20,
+    "live_calls_ok": 18,
+    "live_spend_usd_total": 0.553659,
     "exported_run_calls": [
       {
         "ts": "2026-10-31T15:53:49+0700",
@@ -159,6 +197,30 @@
         "tokens_out": 11195,
         "cost_usd": 0.050886,
         "seconds": 35.92
+      },
+      {
+        "ts": "2026-11-02T14:46:40+0700",
+        "run_id": "live04-breakdown",
+        "step": "generate",
+        "provider": "meta",
+        "model": "muse-spark-1.3",
+        "status": "ok",
+        "tokens_in": 3045,
+        "tokens_out": 7339,
+        "cost_usd": 0.034997,
+        "seconds": 34.08
+      },
+      {
+        "ts": "2026-11-02T14:47:04+0700",
+        "run_id": "live04-breakdown",
+        "step": "repair",
+        "provider": "meta",
+        "model": "muse-spark-1.3",
+        "status": "ok",
+        "tokens_in": 3108,
+        "tokens_out": 5069,
+        "cost_usd": 0.025428,
+        "seconds": 24.28
       }
     ]
   }

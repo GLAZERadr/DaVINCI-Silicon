@@ -76,7 +76,7 @@ api:
 	DAVINCI_CORS_ORIGINS="$(CORS)" uvicorn api.server:app --host 127.0.0.1 --port 8000
 
 # Committed evidence bundle for the Evidence Board (live runs + today's-gates replays).
-LIVE ?= live01 live02-m1 live03-pdf
+LIVE ?= live01 live02-m1 live03-pdf live04-breakdown
 evidence:
 	python3 scripts/export_evidence.py $(LIVE)
 
