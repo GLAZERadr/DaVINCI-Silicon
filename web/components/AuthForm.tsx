@@ -105,8 +105,8 @@ export default function AuthForm({ mode }: { mode: Mode }) {
         <section className="auth-card card" aria-labelledby="auth-title">
           <h1 id="auth-title" className="auth-title">{reg ? "Create your account" : "Sign in"}</h1>
           <p className="auth-sub">{reg
-            ? "Free to read and replay. Live model runs are switched on per account by the DaVINCI team."
-            : "Welcome back. Recorded runs stay open without an account."}</p>
+            ? "Free to read the evidence and replay runs. Live model runs are switched on per account by the DaVINCI team."
+            : "Welcome back. Sign in to open the evidence, the Run Console and your runs."}</p>
 
           <div className="auth-sso">
             <button type="button" className="btn btn-quiet auth-sso-btn" disabled={off("google")} onClick={() => sso("google")}>

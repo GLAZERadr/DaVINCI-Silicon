@@ -39,7 +39,7 @@ export default function AccessRequest() {
     <main className="board">
       <section className="title-block">
         <p className="eyebrow">Request access</p>
-        <h1 className="display-title">Read freely, run with a token. <span className="tone-2">Evidence, Run Console and $0 replays are open to everyone; live model runs need a token issued by the DaVINCI team.</span></h1>
+        <h1 className="display-title">Ask for live runs. <span className="tone-2">With an account you can read the evidence, open the Run Console and replay runs for $0; live model runs are switched on by the DaVINCI team.</span></h1>
       </section>
 
       <ApiPanel onChange={(ok) => setApiOk(ok)} />

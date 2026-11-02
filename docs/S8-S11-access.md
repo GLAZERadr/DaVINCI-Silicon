@@ -111,3 +111,13 @@ wrong current password 403, change, sign-in with the new one, revoke another ses
 
 Accounts start read-only by design. The lead's account (Google + GitHub linked) was
 granted live access on 2 Nov at Adrian's request.
+
+## Sign-in required for app pages (2 Nov, Adrian)
+
+Evidence, Run Console, New run, Spec intake, plans and the account page need a
+signed-in account (or a token set in Connection settings); `/`, `/login/`,
+`/register/` and `/access/` stay public. `AuthGate` (root layout) checks `/me` and
+sends anyone else to `/login/?next=<page>`; sign-in returns to that page. It is a
+client-side gate on a static site, and the evidence also lives in the public repo.
+Consequence: on the hosted board (Vercel) the app pages need a reachable API to sign
+in, so until the API is hosted, visitors there only see the landing page.

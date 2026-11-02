@@ -40,7 +40,7 @@ const FAQ = [
   ["What can it design today?", "One block end to end: a synchronous FIFO, with Icarus Verilog as the simulator. Two more small blocks (a saturating gain stage and a round-robin arbiter) have their own frozen suites. It is a working prototype, not a full chip flow."],
   ["How do I know the tests are good enough?", "Before any RTL is trusted, the suite runs against hand-written buggy versions of the reference design. Each planted bug must make a test fail. The board shows which tests catch which bug, and what slips through when a test is removed."],
   ["Is my code run safely?", "Model-written RTL is compiled and simulated only inside a sandbox with no network, a non-root user, read-only tests and CPU, memory and time limits. Anything with system tasks or compiler directives is rejected before it runs."],
-  ["What does it cost?", "Reading the evidence and replaying recorded runs is free. Live runs call Muse Spark and are switched on per account by the DaVINCI team; the cost of each call is recorded with the run."],
+  ["What does it cost?", "Reading the evidence and replaying recorded runs is free with an account. Live runs call Muse Spark and are switched on per account by the DaVINCI team; the cost of each call is recorded with the run."],
 ];
 
 const usd = (n: number) => `$${n < 0.1 ? n.toFixed(4) : n.toFixed(2)}`;
@@ -194,9 +194,9 @@ export default function Landing({ data }: { data: LandingData }) {
           <h2 className="lp-h2">See the evidence first. <span className="tone-2">Then run your own spec.</span></h2>
           <div className="lp-ctas">
             <article className="lp-cta-card">
-              <span className="lp-cta-tag">Free · no account</span>
+              <span className="lp-cta-tag">Free · with an account</span>
               <h3>Replay a recorded run</h3>
-              <p>Open the Evidence board and Run Console for a real run, then replay it from the stored model output at $0.</p>
+              <p>Sign in, open the Evidence board and Run Console for a real run, then replay it from the stored model output at $0.</p>
               <Link href="/evidence/" className="btn btn-quiet">Open the evidence</Link>
             </article>
             <article className="lp-cta-card lp-cta-card-main">

@@ -720,3 +720,7 @@ tr.row-muted td { color: var(--muted); }
 .account-form label { display: grid; gap: 6px; }
 .account-form p { margin: 0; }
 @media (max-width: 900px) { .account-grid { grid-template-columns: 1fr; } }
+
+/* Sign-in gate for app pages (AuthGate) */
+.gate { min-height: 60vh; display: grid; place-items: center; padding: 24px 16px; }
+.gate-card { max-width: 460px; }
