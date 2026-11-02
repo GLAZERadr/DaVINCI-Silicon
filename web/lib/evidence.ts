@@ -163,6 +163,19 @@ function planDir(id: string) {
 const PLAN_FILE: Record<string, string> = { md: "verification_plan.md", json: "verification_plan.json",
                                            csv: "verification_plan.csv", hjson: "testplan.hjson" };
 
+// Everything the in-app plan viewer needs for a run (its linked plan) or for the reference RTL.
+export function planBundle(id: string): { planId: string; plan: Json; csv: string; hjson: string } | null {
+  let planId = id;
+  if (id !== "reference") {
+    const entry = index().runs.find((e: Json) => e.live.run_id === id);
+    planId = [entry?.replay?.run_id, id].find((r) => r && fs.existsSync(path.join(planDir(r), PLAN_FILE.json))) ?? "";
+  }
+  const dir = planDir(planId);
+  if (!planId || !fs.existsSync(path.join(dir, PLAN_FILE.json))) return null;
+  const text = (f: string) => (fs.existsSync(path.join(dir, f)) ? fs.readFileSync(path.join(dir, f), "utf8") : "");
+  return { planId, plan: JSON.parse(text(PLAN_FILE.json)), csv: text(PLAN_FILE.csv), hjson: text(PLAN_FILE.hjson) };
+}
+
 export function planFiles(): string[] {
   const idx = index();
   const ids = ["reference", ...idx.runs.flatMap((e: Json) => [e.live.run_id, e.replay?.run_id].filter(Boolean))];
