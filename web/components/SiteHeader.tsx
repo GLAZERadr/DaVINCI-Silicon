@@ -1,4 +1,5 @@
 import Link from "next/link";
+import AccountButton from "./AccountButton";
 import Logo from "./Logo";
 
 // 16px line icons in the spirit of GitHub's Octicons, drawn for DaVINCI.
@@ -45,7 +46,7 @@ export default function SiteHeader({ active, crumbs = [], children }:
         </nav>
         <div className="header-actions">
           {children}
-          <Link href="/access/" className="btn btn-quiet btn-sm">Request access</Link>
+          <AccountButton />
         </div>
       </div>
       <nav className="tabs" aria-label="Sections">

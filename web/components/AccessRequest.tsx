@@ -46,7 +46,7 @@ export default function AccessRequest() {
 
       <section className="card">
         <p className="label">Ask for a token</p>
-        <p className="lede">There is no signup. We read each request and, if it fits, send you a personal token by hand. Nothing is created automatically.</p>
+        <p className="lede">Anyone can create an account; live model runs are switched on per account, by hand. Tell us what you would verify and we turn on live runs for your account, or send a personal token. Nothing is granted automatically.</p>
         {apiOk === false && (
           <p className="mark-neutral" role="status">○ The DaVINCI API is not reachable from this page, so requests cannot be sent right now. The recorded runs stay readable on the Evidence and Run Console pages.</p>
         )}

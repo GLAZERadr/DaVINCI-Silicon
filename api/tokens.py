@@ -1,4 +1,4 @@
-"""Per-user API tokens (S8). Issued from the CLI only: no signup, no passwords.
+"""Per-user API tokens (S8), plus sign-in sessions for accounts (api/users.py).
 
   python -m api.tokens issue --owner "Name"   print a new token once; store only its SHA-256
   python -m api.tokens list                   owners, token ids, created/revoked (no secrets)
@@ -7,6 +7,12 @@
 Tokens live in runs/_api/tokens.json (gitignored, mode 0600) as
 {token_id, owner, sha256, created, revoked}. The server reads the file on every
 authenticated request, so issuing and revoking need no restart.
+
+Signing in (email + password, Google or GitHub; api/auth.py) issues a session
+token in the same store, kind "session", with user_id and an expiry. A session
+only reaches live model calls and approvals when the lead granted that account
+live access (`python -m api.users grant <email>`); the grant is read on every
+request. CLI-issued tokens are hand-granted, so they always have live access.
 
 DAVINCI_API_TOKEN (the original single token) keeps working as the admin token,
 owner "admin". With neither an admin token nor an active issued token, live
@@ -42,6 +48,9 @@ class Identity:
     owner: str
     token_id: str
     admin: bool = False
+    live: bool = True
+    user_id: str | None = None
+    name: str | None = None
 
 
 def _sha(token: str) -> str:
@@ -77,6 +86,24 @@ def issue(owner: str) -> tuple[str, dict]:
     return token, rec
 
 
+SESSION_DAYS = 30
+
+
+def issue_session(user: dict) -> str:
+    """A sign-in session for an account; owner is the account's email (unique)."""
+    token = PREFIX + secrets.token_urlsafe(32)
+    now = time.time()
+    rec = {"token_id": "s_" + secrets.token_hex(4), "kind": "session", "owner": user["email"],
+           "user_id": user["user_id"], "sha256": _sha(token),
+           "created": time.strftime("%Y-%m-%dT%H:%M:%S%z"), "expires": int(now + SESSION_DAYS * 86400),
+           "revoked": None}
+    with _lock:
+        tokens = [t for t in _load() if not (t.get("kind") == "session" and t.get("expires", 0) < now)]
+        tokens.append(rec)
+        _save(tokens)
+    return token
+
+
 def revoke(token_id: str) -> dict:
     with _lock:
         tokens = _load()
@@ -90,12 +117,17 @@ def revoke(token_id: str) -> dict:
 
 
 def active() -> list[dict]:
-    return [t for t in _load() if not t.get("revoked")]
+    now = time.time()
+    return [t for t in _load() if not t.get("revoked")
+            and not (t.get("kind") == "session" and t.get("expires", 0) < now)]
 
 
 def configured() -> bool:
-    """True when any credential can authenticate: the admin token or an active issued token."""
-    return bool(os.environ.get("DAVINCI_API_TOKEN")) or bool(active())
+    """True when some credential can make live calls: the admin token, an active
+    CLI-issued token, or an account the lead granted live access."""
+    from api import users
+    return (bool(os.environ.get("DAVINCI_API_TOKEN"))
+            or any(t.get("kind") != "session" for t in active()) or users.any_live())
 
 
 def authenticate(authorization: str | None) -> Identity | None:
@@ -114,6 +146,13 @@ def authenticate(authorization: str | None) -> Identity | None:
     for t in active():  # compare against every hash; no early exit on a match
         if secrets.compare_digest(digest, t["sha256"]):
             match = t
+    if match and match.get("kind") == "session":
+        from api import users
+        u = users.get(match["user_id"])
+        if u is None:
+            raise PermissionError("unknown or revoked token")
+        return Identity(owner=u["email"], token_id=match["token_id"], live=bool(u.get("live")),
+                        user_id=u["user_id"], name=u.get("name"))
     if match:
         return Identity(owner=match["owner"], token_id=match["token_id"])
     raise PermissionError("unknown or revoked token")
@@ -163,7 +202,7 @@ def main(argv=None):
         print("token (shown once; only its SHA-256 is stored):", file=sys.stderr)
         print(token)
     elif a.cmd == "list":
-        rows = _load()
+        rows = [t for t in _load() if t.get("kind") != "session"]  # sign-in sessions: python -m api.users
         if not rows:
             print("no tokens issued")
         for t in rows:

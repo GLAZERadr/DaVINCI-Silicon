@@ -38,8 +38,12 @@ export function setApiBase(url: string) {
   else s.removeItem(BASE_KEY);
 }
 
+// A token typed into Connection settings stays in this tab (sessionStorage); a
+// sign-in session (api/auth.py) is kept across tabs (localStorage) until sign-out.
+const SESSION_KEY = "davinci.session";
+
 export function apiToken(): string {
-  return store("session")?.getItem(TOKEN_KEY) ?? "";
+  return store("session")?.getItem(TOKEN_KEY) || store("local")?.getItem(SESSION_KEY) || "";
 }
 
 export function setApiToken(token: string) {
@@ -47,6 +51,18 @@ export function setApiToken(token: string) {
   if (!s) return;
   if (token) s.setItem(TOKEN_KEY, token);
   else s.removeItem(TOKEN_KEY);
+}
+
+export function sessionToken(): string {
+  return store("local")?.getItem(SESSION_KEY) ?? "";
+}
+
+export function setSessionToken(token: string) {
+  const s = store("local");
+  if (!s) return;
+  if (token) s.setItem(SESSION_KEY, token);
+  else s.removeItem(SESSION_KEY);
+  window.dispatchEvent(new Event("davinci-session"));
 }
 
 export class ApiError extends Error {

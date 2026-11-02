@@ -61,3 +61,39 @@ python -m api.tokens revoke t_1a2b3c4d      # refused from the next request on, 
   may share one IP. Restarting the API resets it.
 - The token sits in the browser's sessionStorage for the tab: an XSS on the board
   would expose it.
+
+## Sign in and register (2 Nov) — `api/users.py`, `api/auth.py`, `/login/`, `/register/`
+
+Accounts with email + password, Google or GitHub. An account is read-only until the
+lead switches on live runs for it; signing up never spends model credit.
+
+```bash
+python -m api.users list                 # accounts, sign-in methods, live or read-only
+python -m api.users grant <email>        # live model runs + approvals for this account
+python -m api.users revoke-live <email>
+```
+
+- Passwords: scrypt (n=2^14, r=8, p=1) with a per-account salt, 10-128 characters.
+  Wrong email and wrong password give the same 401 and take the same time.
+  10 failed sign-ins per IP and per email per 15 min; 5 new accounts per IP per hour.
+- Signing in issues a session token (`s_…`, 30 days) in `runs/_api/tokens.json`;
+  sign-out revokes it. Its owner is the account email. The board keeps it in
+  localStorage (all tabs) until sign-out; a token typed into Connection settings
+  still wins for that tab.
+- Google / GitHub: OAuth 2 authorization code + PKCE, run by the API (the board is
+  static). `state` is single-use and expires after 10 min; `return_to` must be on an
+  origin in `DAVINCI_CORS_ORIGINS`; the session comes back in the URL fragment.
+  Only a provider-verified email is accepted (GitHub: the verified primary email).
+- Linking: a verified Google/GitHub email joins the account with that email. If that
+  account only had an (unverified) password, the password is dropped, so someone who
+  registered another person's email first loses the way in.
+- Setup: set `GOOGLE_CLIENT_ID/SECRET` and/or `GITHUB_CLIENT_ID/SECRET` and
+  `DAVINCI_API_PUBLIC_URL` (default `http://127.0.0.1:8000`) in `.env.local`, and
+  register `<DAVINCI_API_PUBLIC_URL>/auth/google/callback` (Google Cloud console,
+  OAuth client "Web application") and `<…>/auth/github/callback` (GitHub → Settings →
+  Developer settings → OAuth Apps). Without them the buttons show as not configured.
+- Tested 2 Nov locally: register, duplicate (409), short password (422), login, wrong
+  password (401), live run refused until `grant`, fake run allowed, sign-out → 401,
+  OAuth redirect URLs + PKCE + state reuse/expiry + foreign `return_to` (400), and the
+  callback with the provider call stubbed. Not tested: a real Google/GitHub sign-in
+  (no client ids yet). Test accounts were removed afterwards.

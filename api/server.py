@@ -52,6 +52,7 @@ from agent import extract as ex
 from agent import llm
 from api import tokens as tk
 from api.access import router as access_router
+from api.auth import router as auth_router
 
 ROOT = llm.ROOT
 RUNS = llm.RUNS
@@ -81,6 +82,7 @@ app.add_middleware(
     allow_private_network=True,
 )
 app.include_router(access_router)
+app.include_router(auth_router)
 
 
 class RunRequest(BaseModel):
@@ -198,6 +200,8 @@ def _require_token(providers: set, authorization: str | None) -> "tk.Identity | 
     ident = _caller(authorization)
     if ident is None:
         raise HTTPException(401, "live model calls and approvals need an API token; replay and fake runs are open")
+    if not ident.live:
+        raise HTTPException(403, "this account has no live access yet: request access, the DaVINCI team grants it by hand")
     return ident
 
 
@@ -309,7 +313,8 @@ def me(authorization: str | None = Header(None)):
     ident = _caller(authorization)
     if ident is None:
         return {"owner": None, "admin": False, "live_enabled": tk.configured()}
-    return {"owner": ident.owner, "token_id": ident.token_id, "admin": ident.admin, "live_enabled": True}
+    return {"owner": ident.owner, "token_id": ident.token_id, "admin": ident.admin, "live_enabled": True,
+            "live": ident.live, "account": ident.user_id is not None, "name": ident.name}
 
 
 @app.get("/runs/{run_id}")

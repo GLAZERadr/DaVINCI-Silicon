@@ -519,3 +519,24 @@ tr.row-muted td { color: var(--muted); }
 .plan-code { max-height: 70vh; overflow: auto; background: var(--code-bg); }
 .plan-diag { margin: 0 0 10px; }
 .plan-page .grid-2 { align-items: start; }
+
+/* Sign in / register (AuthForm): one calm centred card. */
+.auth { max-width: 440px; margin: 48px auto 64px; padding: 0 16px; }
+.auth-card { padding: 32px 28px; }
+.auth-logo { display: flex; justify-content: center; margin-bottom: 16px; }
+.auth-title { margin: 0; text-align: center; font-size: 24px; font-weight: 700; letter-spacing: -0.02em; }
+.auth-sub { margin: 8px 0 24px; text-align: center; color: var(--muted); line-height: 1.5; }
+.auth-sso { display: grid; gap: 10px; }
+.auth-sso-btn { width: 100%; justify-content: center; gap: 10px; display: inline-flex; align-items: center; }
+.auth-note { margin: 2px 0 0; text-align: center; }
+.auth-or { display: flex; align-items: center; gap: 12px; margin: 22px 0; color: var(--muted); font-size: 13px; }
+.auth-or::before, .auth-or::after { content: ""; flex: 1; height: 1px; background: var(--border); }
+.auth-form { display: grid; gap: 14px; }
+.auth-form label { display: grid; gap: 6px; }
+.auth-form p { margin: 0; }
+.auth-submit { width: 100%; margin-top: 4px; justify-content: center; text-align: center; }
+.auth-switch { margin: 20px 0 0; text-align: center; }
+.auth-foot { text-align: center; margin-top: 16px; }
+.account-name { display: inline-flex; align-items: center; gap: 8px; font-weight: 600; max-width: 260px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.account-dot { width: 24px; height: 24px; border-radius: 50%; background: var(--brand); color: #fff; display: inline-grid; place-items: center; font-size: 12px; flex: none; }
+@media (max-width: 640px) { .account-name .meta-text { display: none; } .account-name { max-width: 120px; } }
