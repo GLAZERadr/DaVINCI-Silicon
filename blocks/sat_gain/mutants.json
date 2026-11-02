@@ -1,0 +1,16 @@
+[
+  {"id": "M1", "req": "REQ-04", "desc": "no saturation: -1 x -1 wraps to -1",
+   "find": "y   <= hi ? 8'sd127 : (lo ? -8'sd128 : t[7:0]);", "replace": "y   <= t[7:0];"},
+  {"id": "M2", "req": "REQ-05", "desc": "round to nearest instead of truncating",
+   "find": "wire signed [8:0] t = p[15:7];", "replace": "wire signed [8:0] t = p[15:7] + p[6];"},
+  {"id": "M3", "req": "REQ-05", "desc": "negative products truncate toward zero",
+   "find": "wire signed [8:0] t = p[15:7];", "replace": "wire signed [8:0] t = p[15:7] + (p[15] && (p[6:0] != 7'd0));"},
+  {"id": "M4", "req": "REQ-04", "desc": "sat flag never raised",
+   "find": "sat <= hi || lo;", "replace": "sat <= 1'b0;"},
+  {"id": "M5", "req": "REQ-01", "desc": "reset does not clear y",
+   "find": "            y   <= 8'sd0;\n", "replace": ""},
+  {"id": "M6", "req": "REQ-06", "desc": "operands multiplied as unsigned",
+   "find": "wire signed [15:0] p = x * g;", "replace": "wire signed [15:0] p = {8'd0, x} * {8'd0, g};"},
+  {"id": "M7", "req": "REQ-03", "desc": "saturation threshold two codes early (126 clamps)",
+   "find": "wire hi = (t > 9'sd127);", "replace": "wire hi = (t > 9'sd125);"}
+]

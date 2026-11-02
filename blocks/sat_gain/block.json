@@ -1,0 +1,23 @@
+{
+  "name": "sat_gain",
+  "title": "Saturating Q1.7 gain",
+  "top": "sat_gain",
+  "spec": "blocks/sat_gain/spec.md",
+  "requirements": "blocks/sat_gain/requirements.json",
+  "interface": "blocks/sat_gain/interface.json",
+  "reference_rtl": "blocks/sat_gain/rtl/sat_gain.v",
+  "tests_dir": "blocks/sat_gain/tests",
+  "test_module": "test_sat_gain",
+  "golden_model": "blocks/sat_gain/tests/golden_model.py",
+  "mutants": "blocks/sat_gain/mutants.json",
+  "runner": "verify/run_block.py",
+  "suite_lock": "blocks/sat_gain/suite.sha256",
+  "frozen": ["blocks/sat_gain/tests/test_sat_gain.py", "blocks/sat_gain/tests/golden_model.py",
+             "verify/run_block.py", "blocks/sat_gain/mutants.json"],
+  "sweep": null,
+  "candidate_tests": {
+    "dir": "blocks/sat_gain/candidate",
+    "module": "test_sat_gain_float_model",
+    "note": "Not frozen. Same stimulus as the frozen suite, but the expected values come from the naive float model (blocks/sat_gain/models/float_model.py). Used by S3 to show triage flagging a test whose reference model is wrong."
+  }
+}

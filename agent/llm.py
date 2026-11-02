@@ -17,6 +17,7 @@ overwritten; replay does not depend on it.
 import hashlib
 import json
 import os
+import re
 import time
 import urllib.error
 import urllib.request
@@ -183,10 +184,21 @@ def _live(provider: str, messages: list, opts: dict) -> Reply:
                  extra={"finish_reason": data["choices"][0].get("finish_reason")})
 
 
+def _fake_reference_rtl(messages: list) -> str:
+    """S7: the reference RTL of the block the prompt asks for (blocks/<name>/block.json),
+    found by its module name; the FIFO's otherwise."""
+    text = "\n".join(str(m.get("content", "")) for m in messages)
+    for bj in sorted((ROOT / "blocks").glob("*/block.json")):
+        b = json.loads(bj.read_text())
+        if b["top"] != "sync_fifo" and re.search(rf"\bmodule\s+{b['top']}\b", text):
+            return (ROOT / b["reference_rtl"]).read_text()
+    return (ROOT / "rtl" / "sync_fifo.v").read_text()
+
+
 def _fake(messages: list, step: str) -> Reply:
     """Offline stand-in: answers with the reference RTL. Lets the whole loop,
     including repair, be exercised without spending credit."""
-    rtl = (ROOT / "rtl" / "sync_fifo.v").read_text()
+    rtl = _fake_reference_rtl(messages)
     ref = json.loads((ROOT / "spec" / "requirements.json").read_text())["requirements"]
     if step == "breakdown":  # the reference RTL's own structure, so the check can be exercised at $0
         el = lambda name, kind, width, role, reqs: {"name": name, "kind": kind, "width": width, "role": role, "reqs": reqs}

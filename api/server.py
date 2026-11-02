@@ -62,6 +62,14 @@ ATTEMPT_FILES = {"sync_fifo.v", "response.md", "prompt.json",
                  "sim/verdict.json", "sim/sim.log", "sim/build.log", "trace/trace.json"}
 MUTANTS = {m["id"] for m in json.loads((ROOT / "verify" / "mutants.json").read_text())}
 
+
+def _blocks() -> dict:
+    """S7 registry: blocks/<name>/block.json (sync_fifo included, at its old paths)."""
+    return {p.parent.name: json.loads(p.read_text()) for p in sorted((ROOT / "blocks").glob("*/block.json"))}
+
+
+ATTEMPT_FILES |= {f"{b['top']}.v" for b in _blocks().values()}
+
 app = FastAPI(title="DaVINCI Silicon API")
 app.add_middleware(
     CORSMiddleware,
@@ -87,6 +95,7 @@ class RunRequest(BaseModel):
     spec: str | None = Field(None, description="spec markdown; default spec/fifo_spec.md", max_length=100_000)
     requirements: dict | None = Field(None, description="approved requirements; default spec/requirements.json")
     extraction_id: str | None = Field(None, description="run from an approved image/PDF extraction")
+    block: str | None = Field(None, description="registered block (GET /blocks); default sync_fifo")
     breakdown_id: str | None = Field(None, description="approved design breakdown passed into the RTL prompt (S1)")
 
 
@@ -206,7 +215,17 @@ def create_run(req: RunRequest, authorization: str | None = Header(None)):
     allowed = [p for p in llm.PROVIDERS if p != "replay"]
     if providers - set(allowed):
         raise HTTPException(422, f"provider must be one of {allowed} (use POST /runs/{{id}}/replay to replay)")
-    if req.seed_bug and req.seed_bug not in MUTANTS:
+    blocks = _blocks()
+    if req.block and req.block not in blocks:
+        raise HTTPException(422, f"block must be one of {sorted(blocks)}")
+    other = req.block and req.block != "sync_fifo"
+    if other:
+        if req.extraction_id or req.breakdown_id or req.spec is not None or req.requirements is not None:
+            raise HTTPException(422, "spec intake, breakdown and custom specs are sync_fifo only")
+        ids = {m["id"] for m in json.loads((ROOT / blocks[req.block]["mutants"]).read_text())}
+        if req.seed_bug and req.seed_bug not in ids:
+            raise HTTPException(422, f"seed_bug must be one of {sorted(ids)}")
+    elif req.seed_bug and req.seed_bug not in MUTANTS:
         raise HTTPException(422, f"seed_bug must be one of {sorted(MUTANTS)}")
     ident = _require_token(providers, authorization)
 
@@ -219,6 +238,8 @@ def create_run(req: RunRequest, authorization: str | None = Header(None)):
         argv += ["--repair-provider", req.repair_provider]
     if req.seed_bug:
         argv += ["--seed-bug", req.seed_bug]
+    if other:
+        argv += ["--block", req.block]
     if req.breakdown_id:
         rec_b = _breakdown(req.breakdown_id)
         if "approved" not in rec_b:
@@ -258,7 +279,8 @@ def replay_run(run_id: str, authorization: str | None = Header(None)):
 def _summary(d: Path) -> dict:
     r = json.loads((d / "run.json").read_text())
     return {k: r.get(k) for k in ("run_id", "status", "started", "providers", "seed_bug", "replayed_from",
-                                  "attempts_total", "attempts_to_green", "time_to_green_s", "cost_usd")}
+                                  "attempts_total", "attempts_to_green", "time_to_green_s", "cost_usd")} \
+        | ({"block": r["block"]} if r.get("block") else {})
 
 
 @app.get("/runs")
@@ -382,6 +404,18 @@ def ledger():
     spent = round(sum(b["cost_usd"] for b in by_provider.values()), 6)
     return {"label": "measured", "spent_usd": spent, "budget_usd": llm.budget_usd(),
             "remaining_usd": round(llm.budget_usd() - spent, 6), "by_provider": by_provider, "entries": entries}
+
+
+@app.get("/blocks")
+def list_blocks():
+    """S7: registered blocks, with their planted bugs, for the New run block selector."""
+    out = []
+    for name, b in _blocks().items():
+        muts = json.loads((ROOT / b["mutants"]).read_text())
+        out.append({"name": name, "title": b.get("title", name), "top": b["top"],
+                    "mutants": [{"id": m["id"], "req": m["req"], "desc": m["desc"]} for m in muts],
+                    "sweep": bool(b.get("sweep"))})
+    return {"blocks": out}
 
 
 @app.get("/health")

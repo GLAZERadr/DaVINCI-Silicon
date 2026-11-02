@@ -1,0 +1,12 @@
+{
+  "block": "rr_arbiter",
+  "params": {},
+  "requirements": [
+    {"id": "REQ-01", "text": "Synchronous active-high reset: grant becomes 0 and requester 0 has the highest priority at the next edge.", "tests": ["test_reset_state", "test_random_regression"]},
+    {"id": "REQ-02", "text": "grant is registered: it reflects req sampled at the previous rising edge; a lone requester is granted at every edge it asks.", "tests": ["test_single_requester", "test_random_regression"]},
+    {"id": "REQ-03", "text": "grant is one-hot or all zero: never more than one requester granted at a time.", "tests": ["test_one_hot", "test_random_regression"]},
+    {"id": "REQ-04", "text": "No grant without a request: grant[i] is 1 only if req[i] was 1 at that edge; with no request grant is 0 and the priority is unchanged.", "tests": ["test_no_request_no_grant", "test_random_regression"]},
+    {"id": "REQ-05", "text": "Round robin: the winner is the first requester at or after the priority pointer, in the order 0, 1, 2, 3, 0, ...; after a grant to i the pointer moves to i+1 (mod 4).", "tests": ["test_round_robin_all", "test_rotation_skips_idle", "test_random_regression"]},
+    {"id": "REQ-06", "text": "Fairness: a requester that holds req high is granted within 4 cycles, whatever the other requesters do.", "tests": ["test_fairness_persistent", "test_random_regression"]}
+  ]
+}

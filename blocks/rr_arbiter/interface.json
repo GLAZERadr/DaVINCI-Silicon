@@ -1,0 +1,11 @@
+{
+  "block": "rr_arbiter",
+  "note": "What the frozen testbench fixes: module name and port names/directions. A spec or requirements list that disagrees cannot be verified by this suite.",
+  "params": {},
+  "ports": [
+    {"name": "clk", "dir": "input"},
+    {"name": "rst", "dir": "input"},
+    {"name": "req", "dir": "input"},
+    {"name": "grant", "dir": "output"}
+  ]
+}

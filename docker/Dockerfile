@@ -21,7 +21,9 @@ COPY tests/  /work/tests/
 COPY verify/ /work/verify/
 COPY tests_sweep/ /work/tests_sweep/
 COPY spec/interface.json /work/spec/interface.json
-RUN chmod -R a-w /work/tests /work/verify /work/tests_sweep /work/spec
+# Registered blocks other than the FIFO (S7): their frozen suites, run by verify/run_block.py.
+COPY blocks/ /work/blocks/
+RUN chmod -R a-w /work/tests /work/verify /work/tests_sweep /work/spec /work/blocks
 USER sim
 
 # The RTL under test is mounted at /work/in/dut.v, results go to /work/out.

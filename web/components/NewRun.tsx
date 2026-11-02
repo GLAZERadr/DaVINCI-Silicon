@@ -8,6 +8,7 @@ import type { Json } from "@/lib/run";
 
 type Mutant = { id: string; req: string; desc: string };
 type Mode = "replay" | "fake" | "live";
+type Block = { name: string; title: string; mutants: Mutant[]; sweep: boolean };
 
 // Start a run through the API and follow it live.
 export default function NewRun({ mutants, recorded }: { mutants: Mutant[]; recorded: string[] }) {
@@ -21,6 +22,9 @@ export default function NewRun({ mutants, recorded }: { mutants: Mutant[]; recor
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [watch, setWatch] = useState<string | null>(null);
+  // S7: registered blocks (GET /blocks); the selector shows only when there is more than one.
+  const [blocks, setBlocks] = useState<Block[]>([]);
+  const [block, setBlock] = useState("sync_fifo");
 
   useEffect(() => {
     const w = new URLSearchParams(window.location.search).get("watch");
@@ -38,8 +42,10 @@ export default function NewRun({ mutants, recorded }: { mutants: Mutant[]; recor
       setSources(all);
       if (!all.includes(source)) setSource(all[0] ?? "");
     }).catch(() => {});
+    api("/blocks").then((r) => setBlocks(r.blocks ?? [])).catch(() => setBlocks([]));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [apiOk]);
+  const blockMutants = block === "sync_fifo" ? mutants : blocks.find((b) => b.name === block)?.mutants ?? [];
 
   async function start(e: React.FormEvent) {
     e.preventDefault();
@@ -48,7 +54,8 @@ export default function NewRun({ mutants, recorded }: { mutants: Mutant[]; recor
     setBusy(true);
     setError(null);
     try {
-      const body = { provider: mode === "live" ? "meta" : "fake", seed_bug: seed || null, max_repairs: repairs };
+      const body = { provider: mode === "live" ? "meta" : "fake", seed_bug: seed || null, max_repairs: repairs,
+                     ...(block !== "sync_fifo" ? { block } : {}) };
       const r = mode === "replay"
         ? await api(`/runs/${encodeURIComponent(source)}/replay`, { method: "POST" })
         : await api("/runs", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
@@ -98,11 +105,20 @@ export default function NewRun({ mutants, recorded }: { mutants: Mutant[]; recor
             </label>
           ) : (
             <div className="run-form-row">
+              {blocks.length > 1 && (
+                <label>
+                  <span className="label">Block</span>
+                  <select value={block} onChange={(e) => { setBlock(e.target.value); setSeed("M1"); }}>
+                    {[...blocks].sort((a, b) => Number(b.name === "sync_fifo") - Number(a.name === "sync_fifo"))
+                      .map((b) => <option key={b.name} value={b.name}>{b.name} · {b.title}{b.sweep ? "" : " · no parameter sweep"}</option>)}
+                  </select>
+                </label>
+              )}
               <label>
                 <span className="label">Seeded bug (attempt 1)</span>
                 <select value={seed} onChange={(e) => setSeed(e.target.value)}>
                   <option value="">None: the model writes attempt 1</option>
-                  {mutants.map((m) => <option key={m.id} value={m.id}>{m.id} · {m.req} · {m.desc}</option>)}
+                  {blockMutants.map((m) => <option key={m.id} value={m.id}>{m.id} · {m.req} · {m.desc}</option>)}
                 </select>
               </label>
               <label>

@@ -52,6 +52,7 @@ export type Run = {
   attempts: Attempt[];
   handoff?: Json;
   notVerifiable?: string[];
+  block?: string; // S7: set for registered blocks other than sync_fifo
 };
 
 export type AttemptFiles = {
@@ -93,6 +94,7 @@ export function toRun(r: Json, files: AttemptFiles): Run {
     };
   });
   return {
+    ...(r.block ? { block: r.block } : {}),
     id: r.run_id,
     status: r.status,
     started: r.started,

@@ -85,7 +85,7 @@ export async function apiRun(id: string): Promise<{ run: Run } | { job: Json }> 
   };
   const ns: number[] = r.attempts.map((a: Json) => a.n);
   const got = await Promise.all(ns.map(async (n) => {
-    const [v, rtl, prompt] = await Promise.all([file(n, "sim/verdict.json"), file(n, "sync_fifo.v"), file(n, "prompt.json")]);
+    const [v, rtl, prompt] = await Promise.all([file(n, "sim/verdict.json"), file(n, `${r.block ?? "sync_fifo"}.v`), file(n, "prompt.json")]);
     const parse = (t: string | null) => { try { return t ? JSON.parse(t) : null; } catch { return null; } };
     return [n, { v: parse(v), rtl, prompt: parse(prompt) }] as const;
   }));

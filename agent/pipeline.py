@@ -64,14 +64,27 @@ def sha256(b: bytes) -> str:
     return hashlib.sha256(b).hexdigest()
 
 
-def suite_hash() -> str:
+def suite_hash(block: dict | None = None) -> str:
     sys.path.insert(0, str(ROOT / "verify"))
+    if block:  # S7: a registered block other than the FIFO (verify/run_block.py)
+        from run_block import suite_hash as bh
+        return bh(block)
     from run_suite import suite_hash as h
     return h()
 
 
-def check_suite(expected: str, when: str):
-    got = suite_hash()
+def load_block(name: str) -> dict | None:
+    """Registry entry (blocks/<name>/block.json) for a block other than the FIFO;
+    None for sync_fifo, whose paths, prompts and gates stay as they were."""
+    if name == "sync_fifo":
+        return None
+    sys.path.insert(0, str(ROOT / "verify"))
+    from run_block import load
+    return load(name)
+
+
+def check_suite(expected: str, when: str, block: dict | None = None):
+    got = suite_hash(block)
     if got != expected:
         raise SystemExit(f"ABORT: frozen suite changed ({when}): {got} != {expected}")
 
@@ -84,8 +97,8 @@ def check_sweep(expected: str, when: str):
         raise SystemExit(f"ABORT: parameter sweep changed ({when}): {got} != {expected}")
 
 
-def apply_mutant(src: str, mutant_id: str) -> tuple[str, dict]:
-    mutants = {m["id"]: m for m in json.loads((ROOT / "verify" / "mutants.json").read_text())}
+def apply_mutant(src: str, mutant_id: str, mutants_file: Path = ROOT / "verify" / "mutants.json") -> tuple[str, dict]:
+    mutants = {m["id"]: m for m in json.loads(mutants_file.read_text())}
     if mutant_id not in mutants:
         raise SystemExit(f"unknown mutant {mutant_id}; have {sorted(mutants)}")
     m = mutants[mutant_id]
@@ -94,22 +107,22 @@ def apply_mutant(src: str, mutant_id: str) -> tuple[str, dict]:
     return src.replace(m["find"], m["replace"]), m
 
 
-def extract(text: str) -> tuple[str | None, str]:
+def extract(text: str, top: str = "sync_fifo") -> tuple[str | None, str]:
     """Return (rtl, diagnosis) from a model reply. rtl is the last fenced block
-    that defines sync_fifo; diagnosis is the prose before the first fence."""
+    that defines the top module; diagnosis is the prose before the first fence."""
     blocks = re.findall(r"```[a-zA-Z]*\n(.*?)```", text, flags=re.S)
-    rtl = next((b for b in reversed(blocks) if re.search(r"\bmodule\s+sync_fifo\b", b)), None)
-    if rtl is None and re.search(r"\bmodule\s+sync_fifo\b", text) and "```" not in text:
+    rtl = next((b for b in reversed(blocks) if re.search(rf"\bmodule\s+{top}\b", b)), None)
+    if rtl is None and re.search(rf"\bmodule\s+{top}\b", text) and "```" not in text:
         rtl = text  # bare Verilog with no fence
     prose = text.split("```", 1)[0].strip()
     prose = re.sub(r"^\s*DIAGNOSIS:\s*", "", prose, flags=re.I)
     return rtl, prose
 
 
-def validate(rtl: str | None) -> str | None:
+def validate(rtl: str | None, top: str = "sync_fifo", interface: dict | None = None) -> str | None:
     """Reason to reject the RTL before simulation, or None if it may run."""
     if rtl is None:
-        return "no Verilog block defining module sync_fifo in the reply"
+        return f"no Verilog block defining module {top} in the reply"
     if len(rtl.encode()) > MAX_RTL_BYTES:
         return f"RTL larger than {MAX_RTL_BYTES} bytes"
     for rule, what in ((DOLLAR, "system task or function ($)"), (DIRECTIVE, "compiler directive (`)")):
@@ -123,7 +136,7 @@ def validate(rtl: str | None) -> str | None:
         if rule.search(code):
             return f"simulation-only construct not allowed in synthesisable RTL: {what}"
     got = ports(code)
-    want = {p["name"]: p["dir"] for p in INTERFACE["ports"]}
+    want = {p["name"]: p["dir"] for p in (interface or INTERFACE)["ports"]}
     if got != want:
         missing = sorted(set(want) - set(got))
         extra = sorted(set(got) - set(want))
@@ -198,7 +211,7 @@ def sandbox_image_id() -> str | None:
     return r.stdout.strip() or None
 
 
-def simulate(rtl_path: Path, out: Path, backend: str = "local") -> dict:
+def simulate(rtl_path: Path, out: Path, backend: str = "local", block: dict | None = None) -> dict:
     """Run the frozen suite on rtl_path and return the verdict (measured).
     local:  a separate Python process with a hard timeout.
     docker: the locked-down sandbox image; RTL mounted read-only."""
@@ -208,6 +221,12 @@ def simulate(rtl_path: Path, out: Path, backend: str = "local") -> dict:
                "-v", f"{rtl_path.resolve()}:/work/in/dut.v:ro", "-v", f"{out.resolve()}:/work/out", SANDBOX_IMAGE]
     else:
         cmd = [sys.executable, str(ROOT / "verify" / "run_suite.py"), str(rtl_path), "--out", str(out)]
+    if block:  # S7: other blocks run through verify/run_block.py (same limits in docker)
+        if backend == "docker":
+            cmd = [*cmd[:-1], "--entrypoint", "timeout", SANDBOX_IMAGE, "120", "python", "verify/run_block.py",
+                   block["name"], "/work/in/dut.v", "--out", "/work/out"]
+        else:
+            cmd = [sys.executable, str(ROOT / "verify" / "run_block.py"), block["name"], str(rtl_path), "--out", str(out)]
     env = None if backend == "docker" else local_env()
     try:
         p = subprocess.run(cmd, capture_output=True, text=True, timeout=SIM_TIMEOUT_S, cwd=ROOT, env=env)
@@ -246,12 +265,17 @@ def sweep(rtl_path: Path, out: Path, backend: str) -> dict:
     return json.loads(f.read_text())
 
 
-def interface_problems(spec: str, reqs: dict) -> list[str]:
+def interface_problems(spec: str, reqs: dict, block: dict | None = None) -> list[str]:
     """Can the frozen suite verify a design built from this spec and requirement
     list at all? A syntactic guard: block, parameters, port names, test names.
     It cannot judge whether the requirement text matches what the tests check."""
     sys.path.insert(0, str(ROOT / "verify"))
     from run_suite import all_tests
+    INTERFACE, top = globals()["INTERFACE"], "sync_fifo"
+    if block:
+        from run_block import all_tests as block_tests
+        INTERFACE, top = json.loads((ROOT / block["interface"]).read_text()), block["top"]
+        all_tests = lambda: block_tests(block)  # noqa: E731
     problems = []
     if reqs.get("block") != INTERFACE["block"]:
         problems.append(f"block is {reqs.get('block')!r}, the suite verifies {INTERFACE['block']!r}")
@@ -262,8 +286,8 @@ def interface_problems(spec: str, reqs: dict) -> list[str]:
     unknown = sorted({t for r in reqs.get("requirements", []) for t in r.get("tests", [])} - known)
     if unknown:
         problems.append(f"requirements name tests the suite does not have: {unknown}")
-    if not re.search(r"\bmodule\s+sync_fifo\b", spec):
-        problems.append("spec does not define module sync_fifo")
+    if not re.search(rf"\bmodule\s+{top}\b", spec):
+        problems.append(f"spec does not define module {top}")
     missing = [p["name"] for p in INTERFACE["ports"] if not re.search(rf"\b{p['name']}\b", spec)]
     if missing:
         problems.append(f"spec does not mention ports {missing}")
@@ -290,9 +314,9 @@ def spec_context(spec: str, reqs: str) -> str:
     return f"## Specification\n\n{spec}\n\n## Approved requirements\n\n```json\n{reqs}\n```"
 
 
-def gen_messages(ctx: str) -> list:
+def gen_messages(ctx: str, top: str = "sync_fifo") -> list:
     return [{"role": "system", "content": SYSTEM},
-            {"role": "user", "content": f"{ctx}\n\nWrite the complete `sync_fifo` module that meets every requirement."}]
+            {"role": "user", "content": f"{ctx}\n\nWrite the complete `{top}` module that meets every requirement."}]
 
 
 def repair_messages(ctx: str, rtl: str | None, feedback: str) -> list:
@@ -341,6 +365,7 @@ def main(argv=None):
     ap.add_argument("--spec", type=Path, default=ROOT / "spec" / "fifo_spec.md")
     ap.add_argument("--requirements", type=Path, default=ROOT / "spec" / "requirements.json")
     ap.add_argument("--breakdown", metavar="BID", help="approved design breakdown to pass into the RTL prompt (agent.breakdown)")
+    ap.add_argument("--block", default="sync_fifo", help="registered block (blocks/<name>/block.json); default sync_fifo")
     a = ap.parse_args(argv)
 
     replayer, source = None, None
@@ -351,6 +376,7 @@ def main(argv=None):
         replayer = llm.Replayer(source)
         src_run = json.loads((RUNS / source / "run.json").read_text())
         a.seed_bug = src_run.get("seed_bug")
+        a.block = src_run.get("block", "sync_fifo")
         # Replay against the inputs the source run used, unless overridden.
         if not a.breakdown and src_run.get("breakdown"):
             a.breakdown = src_run["breakdown"]["breakdown_id"]
@@ -364,12 +390,24 @@ def main(argv=None):
             a.run_id = f"{source}-replay{n}"
     gen_p = a.gen_provider or a.provider
     rep_p = a.repair_provider or a.provider
+    # S7: blocks other than the FIFO bring their own spec, suite pin, interface and
+    # mutants; G3 (parameter sweep) exists for the FIFO only. blk is None for sync_fifo.
+    blk = load_block(a.block)
+    top = blk["top"] if blk else "sync_fifo"
+    iface = json.loads((ROOT / blk["interface"]).read_text()) if blk else INTERFACE
+    if blk:
+        for opt in ("spec", "requirements"):
+            if getattr(a, opt) == ap.get_default(opt):
+                setattr(a, opt, ROOT / blk[opt])
+        if a.breakdown:
+            raise SystemExit("--breakdown is FIFO-only for now")
 
     a.sandbox = choose_sandbox(a.sandbox, {gen_p, rep_p}, source)
-    locked = SUITE_LOCK.read_text().strip()
-    check_suite(locked, "before run")
-    sweep_locked = SWEEP_LOCK.read_text().strip()
-    check_sweep(sweep_locked, "before run")
+    locked = (ROOT / blk["suite_lock"] if blk else SUITE_LOCK).read_text().strip()
+    check_suite(locked, "before run", blk)
+    sweep_locked = SWEEP_LOCK.read_text().strip() if not blk else None
+    if not blk:
+        check_sweep(sweep_locked, "before run")
     image_id = None
     if a.sandbox == "docker":
         image_id = sandbox_image_id()
@@ -399,6 +437,8 @@ def main(argv=None):
         "suite_sha256": locked, "spec_sha256": sha256(spec.encode()), "requirements_sha256": sha256(reqs.encode()),
         "attempts": [],
     }
+    if blk:
+        record["block"] = blk["name"]
     approved = json.loads(reqs)
     if approved.get("extraction_id"):  # requirements came from an approved image/PDF extraction
         record["extraction"] = {"extraction_id": approved["extraction_id"], "approved_sha256": sha256(reqs.encode()),
@@ -413,9 +453,11 @@ def main(argv=None):
                                "cost_usd": rec_b.get("cost_usd"), "provider": rec_b.get("provider")}
         (run.dir / "breakdown.json").write_text(json.dumps(approved_breakdown, indent=2))
     record["sweep_sha256"] = sweep_locked
+    if blk:
+        record["sweep"] = "not run: the G3 parameter sweep exists for sync_fifo only"
     run.event("run_started", run_id=run.id, generate=gen_p, repair=rep_p, seed_bug=a.seed_bug or "-")
 
-    problems = interface_problems(spec, approved)
+    problems = interface_problems(spec, approved, blk)
     if problems:  # the frozen suite cannot judge this design: no model call, no verdict
         record.update(finished=time.strftime("%Y-%m-%dT%H:%M:%S%z"), status="not_verifiable",
                       not_verifiable=problems, attempts_total=0, attempts_to_green=None, first_pass=False,
@@ -435,12 +477,13 @@ def main(argv=None):
         diagnosis, reply = None, None
 
         if n == 1 and a.seed_bug:
-            rtl, m = apply_mutant((ROOT / "rtl" / "sync_fifo.v").read_text(), a.seed_bug)
+            rtl, m = apply_mutant((ROOT / (blk["reference_rtl"] if blk else "rtl/sync_fifo.v")).read_text(), a.seed_bug,
+                                  ROOT / (blk["mutants"] if blk else "verify/mutants.json"))
             att.update(source="seeded", seeded={"mutant": m["id"], "req": m["req"], "desc": m["desc"]})
             run.event("seeded", attempt=n, mutant=m["id"], desc=m["desc"])
         else:
             provider = gen_p if step == "generate" else rep_p
-            msgs = gen_messages(ctx) if step == "generate" else \
+            msgs = gen_messages(ctx, top) if step == "generate" else \
                 repair_messages(ctx, last_rtl, measured_feedback(verdict, rejection))
             (adir / "prompt.json").write_text(json.dumps(msgs, indent=1))
             run.event("model_call", attempt=n, step=step, provider=provider)
@@ -456,7 +499,7 @@ def main(argv=None):
                 break
             run.log_call(step, n, reply, None, h)
             (adir / "response.md").write_text(reply.text)
-            rtl, diagnosis = extract(reply.text)
+            rtl, diagnosis = extract(reply.text, top)
             att.update(source="model", provider=reply.provider, model=reply.model,
                        tokens_in=reply.tokens_in, tokens_out=reply.tokens_out,
                        cost_usd=reply.cost_usd, model_seconds=reply.seconds, **reply.extra)
@@ -465,13 +508,13 @@ def main(argv=None):
             att["ai_interpretation"] = {"label": AI_LABEL, "diagnosis": diagnosis[:2000]}
             run.event("diagnosis", attempt=n, label=AI_LABEL, text=diagnosis[:300])
 
-        rejection = validate(rtl)
+        rejection = validate(rtl, top, iface)
         status = "rejected"
         if rejection and reply is not None and reply.extra.get("finish_reason") == "length":
             # A configuration limit, not a model mistake: counted, but under its own status.
             status = "truncated"
             rejection = f"reply cut off at the output token limit ({opts['max_tokens']} tokens); {rejection}"
-        rtl_path = adir / "sync_fifo.v"
+        rtl_path = adir / f"{top}.v"
         if not rejection:
             assert TESTS not in rtl_path.parents
             rtl_path.write_text(rtl)
@@ -500,8 +543,8 @@ def main(argv=None):
             break
         simulated[att["rtl_sha256"]] = n
         run.event("simulating", attempt=n)
-        verdict = simulate(rtl_path, adir / "sim", a.sandbox)
-        check_suite(locked, f"after attempt {n}")
+        verdict = simulate(rtl_path, adir / "sim", a.sandbox, blk)
+        check_suite(locked, f"after attempt {n}", blk)
         if verdict.get("suite_sha256") not in (None, locked):
             raise SystemExit(f"ABORT: simulator ran a different suite ({verdict['suite_sha256']}); "
                              "rebuild the sandbox image with `make image`")
@@ -518,7 +561,7 @@ def main(argv=None):
         run.event("verdict", attempt=n, status=verdict["status"],
                   passed=verdict.get("passed", 0), total=verdict.get("total", 0))
         last_rtl = rtl
-        if verdict["status"] == "pass":
+        if verdict["status"] == "pass" and not blk:
             # G3: same design at other parameter sets. Never shown to the model;
             # a visible pass that fails here is an escape, not a pass.
             run.event("sweeping", attempt=n)
@@ -552,8 +595,9 @@ def main(argv=None):
             "last_simulated_attempt": max(simulated.values()) if simulated else None,
             "last_diagnosis": {"label": AI_LABEL, "text": diag} if diag else None,
         }
-    check_suite(locked, "after run")
-    check_sweep(sweep_locked, "after run")
+    check_suite(locked, "after run", blk)
+    if not blk:
+        check_sweep(sweep_locked, "after run")
     atts = record["attempts"]
     record.update(
         finished=time.strftime("%Y-%m-%dT%H:%M:%S%z"),
