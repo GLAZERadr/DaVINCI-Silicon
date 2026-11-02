@@ -6,6 +6,8 @@ const config: NextConfig = {
   output: "export",
   trailingSlash: true,
   images: { unoptimized: true },
+  // Dev server only: the default bottom-left badge covers the sidebar's collapse button.
+  devIndicators: { position: "bottom-right" },
 };
 
 export default config;
