@@ -10,6 +10,8 @@ type Row = { key: string; label: string; kind: "bit" | "bus" | "clk"; get: (c: T
   group: "in" | "out" | "exp" | "ptr"; cmp?: string };
 
 const hex = (v: number | null | undefined) => (v == null ? "x" : v.toString(16).toUpperCase());
+// Readout values carry their radix, so measured and expected never look like different units.
+const h0x = (v: number | null | undefined) => (v == null ? "x" : `0x${hex(v)}`);
 
 function rows(t: Trace, test: TraceTest): Row[] {
   const r: Row[] = [
@@ -114,7 +116,7 @@ export default function Waveform({ trace, test, cycle, onTest, onCycle }:
           {rs.map((r) => <div key={r.key} className={`wf-label wf-g-${r.group}`}>{r.label}</div>)}
         </div>
         <div className="wf-scroll">
-          <svg width={width} height={(rs.length + 1) * ROW} role="img"
+          <svg width={width} height={(rs.length + 1) * ROW} viewBox={`0 0 ${width} ${(rs.length + 1) * ROW}`} role="img"
             aria-label={`Waveform of ${tt.name}: ${cyc.length} cycles${tt.first_mismatch ? `, first mismatch at cycle ${tt.first_mismatch}` : ""}`}>
             {bad.map((i) => <rect key={`b${i}`} x={i * CELL} y={0} width={CELL} height={(rs.length + 1) * ROW} className="wf-badcol" />)}
             <rect x={idx * CELL} y={0} width={CELL} height={(rs.length + 1) * ROW} className="wf-cursor" />
@@ -143,10 +145,10 @@ export default function Waveform({ trace, test, cycle, onTest, onCycle }:
       {cur && (
         <div className="wf-readout" aria-live="polite">
           <strong>Cycle {cur.k}</strong>
-          <span>in: <span className="mono">rst={cur.in.rst} wr_en={cur.in.wr_en} din={hex(cur.in.din)} rd_en={cur.in.rd_en}</span></span>
-          <span>out: <span className="mono">count={cur.out.count} full={cur.out.full} empty={cur.out.empty} dout={hex(cur.out.dout)} ovf={cur.out.overflow} unf={cur.out.underflow}</span></span>
+          <span>in: <span className="mono">rst={cur.in.rst} wr_en={cur.in.wr_en} din={h0x(cur.in.din)} rd_en={cur.in.rd_en}</span></span>
+          <span>out: <span className="mono">count={h0x(cur.out.count)} full={cur.out.full} empty={cur.out.empty} dout={h0x(cur.out.dout)} ovf={cur.out.overflow} unf={cur.out.underflow}</span></span>
           {cur.mismatch.length > 0
-            ? <span className="mark-fail">✕ {cur.mismatch.map((f) => `${f}: measured ${hex(cur.out[f])}, golden model ${hex(cur.exp[f])}`).join(" · ")}</span>
+            ? <span className="mark-fail">✕ {cur.mismatch.map((f) => `${f}: measured ${h0x(cur.out[f])}, golden model ${h0x(cur.exp[f])}`).join(" · ")}</span>
             : <span className="mark-pass">✓ matches the golden model</span>}
           <span className="btn-row">
             <button type="button" className="btn btn-quiet btn-sm" onClick={() => onCycle(cyc[Math.max(0, idx - 1)].k)} aria-label="Previous cycle">←</button>

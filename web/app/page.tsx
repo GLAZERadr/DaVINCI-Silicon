@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Landing, { type LandingData } from "@/components/Landing";
-import { board, runList } from "@/lib/evidence";
+import { board, runList, traceFiles, traceText, type Trace } from "@/lib/evidence";
 
 export const metadata: Metadata = { title: "DaVINCI Silicon · Verified RTL from a spec" };
 
@@ -36,5 +36,16 @@ export default function Home() {
       seconds: b.live.timeToGreenS,
     } : null,
   };
+  // The failing test's waveform from attempt 1, as the Run Console shows it.
+  const file = `${b.live.id}__${failing?.n ?? 1}.json`;
+  if (traceFiles().includes(file) && firstFail) {
+    const tr = JSON.parse(traceText(file)) as Trace;
+    data.trace = { ...tr, tests: tr.tests.filter((x) => x.name === firstFail.name) };
+  }
+  const ph = b.physical;
+  if (ph?.staRef && ph.staFinal) {
+    const row = (s: typeof ph.staRef) => ({ area: s.synthesis.area_um2, fmax: s.timing.fmax_mhz, mw: s.power.total_w * 1000 });
+    data.physical = { ref: row(ph.staRef), run: row(ph.staFinal), drcLvsClean: !!ph.layoutFinal && ["magic_drc_errors", "klayout_drc_errors", "lvs_errors"].every((k) => ph.layoutFinal!.checks?.[k] === 0) };
+  }
   return <Landing data={data} />;
 }
