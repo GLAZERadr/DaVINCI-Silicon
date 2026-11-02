@@ -45,6 +45,24 @@ function Diff({ text }: { text: string }) {
   );
 }
 
+// Footer of the run timeline when there is no RTL diff to show, written from the
+// attempt list: "first attempt passed" only when attempt 1 is the only one and passed.
+function noDiffNote(attempts: Attempt[], repair: Attempt | undefined): string {
+  if (attempts.length === 1 && attempts[0].status === "pass") {
+    return "The first attempt passed, so no repair or diagnosis was requested.";
+  }
+  const list = attempts.map((a) => `attempt ${a.n} ${status(a.status).word.toLowerCase()}`).join(" · ");
+  if (repair) {
+    const prev = attempts.find((a) => a.n === repair.n - 1);
+    if (prev && !prev.total) {
+      return `${list}. No RTL diff: attempt ${prev.n} was not simulated, so there is no simulated RTL to compare; `
+        + `the diagnosis sent with attempt ${repair.n} is shown above.`;
+    }
+    return `${list}. The diagnosis sent with attempt ${repair.n} is shown above.`;
+  }
+  return `${list}. No repair diagnosis was recorded.`;
+}
+
 export default function Board({ data, runs }: { data: BoardData; runs: RunSummary[] }) {
   const { live, replay, requirements, mutation, weakDemo } = data;
   const shown = replay ?? live; // today's gates, on the same recorded model output
@@ -337,7 +355,7 @@ export default function Board({ data, runs }: { data: BoardData; runs: RunSummar
                   <summary>Show RTL diff, attempt {repair.n - 1} → {repair.n}</summary>
                   <Diff text={repair.diff} />
                 </details>
-              ) : <span className="meta-text">{seeded ? "" : "The first attempt passed, so no repair or diagnosis was requested."}</span>}
+              ) : <span className="meta-text">{seeded ? "" : noDiffNote(live.attempts, repair)}</span>}
               <span className="meta-text">Test files unchanged on every attempt: run-time suite <span className="mono">{short(live.suiteSha, 10)}</span>{live.attempts.every((a) => !a.suiteSha || a.suiteSha === live.suiteSha) ? "" : " · CHANGED"}</span>
             </div>
           </section>
