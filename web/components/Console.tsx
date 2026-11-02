@@ -277,7 +277,12 @@ export default function Console({ runs, requirements, traceSource = "static", tr
         <div className="c-scroll c-out">
           {panel === "sim" && (
             !a ? null
-            : a.rejection ? <p><span className="mark-fail">✕ Rejected before simulation:</span> <span className="mono">{a.rejection}</span></p>
+            : a.rejection ? (
+              <>
+                <p><span className="mark-fail">✕ Rejected before simulation:</span> <span className="mono">{a.rejection}</span></p>
+                {a.recheck && <p><span className="tag-measured">measured</span> Re-check: {a.recheck.note}</p>}
+              </>
+            )
             : sim && sim.tests.length ? (
               <>
                 {a.sameAs ? <p className="mark-neutral">○ Same design as attempt {a.sameAs}; not simulated again. Showing attempt {a.sameAs}.</p> : null}

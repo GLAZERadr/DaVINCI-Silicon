@@ -1,0 +1,18 @@
+{
+  "label": "measured",
+  "check": "G1 pre-simulation check, agent/pipeline.py validate()",
+  "original_rejection": "port list does not match the spec interface (missing [], extra ['v'], wrong direction [])",
+  "checked_with_commit": "a340367",
+  "rtl_sha256": "ea8fc5843c0c258e1875d3e46c9cd55ace7673e87b22c81a560475dc2602e722",
+  "g1_now": "pass",
+  "note": "rejected by G1 parser bug (function argument read as a module port), fixed aefeca1; RTL passes G1 on re-check; frozen suite on re-check: 10/10 (pass)",
+  "simulated": {
+    "sandbox": "docker",
+    "status": "pass",
+    "passed": 10,
+    "total": 10,
+    "suite_sha256": "4adc7da757edd72117db7a297aa7900d5744361903b2b9d1aea339da5dcc7db1",
+    "simulator": "Icarus Verilog version 12.0 (stable) ()",
+    "suite_matches_pin": true
+  }
+}

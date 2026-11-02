@@ -101,11 +101,12 @@ export async function apiRun(id: string): Promise<{ run: Run } | { job: Json }> 
   };
   const ns: number[] = r.attempts.map((a: Json) => a.n);
   const got = await Promise.all(ns.map(async (n) => {
-    const [v, rtl, prompt] = await Promise.all([file(n, "sim/verdict.json"), file(n, `${r.block ?? "sync_fifo"}.v`), file(n, "prompt.json")]);
+    const [v, rtl, prompt, recheck] = await Promise.all([file(n, "sim/verdict.json"), file(n, `${r.block ?? "sync_fifo"}.v`),
+                                                          file(n, "prompt.json"), file(n, "g1_recheck.json")]);
     const parse = (t: string | null) => { try { return t ? JSON.parse(t) : null; } catch { return null; } };
-    return [n, { v: parse(v), rtl, prompt: parse(prompt) }] as const;
+    return [n, { v: parse(v), rtl, prompt: parse(prompt), recheck: parse(recheck) }] as const;
   }));
   const by = new Map(got);
   return { run: toRun(r, { verdict: (n) => by.get(n)?.v ?? null, rtl: (n) => by.get(n)?.rtl ?? null,
-                           prompt: (n) => by.get(n)?.prompt ?? null }) };
+                           prompt: (n) => by.get(n)?.prompt ?? null, recheck: (n) => by.get(n)?.recheck ?? null }) };
 }

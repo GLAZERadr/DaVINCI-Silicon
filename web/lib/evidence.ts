@@ -25,6 +25,7 @@ function loadRun(id: string): Run {
     verdict: (n) => read(`runs/${id}/attempt_${n}/sim/verdict.json`),
     rtl: (n) => text(`runs/${id}/attempt_${n}/sync_fifo.v`),
     prompt: (n) => read(`runs/${id}/attempt_${n}/prompt.json`) as Json[] | null,
+    recheck: (n) => read(`runs/${id}/attempt_${n}/g1_recheck.json`),
   });
 }
 

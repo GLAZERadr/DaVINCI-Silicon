@@ -20,6 +20,8 @@ export type Attempt = {
   simulator?: string;
   suiteSha?: string;
   rejection?: string;
+  // Later re-check of a G1 rejection (verify/recheck_g1.py), measured; the rejection itself stays.
+  recheck?: { note: string; g1_now: string; simulated?: { status: string; passed: number; total: number } };
   diagnosis?: string; // AI interpretation, never a verdict
   diff?: string;
   compileOk?: boolean;
@@ -59,6 +61,7 @@ export type AttemptFiles = {
   verdict: (n: number) => Json | null;
   rtl?: (n: number) => string | null;
   prompt?: (n: number) => Json[] | null;
+  recheck?: (n: number) => Json | null;
 };
 
 // run.json (+ per-attempt files) → Run.
@@ -81,6 +84,7 @@ export function toRun(r: Json, files: AttemptFiles): Run {
       simulator: a.measured?.simulator,
       suiteSha: a.measured?.suite_sha256,
       rejection: a.measured?.rejection,
+      recheck: (files.recheck?.(a.n) as Attempt["recheck"]) ?? undefined,
       diagnosis: a.ai_interpretation?.diagnosis,
       diff: a.diff_vs_prev,
       compileOk: a.measured_compile?.ok,

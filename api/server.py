@@ -60,7 +60,7 @@ API_DIR = RUNS / "_api"
 JOBS_LOG = API_DIR / "jobs.jsonl"
 RUN_ID = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$")
 ATTEMPT_FILES = {"sync_fifo.v", "response.md", "prompt.json",
-                 "sim/verdict.json", "sim/sim.log", "sim/build.log", "trace/trace.json"}
+                 "sim/verdict.json", "sim/sim.log", "sim/build.log", "trace/trace.json", "g1_recheck.json"}
 MUTANTS = {m["id"] for m in json.loads((ROOT / "verify" / "mutants.json").read_text())}
 
 

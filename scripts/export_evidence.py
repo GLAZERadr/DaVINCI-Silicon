@@ -23,7 +23,8 @@ RUNS = ROOT / "runs"
 LIVE = {"meta", "baseten"}
 # S6/S10 physical estimates: only the small summaries (never netlists, GDS or flow logs).
 PHYSICAL_FILES = ["sta/sta.json", "layout/summary.json"]
-ATTEMPT_FILES = ["prompt.json", "response.md", "sync_fifo.v", "sim/verdict.json", "sweep/sweep.json", "trace/trace.json"]
+ATTEMPT_FILES = ["prompt.json", "response.md", "sync_fifo.v", "sim/verdict.json", "sweep/sweep.json", "trace/trace.json",
+                 "g1_recheck.json"]
 
 
 def scrub(text: str) -> str:
