@@ -128,13 +128,17 @@ def validate(rtl: str | None) -> str | None:
         missing = sorted(set(want) - set(got))
         extra = sorted(set(got) - set(want))
         wrong = sorted(k for k in set(got) & set(want) if got[k] != want[k])
-        return f"port list does not match the spec interface (missing {missing}, extra {extra}, wrong direction {wrong})"
+        parts = [f"{label} {names}" for label, names in (("missing", missing), ("extra", extra),
+                                                         ("wrong direction", wrong)) if names]
+        return f"port list does not match the spec interface ({'; '.join(parts)})"
     return None
 
 
 def ports(code: str) -> dict:
     """{port name: direction} declared in the module, ANSI header or body."""
     found = {}
+    # Arguments of functions and tasks are declared with input/output too; they are not ports.
+    code = re.sub(r"\b(function|task)\b.*?\bend\1\b", "", code, flags=re.S)
     for direction, names in PORT_DECL.findall(code):
         for name in re.split(r"\s*,\s*", names.strip().rstrip(",")):
             if name:
