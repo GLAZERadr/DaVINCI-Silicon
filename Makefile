@@ -2,7 +2,7 @@ RTL ?= rtl/sync_fifo.v
 RUN ?= manual
 IMAGE = davinci-sim:latest
 
-.PHONY: sim mutate weak-demo image sandbox api evidence board plan plan-ref gaps coverage coverage-ref trace trace-ref triage
+.PHONY: sim mutate weak-demo image sandbox api evidence board plan plan-ref gaps coverage coverage-ref trace trace-ref triage sta sta-ref
 
 # Local run (needs iverilog + cocotb installed)
 sim:
@@ -48,6 +48,16 @@ coverage-ref:
 # gaps and trace-ref.
 triage:
 	python3 verify/triage.py
+
+# S6 pre-layout timing/power estimate on SKY130 hd (typical corner, no wire parasitics,
+# default activity): Yosys + OpenSTA in a no-network container. Needs the LibreLane
+# image (docker pull ghcr.io/librelane/librelane:3.0.17) and the SKY130 PDK
+# (pip install ciel && ciel fetch --pdk sky130 8afc8346a57fe1ab7934ba5a6056ea8b43078e71).
+sta:
+	python3 verify/sta.py --run runs/$(RUN)
+
+sta-ref:
+	python3 verify/sta.py --reference
 
 # Per-cycle traces (waveform + FIFO views): every simulated attempt of a run, in Docker.
 trace:
