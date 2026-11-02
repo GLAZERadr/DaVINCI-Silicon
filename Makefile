@@ -56,6 +56,15 @@ trace:
 trace-ref:
 	python3 verify/trace.py --reference
 
+# S2 area indicator: Yosys `synth; stat` cell and flip-flop counts (generic cells, no
+# standard-cell library): a stored run's final RTL inside Docker, or the reference RTL.
+.PHONY: area area-ref
+area:
+	python3 verify/area.py --run runs/$(RUN)
+
+area-ref:
+	python3 verify/area.py --reference
+
 # Verification plan for a stored run: runs/$(RUN)/verification_plan.{md,json}.
 # Reads stored files only (no simulation, no model call); output is reproducible.
 plan:
