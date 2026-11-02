@@ -23,7 +23,7 @@ Inversion question for each decision: *what would make this fail?* Likelihood (L
 | R13 | **Evidence lost** (git-ignored `runs/` on one laptop) | L | H | `.gitignore` | committed `evidence/` bundle with manifest | P1 |
 | R14 | **Worker thread dies silently in the demo** | L | M | `api/server.py:89-107` | try/except/finally; liveness in `/health`; static board removes the dependency | P1 |
 | R15 | **Simulator drift** (Icarus 12 in Docker vs 13 local) | L | L | identical verdicts on 2 runs | pin one image for the benchmark; record `image_id` | P1 |
-| R16 | **Vision wording ("world model", "Physical AI") reaches the pitch** | M | M | vision text vs `CLAUDE.md` §8 | ADR-002; grep check in acceptance criteria | P1 |
+| R16 | **Vision wording ("world model", "Physical AI") reaches the pitch** | M | M | vision text vs the engineering handover §8 | ADR-002; grep check in acceptance criteria | P1 |
 
 ## 2. Inversion review of the key decisions
 
@@ -54,7 +54,7 @@ These are proposals; thresholds should be agreed with Adrian. **Technical:**
 
 ## 4. Hackathon cut list (cut from the top when late)
 
-Agreed with red-team pass 2. It extends the cut order in `CLAUDE.md` §6.
+Agreed with red-team pass 2. It extends the cut order in the engineering handover §6.
 
 1. Hosted live simulation on Modal (Volume, cancel, 429, queue caps). Public surface stays static with replay (ADR-009, Adrian decides).
 2. Baseten repair arm (credits unapproved; price unset).

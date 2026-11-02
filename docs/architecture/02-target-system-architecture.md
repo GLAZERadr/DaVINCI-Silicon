@@ -127,7 +127,7 @@ Stop conditions: pass; repairs exhausted; no progress after 2 repairs; budget re
 | Question | Answer | Evidence |
 | --- | --- | --- |
 | Is a learned world model needed for functional RTL? | **No: remove from the architecture.** | `tests/golden_model.py` is an exact transition function. Simulation costs 0.23–0.39 s vs 6–27 s per model call. |
-| What plays that role? | The cycle-accurate reference model plus Icarus. Call it that, not a "world model". | `CLAUDE.md` §8 already bans the term in copy. |
+| What plays that role? | The cycle-accurate reference model plus Icarus. Call it that, not a "world model". | the engineering handover §8 already bans the term in copy. |
 | Any future predictive model? | Possibly a PPA surrogate after synthesis exists. **Deferred, no build trigger set.** | No synthesis data exists, so any threshold would be invented (red team pass 2). |
 
 ## 6. Data flow and artifact lifecycle
@@ -212,7 +212,7 @@ A **visible pass with a G3 failure** is recorded as `escaped`, never as `pass`. 
 | 6 | Data | Postgres, object store, knowledge graph | **Defer** | Post |
 | 7 | Verification | Gates G0–G3, honest labels, escape metric | **Build** | Hackathon |
 | 8 | Infra | FastAPI + one worker | **Reuse** for operator use; harden worker (try/except, health) | Hackathon |
-| 8 | Infra | Hosted live simulation (Modal Sandbox, Volume, queue caps, cancel) | **Defer** unless Modal credits are confirmed by 1 Nov. *Contradicts the CLAUDE.md §6 Deploy task; Adrian decides.* | Hackathon / post |
+| 8 | Infra | Hosted live simulation (Modal Sandbox, Volume, queue caps, cancel) | **Defer** unless Modal credits are confirmed by 1 Nov. *Contradicts the the engineering handover §6 Deploy task; Adrian decides.* | Hackathon / post |
 | 9 | Security | Fail-closed token (`compare_digest`) | **Build** | Hackathon (P0) |
 | 9 | Security | No local simulation of model RTL; server-chosen sandbox; scrubbed env | **Build** | Hackathon (P0) |
 | 9 | Security | Data classification / provider policy gate | **Defer** | Post |

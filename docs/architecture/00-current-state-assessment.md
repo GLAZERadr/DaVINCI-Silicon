@@ -50,7 +50,7 @@ Stack: Python 3.12/3.13, cocotb 2.1.0, Icarus Verilog 12 (container) / 13 (dev M
 
 ## 4. Gaps and conflicts found during discovery
 
-1. **The vision and the code are about different things.** The stated ambition is "Physical AI and World Models" for engineering design. The code is a test-driven RTL generation loop for digital logic, with no physical model. `CLAUDE.md` §8 even forbids "world model", "Physical AI" and "digital twin" in README and UI copy. This review has to settle whether the framing helps or hurts.
+1. **The vision and the code are about different things.** The stated ambition is "Physical AI and World Models" for engineering design. The code is a test-driven RTL generation loop for digital logic, with no physical model. The engineering handover §8 even forbids "world model", "Physical AI" and "digital twin" in README and UI copy. This review has to settle whether the framing helps or hurts.
 2. **The spec gives away the key logic.** `spec/fifo_spec.md:52` states `do_write = wr_en && (!full || rd_en)`, the exact line mutant M1 breaks. The model's diagnosis in `live02-m1` quotes it. First-pass success on this spec says little about capability on underspecified designs.
 3. **Default parameters only.** The suite instantiates WIDTH=8, DEPTH=16, AF_THRESH=14. RTL that hard-codes those values would pass.
 4. **No synthesis or lint gate.** "Passes simulation" is the only correctness signal. Unsynthesisable or simulation-only constructs are caught only if Icarus rejects them.
@@ -63,7 +63,7 @@ Stack: Python 3.12/3.13, cocotb 2.1.0, Icarus Verilog 12 (container) / 13 (dev M
 
 - Deadline: submit 4 Nov 2026 21:00 WIB, feature freeze 3 Nov 23:59 WIB, about 3.5 days from this snapshot.
 - Budget: $150 model credit, hard stop $120. Spend so far is about $0.035 (`runs/_ledger.jsonl`).
-- Scope rule in `CLAUDE.md` §2: one block, one simulator, no UART, OpenROAD, multi-agent frameworks or digital twin.
+- Scope rule in the engineering handover §2: one block, one simulator, no UART, OpenROAD, multi-agent frameworks or digital twin.
 - Judging: impact 30 %, use of Meta AI tooling 25 %, technical depth 20 %, demo 25 %.
 - Team: one lead engineer plus AI agents.
 
@@ -72,4 +72,4 @@ Stack: Python 3.12/3.13, cocotb 2.1.0, Icarus Verilog 12 (container) / 13 (dev M
 - No user interviews, design-partner feedback or market evidence exists in the repo.
 - No data on how the model behaves across repeated runs, other blocks or other prompts.
 - No synthesis, timing or area numbers of any kind.
-- Baseten and Modal credit approval is unknown (`CLAUDE.md` §9).
+- Baseten and Modal credit approval is unknown (the engineering handover §9).

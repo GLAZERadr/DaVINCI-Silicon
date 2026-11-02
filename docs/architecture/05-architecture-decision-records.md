@@ -1,6 +1,6 @@
 # 05 — Architecture decision records
 
-Format: context → decision → alternatives → rationale and evidence → trade-offs → reversibility. "Proposed" means recommended by this review and awaiting Adrian. "Accepted" means already in the code or in `CLAUDE.md`.
+Format: context → decision → alternatives → rationale and evidence → trade-offs → reversibility. "Proposed" means recommended by this review and awaiting Adrian. "Accepted" means already in the code or in the engineering handover.
 
 ---
 
@@ -19,7 +19,7 @@ Format: context → decision → alternatives → rationale and evidence → tra
 
 ## ADR-002 · No learned world model; the cycle-accurate reference model plus simulator fills that role
 **Status:** Proposed.
-**Context:** The vision says "Physical AI and World Models". The code has none, and `CLAUDE.md` §8 bans the terms in copy.
+**Context:** The vision says "Physical AI and World Models". The code has none, and the engineering handover §8 bans the terms in copy.
 **Decision:** Remove world model and digital twin from the architecture. Describe `tests/golden_model.py` as a cycle-accurate reference model. Keep a PPA surrogate as deferred research with no build trigger set.
 **Alternatives:** learned dynamics model of the DUT; surrogate test-outcome predictor; general physical world model.
 **Rationale:**
@@ -31,7 +31,7 @@ Format: context → decision → alternatives → rationale and evidence → tra
 **Reversibility:** fully reversible. Nothing is built; revisit when downstream data exists.
 
 ## ADR-003 · Single deterministic pipeline; no runtime multi-agent framework
-**Status:** Accepted (`CLAUDE.md` §2), reaffirmed.
+**Status:** Accepted (the engineering handover §2), reaffirmed.
 **Decision:** one loop in `agent/pipeline.py` with typed model calls. Add the stop states `truncated`, `no_progress` and `needs_engineer`.
 **Alternatives:** planner/coder/verifier agent team; agent framework.
 **Rationale:** no task here needs parallel or debating agents (AI reviewer). Fewer moving parts gives cleaner evidence. Incumbents' multi-agent products are not evidence of necessity.
@@ -106,13 +106,13 @@ Format: context → decision → alternatives → rationale and evidence → tra
 **Reversibility:** pitch is easy to change; product direction is costly once built, hence "hypothesis" until V-1/V-2 in `04`.
 
 ## ADR-009 · Public hackathon surface is a static Evidence Board over a committed bundle
-**Status:** Proposed. **Conflicts with `CLAUDE.md` §6 Deploy task (hosted API + Modal simulations). Adrian decides.**
+**Status:** Proposed. **Conflicts with the engineering handover §6 Deploy task (hosted API + Modal simulations). Adrian decides.**
 **Decision:** serve a static board with replay over `evidence/`. Build hosted live simulation (Modal Sandbox, Volume, queue caps, cancel) only if Modal credits are confirmed by 1 Nov and P0/P1 are done.
 **Alternatives:** hosted live runs open to judges.
 **Rationale:**
 - A public live endpoint adds budget-abuse, sandbox-escape and availability risk.
 - Its components (verdict on stdout, Volume, rate limits, cancel) are unbuilt and untested.
-- Credit approval is unknown (`CLAUDE.md` §9).
+- Credit approval is unknown (the engineering handover §9).
 - A recorded run was already required as the fallback.
 
 **Trade-offs:** judges can't trigger a fresh model call themselves. The video and code must carry "real Meta model use".
@@ -132,7 +132,7 @@ Format: context → decision → alternatives → rationale and evidence → tra
 ## ADR-011 · Benchmark arms by condition, not one prompt sampled N times
 **Status:** Proposed.
 **Decision:** arms A (equation spec), B (independently written prose spec), C (M1–M8 seeded once each) plus an inverse-mutant baseline. N = 10 for A and B, with Wilson intervals. One simulator image; no cache reads.
-**Alternatives:** N ≥ 10 of the same prompt (`CLAUDE.md` §6); N ≥ 30 per cell over a 36-cell matrix (AI reviewer).
+**Alternatives:** N ≥ 10 of the same prompt (the engineering handover §6); N ≥ 30 per cell over a 36-cell matrix (AI reviewer).
 **Rationale:** the same prompt sampled 10 times measures sampling noise on a spec that contains the answer. The full matrix is about 360 runs of analysis before the UI exists (red team pass 2). Cost is about $1, so the limit is time.
 **Trade-offs:** fewer conditions (no Baseten arm unless credits arrive).
 **Reversibility:** easy. More arms can be added later.

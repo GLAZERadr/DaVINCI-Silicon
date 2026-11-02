@@ -1,6 +1,6 @@
 # Update 31 Oct 2026: engineer discovery → verification plan + evidence
 
-Overrides older priorities in `CLAUDE.md` where they conflict. Applies to work on Mon 2 – Tue 3 Nov, before UI polish and before feature freeze (3 Nov 23:59 WIB).
+Overrides older priorities in the engineering handover where they conflict. Applies to work on Mon 2 – Tue 3 Nov, before UI polish and before feature freeze (3 Nov 23:59 WIB).
 
 ## 1. What we heard
 
@@ -62,7 +62,7 @@ Count how often key FIFO situations actually happened during simulation.
 - Board hero, page title, README intro and the video script lead with the verification plan and evidence.
 - Keep the measured / AI-interpretation labels everywhere.
 - Add the two limitations from §2 to the README.
-- Respect `CLAUDE.md` §8 (no "world model", "Physical AI", speedups or PPA numbers) and the no-names rule.
+- Respect the engineering handover §8 (no "world model", "Physical AI", speedups or PPA numbers) and the no-names rule.
 - **Done 31 Oct:** README intro leads with the plan and evidence; limitations add design breakdown (by a person) and mutation-based coverage (not line/functional, REQ-04/09 untargeted); timing was already listed. Board: kicker "Verification plan", hero lead sentence, traceability labelled as the plan, footer limitations, page description. "Proven by mutation" avoided: mutation testing shows the tests catch planted bugs, nothing more. The video script is not in this repo; it should follow the same order (plan → gaps → AI attempt measured).
 
 ## 4. Order and cut line
@@ -72,4 +72,4 @@ Count how often key FIFO situations actually happened during simulation.
 3. P4 (Tue 3 Nov morning).
 4. P3 (Tue 3 Nov, only if 1–3 are done).
 
-All four come before UI polish. Benchmark, deploy and the never-cut list in `CLAUDE.md` §6 are unchanged.
+All four come before UI polish. Benchmark, deploy and the never-cut list in the engineering handover §6 are unchanged.
