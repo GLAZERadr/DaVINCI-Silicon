@@ -172,9 +172,18 @@ def _caller(authorization: str | None) -> "tk.Identity | None":
         raise HTTPException(401, str(e)) from None
 
 
+def _caller_open(authorization: str | None) -> "tk.Identity | None":
+    """For $0 actions (replay, fake runs, listing): a wrong or revoked token counts as
+    anonymous, so a stale token in a browser tab never blocks a free replay."""
+    try:
+        return tk.authenticate(authorization)
+    except PermissionError:
+        return None
+
+
 def _require_token(providers: set, authorization: str | None) -> "tk.Identity | None":
     if not providers & set(llm.LIVE):
-        return _caller(authorization)
+        return _caller_open(authorization)
     if not tk.configured():
         raise HTTPException(403, "live model calls are disabled: no API token is configured on the server")
     ident = _caller(authorization)
@@ -238,7 +247,7 @@ def create_run(req: RunRequest, authorization: str | None = Header(None)):
 @app.post("/runs/{run_id}/replay", status_code=202)
 def replay_run(run_id: str, authorization: str | None = Header(None)):
     _check_id(run_id)
-    ident = _caller(authorization)
+    ident = _caller_open(authorization)
     src = RUNS / run_id
     if not (src / "run.json").exists() or not (src / "calls.jsonl").exists():
         raise HTTPException(404, f"no finished run {run_id} with recorded model calls")
@@ -254,7 +263,7 @@ def _summary(d: Path) -> dict:
 
 @app.get("/runs")
 def list_runs(mine: bool = False, authorization: str | None = Header(None)):
-    ident = _caller(authorization)
+    ident = _caller(authorization) if mine else _caller_open(authorization)
     if mine and ident is None:
         raise HTTPException(401, "mine=1 needs an API token")
     done = [_summary(d) for d in RUNS.iterdir() if (d / "run.json").exists()] if RUNS.exists() else []
