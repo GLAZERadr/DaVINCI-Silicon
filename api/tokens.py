@@ -51,6 +51,7 @@ class Identity:
     live: bool = True
     user_id: str | None = None
     name: str | None = None
+    avatar: str | None = None
 
 
 def _sha(token: str) -> str:
@@ -152,7 +153,7 @@ def authenticate(authorization: str | None) -> Identity | None:
         if u is None:
             raise PermissionError("unknown or revoked token")
         return Identity(owner=u["email"], token_id=match["token_id"], live=bool(u.get("live")),
-                        user_id=u["user_id"], name=u.get("name"))
+                        user_id=u["user_id"], name=u.get("name"), avatar=u.get("avatar"))
     if match:
         return Identity(owner=match["owner"], token_id=match["token_id"])
     raise PermissionError("unknown or revoked token")

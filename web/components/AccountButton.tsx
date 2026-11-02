@@ -2,17 +2,18 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import Avatar from "./Avatar";
 import { ApiError, api, sessionToken, setSessionToken } from "@/lib/api";
 
 // Account control: Sign in / Get started on the landing page; in the app sidebar the
 // signed-in profile with sign-out.
 export default function AccountButton({ landing = false, active = false }: { landing?: boolean; active?: boolean }) {
-  const [me, setMe] = useState<{ name: string; live: boolean } | null | undefined>(undefined);
+  const [me, setMe] = useState<{ name: string; live: boolean; avatar: string | null } | null | undefined>(undefined);
 
   useEffect(() => {
     const load = () => {
       if (!sessionToken()) return setMe(null);
-      api("/me").then((m) => setMe(m.account ? { name: m.name ?? m.owner, live: !!m.live } : null))
+      api("/me").then((m) => setMe(m.account ? { name: m.name ?? m.owner, live: !!m.live, avatar: m.avatar ?? null } : null))
         .catch((e) => {
           // Only the server saying 401 ends the session; a request aborted by a page
           // change or an unreachable API must not throw a fresh sign-in away.
@@ -45,7 +46,7 @@ export default function AccountButton({ landing = false, active = false }: { lan
     <div className="sb-account">
       <Link href="/account/" className="sb-account-link" aria-current={active ? "page" : undefined}
         title={me.live ? "Your account · live model runs enabled" : "Your account · read-only: live runs not granted yet"}>
-        <span className="account-dot" aria-hidden="true">{me.name.slice(0, 1).toUpperCase()}</span>
+        <Avatar name={me.name} src={me.avatar} className="account-dot" />
         <span className="sb-account-text"><strong>{me.name}</strong><span className="meta-text">{me.live ? "Live runs enabled" : "Read-only"}</span></span>
       </Link>
       <button type="button" className="sb-signout" onClick={signOut} aria-label="Sign out" title="Sign out">

@@ -24,6 +24,7 @@ import secrets
 import sys
 import threading
 import time
+import urllib.parse
 
 from api.tokens import API_DIR
 
@@ -66,9 +67,21 @@ def check_password(password: str, stored: str | None) -> bool:
     return hmac.compare_digest(got.hex(), h)
 
 
+# Profile photos are only taken from the providers' own image hosts.
+AVATAR_HOSTS = (".googleusercontent.com", ".githubusercontent.com")
+
+
+def avatar_ok(url: str | None) -> str | None:
+    if not url or len(url) > 500:
+        return None
+    p = urllib.parse.urlsplit(url)
+    return url if p.scheme == "https" and p.hostname and p.hostname.endswith(AVATAR_HOSTS) else None
+
+
 def public(u: dict) -> dict:
     """What the account owner may see about their own account."""
     return {"user_id": u["user_id"], "email": u["email"], "name": u["name"], "live": bool(u.get("live")),
+            "avatar": u.get("avatar"),
             "methods": (["password"] if u.get("password") else []) + [p for p in PROVIDERS if u.get(p)]}
 
 
@@ -116,7 +129,7 @@ def login(email: str, password: str) -> dict | None:
     return u if check_password(password, u.get("password") if u else None) else None
 
 
-def from_provider(provider: str, subject: str, email: str, name: str) -> dict:
+def from_provider(provider: str, subject: str, email: str, name: str, avatar: str | None = None) -> dict:
     """Account for a Google/GitHub identity whose email the provider verified:
     the one already linked to this identity, else the one with this email, else a new one."""
     assert provider in PROVIDERS
@@ -133,6 +146,8 @@ def from_provider(provider: str, subject: str, email: str, name: str) -> dict:
                 u["password"] = None  # unverified password on someone else's email: drop it
             u[provider] = subject
         u["email_verified"] = True
+        if avatar_ok(avatar):
+            u["avatar"] = avatar  # refreshed on every Google/GitHub sign-in; the latest one wins
         _save(users)
     return u
 

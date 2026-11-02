@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Avatar from "./Avatar";
 import { useCallback, useEffect, useState } from "react";
 import { api, sessionToken, setSessionToken } from "@/lib/api";
 import type { Json } from "@/lib/run";
@@ -59,7 +60,7 @@ export default function AccountView() {
   return (
     <main className="board account">
       <section className="account-head">
-        <span className="account-avatar" aria-hidden="true">{String(acc.name).slice(0, 1).toUpperCase()}</span>
+        <Avatar name={String(acc.name)} src={acc.avatar} className="account-avatar" />
         <div>
           <h1 className="account-name-h">{acc.name}</h1>
           <p className="meta-text">{acc.email} · member since {fmt(acc.created)}</p>

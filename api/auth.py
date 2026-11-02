@@ -268,7 +268,7 @@ def _http(url: str, data: dict | None = None, token: str | None = None) -> dict 
         return json.loads(r.read())
 
 
-def _identity(provider: str, code: str, verifier: str) -> tuple[str, str, str]:
+def _identity(provider: str, code: str, verifier: str) -> tuple[str, str, str, str | None]:
     """(subject, verified email, name) from the provider; ValueError if the email is not verified."""
     cid, sec = _creds(provider)
     tok = _http(OAUTH[provider]["token"], {
@@ -281,13 +281,13 @@ def _identity(provider: str, code: str, verifier: str) -> tuple[str, str, str]:
         info = _http("https://openidconnect.googleapis.com/v1/userinfo", token=access)
         if not info.get("email") or not info.get("email_verified"):
             raise ValueError("Google did not return a verified email")
-        return str(info["sub"]), info["email"], info.get("name") or ""
+        return str(info["sub"]), info["email"], info.get("name") or "", info.get("picture")
     user = _http("https://api.github.com/user", token=access)
     emails = _http("https://api.github.com/user/emails", token=access)
     primary = next((e["email"] for e in emails if e.get("primary") and e.get("verified")), None)
     if not primary:
         raise ValueError("GitHub has no verified primary email for this account")
-    return str(user["id"]), primary, user.get("name") or user.get("login") or ""
+    return str(user["id"]), primary, user.get("name") or user.get("login") or "", user.get("avatar_url")
 
 
 @router.get("/auth/{provider}/callback")
@@ -299,8 +299,8 @@ def oauth_callback(provider: str, state: str = "", code: str = "", error: str = 
     if error or not code:
         return _back(st["return_to"], auth_error=error or "cancelled")
     try:
-        subject, email, name = _identity(provider, code, st["verifier"])
+        subject, email, name, avatar = _identity(provider, code, st["verifier"])
     except (ValueError, KeyError, urllib.error.URLError, TimeoutError) as e:
         return _back(st["return_to"], auth_error=str(e)[:200])
-    u = users.from_provider(provider, subject, email, name)
+    u = users.from_provider(provider, subject, email, name, avatar)
     return _back(st["return_to"], dv_session=tk.issue_session(u))

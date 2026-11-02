@@ -314,7 +314,7 @@ def me(authorization: str | None = Header(None)):
     if ident is None:
         return {"owner": None, "admin": False, "live_enabled": tk.configured()}
     return {"owner": ident.owner, "token_id": ident.token_id, "admin": ident.admin, "live_enabled": True,
-            "live": ident.live, "account": ident.user_id is not None, "name": ident.name}
+            "live": ident.live, "account": ident.user_id is not None, "name": ident.name, "avatar": ident.avatar}
 
 
 @app.get("/runs/{run_id}")
