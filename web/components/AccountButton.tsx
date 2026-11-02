@@ -27,15 +27,17 @@ export default function AccountButton({ landing = false }: { landing?: boolean }
   async function signOut() {
     await api("/auth/logout", { method: "POST" }).catch(() => {});
     setSessionToken("");
+    window.location.replace("/"); // signed out: back to the landing page
   }
 
   if (me === undefined) return null; // storage is read after mount
-  if (!me) return (
+  // Inside the app the header stays clean when signed out; signing in starts from the landing page.
+  if (!me) return landing ? (
     <>
-      <Link href="/login/" className={landing ? "lp-nav-link" : "btn btn-quiet btn-sm"}>Sign in</Link>
-      <Link href="/register/" className="btn btn-sm">{landing ? "Get started" : "Sign up"}</Link>
+      <Link href="/login/" className="lp-nav-link">Sign in</Link>
+      <Link href="/register/" className="btn btn-sm">Get started</Link>
     </>
-  );
+  ) : null;
   if (landing) return <Link href="/evidence/" className="btn btn-sm">Open DaVINCI</Link>;
   return (
     <>
