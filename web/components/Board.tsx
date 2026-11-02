@@ -2,6 +2,7 @@ import Link from "next/link";
 import BreakdownView from "./BreakdownView";
 import ModelAvatar from "./ModelAvatar";
 import TestTriage from "./TestTriage";
+import PhysicalPanel from "./PhysicalPanel";
 import SiteHeader from "./SiteHeader";
 import ReplayButton from "./ReplayButton";
 import { type Attempt, type Board as BoardData, type RunSummary, simShort, status } from "@/lib/evidence";
@@ -352,6 +353,7 @@ export default function Board({ data, runs }: { data: BoardData; runs: RunSummar
             </ul>
           </section>
 
+          <PhysicalPanel data={data.physical} />
         </main>
 
         <aside className="repo-side" aria-label="About this run">
