@@ -8,7 +8,7 @@ export function generateStaticParams() {
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const { id } = await params;
-  return { title: `${id} · DaVINCI Evidence Board` };
+  return { title: `${id} · DaVINCI Silicon Evidence Board` };
 }
 
 export default async function RunPage({ params }: { params: Promise<{ id: string }> }) {

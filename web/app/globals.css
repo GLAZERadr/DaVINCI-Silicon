@@ -78,7 +78,8 @@ code { font-size: 0.92em; }
 .wordmark { display: inline-flex; align-items: center; gap: 10px; color: var(--text); }
 .wordmark:hover { text-decoration: none; }
 .wordmark svg { display: block; }
-.wordmark .word { font-size: 18px; font-weight: 800; letter-spacing: -0.01em; }
+.wordmark .word { font-size: 18px; font-weight: 800; letter-spacing: -0.01em; white-space: nowrap; }
+.wordmark .word-series { font-weight: 500; color: var(--muted); }
 .crumbs { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; font-size: 16px; min-width: 0; }
 .crumbs a { color: var(--text); }
 .crumb { display: inline-flex; gap: 6px; align-items: center; }
@@ -161,7 +162,8 @@ main.board { max-width: 1120px; margin: 0 auto; padding: 28px 32px 48px; display
 .checks { list-style: none; margin: 0; padding: 0; }
 .checks li { display: grid; grid-template-columns: 18px 46px minmax(0, 1fr) auto; gap: 10px; align-items: baseline; padding: 10px 16px; border-bottom: 1px solid var(--border); }
 .checks li:last-child { border-bottom: 0; }
-.check-id { color: var(--muted); font-size: 12px; }
+.check-id { color: var(--muted); font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.checks.checks-noid li { grid-template-columns: 18px minmax(0, 1fr) auto; }
 .check-name { font-weight: 600; }
 .check-name .meta-text { display: block; font-weight: 400; margin-top: 2px; }
 
@@ -218,8 +220,8 @@ details > summary::before { content: "▸"; display: inline-block; margin-right:
 details[open] > summary::before { transform: rotate(90deg); }
 .c-tree summary::before { content: none; }
 pre.code { margin: 8px 0 0; font-size: 12.5px; background: var(--code-bg); color: var(--text); border: 1px solid var(--border); padding: 12px 14px; border-radius: var(--radius-sm); overflow-x: auto; line-height: 1.55; }
-pre.code .diff-add { background: var(--add-bg); display: inline-block; width: 100%; }
-pre.code .diff-del { background: var(--del-bg); display: inline-block; width: 100%; }
+pre.code .diff-add { background: var(--add-bg); display: inline-block; min-width: 100%; }
+pre.code .diff-del { background: var(--del-bg); display: inline-block; min-width: 100%; }
 .diff-add { color: var(--pass-text); }
 .diff-del { color: var(--fail-text); }
 dl.facts { margin: 0; display: grid; grid-template-columns: 120px minmax(0, 1fr); gap: 10px 12px; }
@@ -505,3 +507,15 @@ tr.row-muted td { color: var(--muted); }
 .bd-ai .table-wrap { border-top: 1px dashed var(--border-strong); }
 .bd-facts { padding: 10px 12px; border-top: 1px dashed var(--border-strong); }
 .bd .measured .label { display: block; }
+
+/* ---- in-app plan viewer ---- */
+.plan { display: flex; flex-direction: column; gap: 20px; }
+.plan-bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px; border-bottom: 1px solid var(--border); }
+.plan-bar .c-tabs { border-bottom: 0; background: transparent; min-width: 0; max-width: 100%; flex: 1 1 auto; }
+.plan-dl { font-size: 12.5px; }
+.plan-facts { padding: 12px 16px; grid-template-columns: 96px minmax(0, 1fr); }
+.plan-p { margin: 0 0 8px; line-height: 1.6; }
+.plan-list { margin: 0; padding: 12px 16px 12px 34px; display: flex; flex-direction: column; gap: 6px; line-height: 1.5; }
+.plan-code { max-height: 70vh; overflow: auto; background: var(--code-bg); }
+.plan-diag { margin: 0 0 10px; }
+.plan-page .grid-2 { align-items: start; }
