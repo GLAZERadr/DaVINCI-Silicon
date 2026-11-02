@@ -2,7 +2,7 @@ RTL ?= rtl/sync_fifo.v
 RUN ?= manual
 IMAGE = davinci-sim:latest
 
-.PHONY: sim mutate weak-demo image sandbox api evidence board plan plan-ref gaps coverage coverage-ref trace trace-ref triage sta sta-ref
+.PHONY: sim mutate weak-demo image sandbox api evidence board plan plan-ref gaps coverage coverage-ref trace trace-ref triage sta sta-ref layout layout-ref
 
 # Local run (needs iverilog + cocotb installed)
 sim:
@@ -58,6 +58,15 @@ sta:
 
 sta-ref:
 	python3 verify/sta.py --reference
+
+# S10 post-layout, multi-corner (ss/tt/ff) STA and power from the open-source LibreLane
+# (OpenLane 2) Classic flow on SKY130: a separate heavy job, once per design (about 70 s
+# here). Full flow reports + GDS stay in runs/<id>/layout/ (gitignored); summary.json is small.
+layout:
+	python3 verify/layout.py --run runs/$(RUN)
+
+layout-ref:
+	python3 verify/layout.py --reference
 
 # Per-cycle traces (waveform + FIFO views): every simulated attempt of a run, in Docker.
 trace:

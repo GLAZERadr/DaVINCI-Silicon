@@ -1,0 +1,10 @@
+{
+  "DESIGN_NAME": "sync_fifo",
+  "VERILOG_FILES": ["dir::src/dut.v"],
+  "CLOCK_PORT": "clk",
+  "CLOCK_PERIOD": 10,
+  "FP_SIZING": "relative",
+  "FP_CORE_UTIL": 40,
+  "PL_TARGET_DENSITY_PCT": 55,
+  "RUN_LINTER": false
+}
