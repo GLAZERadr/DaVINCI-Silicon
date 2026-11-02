@@ -150,7 +150,7 @@ export default function Board({ data, runs }: { data: BoardData; runs: RunSummar
           </section>
         )}
 
-        {data.area && <AreaBox area={data.area} />}
+        {data.area && <AreaBox area={data.area} physical={!!data.physical?.staFinal} />}
 
         {data.gaps && (
           <section className="box" aria-labelledby="gaps">

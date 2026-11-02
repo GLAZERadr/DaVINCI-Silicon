@@ -1,7 +1,8 @@
 import type { Area } from "@/lib/evidence";
 
 // S2: size indicator from Yosys (verify/area.py). Rendered only when a stored area.json exists.
-export default function AreaBox({ area }: { area: Area }) {
+// Timing and power live in the SKY130 boxes (S6/S10) when those were measured for this run.
+export default function AreaBox({ area, physical = false }: { area: Area; physical?: boolean }) {
   const { final, reference } = area;
   const versions = [...new Set([final.yosys, reference?.yosys].filter(Boolean))].join(" · ");
   return (
@@ -17,8 +18,14 @@ export default function AreaBox({ area }: { area: Area }) {
           <tbody>
             <tr><td>Final RTL <span className="meta-text mono">{area.runId}</span></td><td>{final.cells}</td><td>{final.flops}</td></tr>
             {reference && <tr><td>Reference RTL <span className="meta-text">hand-written</span></td><td>{reference.cells}</td><td>{reference.flops}</td></tr>}
-            <tr><td>Timing</td><td colSpan={2}><span className="mark-neutral">○ not measured</span> <span className="meta-text">no STA flow</span></td></tr>
-            <tr><td>Power</td><td colSpan={2}><span className="mark-neutral">○ not measured</span> <span className="meta-text">no power flow</span></td></tr>
+            {physical ? (
+              <tr><td>Timing and power</td><td colSpan={2}><span className="meta-text">measured on SKY130, in the pre-layout and post-layout boxes below</span></td></tr>
+            ) : (
+              <>
+                <tr><td>Timing</td><td colSpan={2}><span className="mark-neutral">○ not measured</span> <span className="meta-text">no STA flow</span></td></tr>
+                <tr><td>Power</td><td colSpan={2}><span className="mark-neutral">○ not measured</span> <span className="meta-text">no power flow</span></td></tr>
+              </>
+            )}
           </tbody>
         </table>
       </div>

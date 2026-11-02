@@ -36,9 +36,9 @@ export default function AuthGate({ children }: { children: React.ReactNode }) {
 
   if (open || state === "ok") return <>{children}</>;
   return (
-    <main className="gate">
+    <main className="auth-gate">
       {state === "checking" ? <p className="mark-neutral" role="status">○ Checking your sign-in…</p> : (
-        <section className="card gate-card">
+        <section className="card auth-gate-card">
           <p className="label">Sign-in could not be checked</p>
           <p className="lede">The DaVINCI API is not reachable from this page, so your account cannot be verified right now.</p>
           <div className="btn-row">
