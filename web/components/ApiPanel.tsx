@@ -10,6 +10,7 @@ export default function ApiPanel({ needToken, onChange }: { needToken?: string; 
   const [health, setHealth] = useState<"checking" | "ok" | "down" | "none">("checking");
   const [open, setOpen] = useState(false);
   const [saved, setSaved] = useState({ base: "", token: false }); // read after mount: storage is browser-only
+  const [owner, setOwner] = useState<string | null>(null); // "" = token not accepted
 
   async function check() {
     setSaved({ base: apiBase(), token: !!apiToken() });
@@ -22,6 +23,8 @@ export default function ApiPanel({ needToken, onChange }: { needToken?: string; 
     try {
       await api("/health");
       setHealth("ok");
+      // Whose token this is (S8); a revoked or mistyped token shows as not accepted.
+      setOwner(apiToken() ? await api("/me").then((m) => m.owner as string).catch(() => "") : null);
       onChange?.(true, !!apiToken());
     } catch {
       setHealth("down");
@@ -53,7 +56,8 @@ export default function ApiPanel({ needToken, onChange }: { needToken?: string; 
         <div>
           <span className={tone}>{label}</span>
           <span className="mono api-url">{saved.base || "set NEXT_PUBLIC_DAVINCI_API or enter a URL"}</span>
-          {saved.token ? <span className="mark-neutral"> · token set for this tab</span> : null}
+          {saved.token ? (owner === "" ? <span className="mark-fail"> · ✕ token not accepted</span>
+            : <span className="mark-neutral"> · {owner ? `token: ${owner}` : "token set for this tab"}</span>) : null}
         </div>
         <button type="button" className="btn btn-quiet" onClick={() => setOpen(!open)} aria-expanded={open}>
           {open ? "Close" : "Connection settings"}
@@ -78,7 +82,7 @@ export default function ApiPanel({ needToken, onChange }: { needToken?: string; 
           </label>
           <label>
             <span className="label">API token (live model calls, approvals)</span>
-            <input value={token} onChange={(e) => setToken(e.target.value)} type="password" autoComplete="off" placeholder="paste the DAVINCI_API_TOKEN value" />
+            <input value={token} onChange={(e) => setToken(e.target.value)} type="password" autoComplete="off" placeholder="paste your issued token" />
           </label>
           <button type="submit" className="btn">Save</button>
         </form>
