@@ -3,6 +3,7 @@ import Link from "next/link";
 import Console from "@/components/Console";
 import SiteHeader from "@/components/SiteHeader";
 import { consoleRuns, requirementsFor, runList, triage } from "@/lib/evidence";
+import { learnItems } from "@/lib/learn";
 
 export function generateStaticParams() {
   return runList().map((r) => ({ id: r.id }));
@@ -25,7 +26,7 @@ export default async function RunConsole({ params }: { params: Promise<{ id: str
         ))}
         <Link className="subbar-end" href={`/runs/${id}/`}>Evidence for {id} →</Link>
       </nav>
-      <Console runs={runs} requirements={requirementsFor(runs[0].run)} triage={triage()} />
+      <Console runs={runs} requirements={requirementsFor(runs[0].run)} triage={triage()} learn={learnItems()} />
     </>
   );
 }

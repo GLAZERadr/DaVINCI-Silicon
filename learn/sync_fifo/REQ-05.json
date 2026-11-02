@@ -1,0 +1,30 @@
+{
+  "id": "REQ-05",
+  "block": "sync_fifo",
+  "requirement": "A read when empty is ignored, pulses underflow for one cycle, and dout holds its value.",
+  "test": "test_underflow",
+  "label": "AI interpretation · not verified",
+  "content": {
+    "explanation": "(fake provider) stand-in text for REQ-05, not written by a model. Regenerate with --provider meta. The requirement says what the FIFO must do; the directed test test_underflow drives exactly that situation.",
+    "question": "(fake provider) At cycle 5 of test_underflow, wr_en=0 and rd_en=1. What should count be just after this edge, and why?",
+    "answer": "(fake provider) 0. Before this edge count was 0; a write adds one entry and a read removes one, so the golden model expects 0.",
+    "signal": "count",
+    "cycle": 5,
+    "expected_value": 0
+  },
+  "check": {
+    "label": "measured · golden model on the reference trace",
+    "reference_trace_sha256": "8bd68467e479361450f4bbb409ea10e455a0c596b4c98dcb88fc192bb0964aff",
+    "cycle_in_test": true,
+    "golden_value": 0,
+    "answer_matches_golden": true
+  },
+  "provider": "fake",
+  "model": "fake-reference",
+  "tokens_in": 0,
+  "tokens_out": 0,
+  "cost_usd": 0.0,
+  "request_sha256": "df01b8dbe183675d085e2677a352553cb478b0b3669c375083658e1dda9dda36",
+  "response_sha256": "4ae2a16cf1a169ab8ef62385f86e549d974e8e060ca022754818edffd2ef5cd7",
+  "requirements_sha256": "7ba5f39c3e28a36b9c9248e13a07dbe5944ce2e5da36589997e7d471140850da"
+}

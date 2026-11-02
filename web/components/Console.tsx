@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import FifoView from "./FifoView";
+import LearnView, { type LearnItem, LearnToggle, LockedNote, learnTargets, useLearn } from "./LearnView";
 import ModelAvatar from "./ModelAvatar";
 import TestTriage from "./TestTriage";
 import Waveform, { pickTest } from "./Waveform";
@@ -99,13 +100,13 @@ function traceUrl(source: "static" | "api", runId: string, n: number) {
     : `${apiBase()}/runs/${encodeURIComponent(runId)}/attempts/${n}/trace/trace.json`;
 }
 
-export default function Console({ runs, requirements, traceSource = "static", triage = null }:
-  { runs: ConsoleRun[]; requirements: Requirement[]; traceSource?: "static" | "api"; triage?: Json | null }) {
+export default function Console({ runs, requirements, traceSource = "static", triage = null, learn = {} }:
+  { runs: ConsoleRun[]; requirements: Requirement[]; traceSource?: "static" | "api"; triage?: Json | null; learn?: Record<string, LearnItem> }) {
   const [which, setWhich] = useState(0);
   const run = runs[which].run;
   const [sel, setSel] = useState(startAttempt(run));
   const [quiet, setQuiet] = useState(true);
-  const [editor, setEditor] = useState<"wave" | "fifo" | "diff" | "rtl" | "prompt">("wave");
+  const [editor, setEditor] = useState<"learn" | "wave" | "fifo" | "diff" | "rtl" | "prompt">("wave");
   const [trace, setTrace] = useState<{ key: string; data: Trace | null } | null>(null);
   const [wTest, setWTest] = useState("");
   const [wCycle, setWCycle] = useState(1);
@@ -142,17 +143,21 @@ export default function Console({ runs, requirements, traceSource = "static", tr
   }, [traceKey, traceSource, run.id, sim]);
   const tr = trace?.key === traceKey ? trace.data : null;
   const pickWTest = (t: string) => { setWTest(t); setWCycle(tr?.tests.find((x) => x.name === t)?.first_mismatch ?? 1); };
+  const failing = (sim?.tests ?? []).filter((t) => !t.passed);
+  const learnFor = learnTargets(failing, requirements, learn);
+  const L = useLearn(run.id, a?.n, learnFor);
+  const lock = L.locked ? " · locked" : "";
   const editorTabs = [
+    ...(L.on ? [{ key: "learn" as const, label: "Learn" }] : []),
     { key: "wave" as const, label: "Waveform", disabled: !tr },
     { key: "fifo" as const, label: "FIFO replay", disabled: !tr },
-    { key: "diff" as const, label: a?.n === 1 ? "Diff (none on attempt 1)" : "Diff vs previous", disabled: !a?.diff },
-    { key: "rtl" as const, label: "sync_fifo.v", disabled: !a?.rtl },
-    { key: "prompt" as const, label: "Prompt", disabled: !a?.prompt },
+    { key: "diff" as const, label: (a?.n === 1 ? "Diff (none on attempt 1)" : "Diff vs previous") + lock, disabled: !a?.diff || L.locked },
+    { key: "rtl" as const, label: "sync_fifo.v" + lock, disabled: !a?.rtl || L.locked },
+    { key: "prompt" as const, label: "Prompt" + lock, disabled: !a?.prompt || L.locked },
   ];
   const shownEditor = editorTabs.find((t) => t.key === editor && !t.disabled)?.key ?? editorTabs.find((t) => !t.disabled)?.key;
   const st = status(run.status);
   const next = a ? run.attempts.find((x) => x.n === a.n + 1) : undefined;
-  const failing = (sim?.tests ?? []).filter((t) => !t.passed);
   const ordered = [...failing, ...(sim?.tests ?? []).filter((t) => t.passed)];
   const shownDiff = a?.diff ? (quiet ? hideNoise(a.diff) : { text: a.diff, hidden: 0 }) : null;
 
@@ -165,6 +170,9 @@ export default function Console({ runs, requirements, traceSource = "static", tr
   return (
     <div className="console">
       <aside className="c-side" aria-label="Run, attempts and requirements">
+        <div className="c-section">
+          <LearnToggle on={L.on} onChange={(v) => { L.setOn(v); setEditor(v ? "learn" : "wave"); }} />
+        </div>
         {runs.length > 1 && (
           <div className="c-section">
             <p className="label">View</p>
@@ -230,6 +238,8 @@ export default function Console({ runs, requirements, traceSource = "static", tr
         <Tabs label="Editor" tabs={editorTabs} value={shownEditor ?? "diff"} onChange={setEditor} />
         <div className="c-scroll">
           {!a ? <p className="c-empty">No attempt to show.</p>
+            : shownEditor === "learn" ? <LearnView key={L.key} item={L.target ? learn[L.target.req] : undefined} targets={learnFor} target={L.target}
+                onPick={L.setPick} trace={tr} revealed={L.isRevealed} onReveal={L.reveal} />
             : shownEditor === "wave" && tr ? <Waveform trace={tr} test={wTest} cycle={wCycle} onTest={pickWTest} onCycle={setWCycle} />
             : shownEditor === "fifo" && tr ? <FifoView trace={tr} test={wTest} cycle={wCycle} onTest={pickWTest} onCycle={setWCycle} />
             : shownEditor === "diff" && shownDiff ? (
@@ -308,6 +318,7 @@ export default function Console({ runs, requirements, traceSource = "static", tr
       </section>
 
       <aside className="c-right" aria-label="Diagnosis and attempt details">
+        {L.locked ? <LockedNote /> : <>
         {next?.diagnosis && a?.status !== "pass" ? (
           <div className="ai">
             <p className="ai-head"><ModelAvatar model={next.model} size={20} /><strong>{next.model ?? "model"}</strong></p>
@@ -327,13 +338,14 @@ export default function Console({ runs, requirements, traceSource = "static", tr
             <p>{a?.source === "seeded" ? "No model text: this attempt is the seeded bug." : a?.n === 1 ? "First generation: the model answers with RTL only, no diagnosis." : "No diagnosis recorded."}</p>
           </div>
         ) : null}
+        </>}
         <div className={`measured ${sim?.total ? (sim.passed === sim.total ? "pass" : "fail") : ""}`}>
           <p className="label">Measured</p>
           <p>{a?.rejection ? `Rejected: ${a.rejection}` : sim?.total ? `${sim.passed}/${sim.total} frozen tests` : "Not simulated"}
             {a?.sweep ? ` · sweep ${a.sweep.status}` : ""}</p>
         </div>
         <dl className="facts c-facts">
-          <dt>Source</dt><dd>{a?.source === "seeded" ? `reference RTL + ${a.seeded?.mutant} (${a.seeded?.desc})` : a?.source ?? "–"}</dd>
+          <dt>Source</dt><dd>{a?.source === "seeded" ? `reference RTL + ${a.seeded?.mutant} (${L.locked ? "bug description hidden in Learn mode" : a.seeded?.desc})` : a?.source ?? "–"}</dd>
           {a?.model ? <><dt>Model</dt><dd>{a.model}</dd></> : null}
           {a?.tokensIn !== undefined ? <><dt>Tokens</dt><dd>{a.tokensIn.toLocaleString()} in / {(a.tokensOut ?? 0).toLocaleString()} out</dd></> : null}
           {a?.costUsd !== undefined ? <><dt>Cost</dt><dd>${a.costUsd.toFixed(4)}</dd></> : null}

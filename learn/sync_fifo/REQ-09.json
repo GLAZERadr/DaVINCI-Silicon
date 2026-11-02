@@ -1,0 +1,30 @@
+{
+  "id": "REQ-09",
+  "block": "sync_fifo",
+  "requirement": "count equals the number of stored entries after every cycle.",
+  "test": "test_full_flag",
+  "label": "AI interpretation · not verified",
+  "content": {
+    "explanation": "(fake provider) stand-in text for REQ-09, not written by a model. Regenerate with --provider meta. The requirement says what the FIFO must do; the directed test test_full_flag drives exactly that situation.",
+    "question": "(fake provider) At cycle 18 of test_full_flag, wr_en=1 and rd_en=0. What should count be just after this edge, and why?",
+    "answer": "(fake provider) 16. Before this edge count was 15; a write adds one entry and a read removes one, so the golden model expects 16.",
+    "signal": "count",
+    "cycle": 18,
+    "expected_value": 16
+  },
+  "check": {
+    "label": "measured · golden model on the reference trace",
+    "reference_trace_sha256": "8bd68467e479361450f4bbb409ea10e455a0c596b4c98dcb88fc192bb0964aff",
+    "cycle_in_test": true,
+    "golden_value": 16,
+    "answer_matches_golden": true
+  },
+  "provider": "fake",
+  "model": "fake-reference",
+  "tokens_in": 0,
+  "tokens_out": 0,
+  "cost_usd": 0.0,
+  "request_sha256": "e8e1d1cd637c96f8b14c86fe48dbc59dcfbd4ec7de8131ef69c867790a92eb49",
+  "response_sha256": "b9460fe9e2276a48f6b4630d24bedd4ab0f9f73e75c3f9684b183b2c9d014473",
+  "requirements_sha256": "7ba5f39c3e28a36b9c9248e13a07dbe5944ce2e5da36589997e7d471140850da"
+}
