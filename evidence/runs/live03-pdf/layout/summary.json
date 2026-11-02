@@ -1,0 +1,261 @@
+{
+  "label": "Post-layout, multi-corner (ss/tt/ff) STA and power from the open-source OpenLane 2 flow on SKY130.",
+  "kind": "measured",
+  "source": {
+    "run_id": "live03-pdf",
+    "attempt": 1,
+    "rtl": "model"
+  },
+  "rtl_sha256": "466229822924bf013d4f9ca473df0c347c76a3d3e3cc825eb2e503d6678a863b",
+  "clock": {
+    "port": "clk",
+    "period_ns": 10.0,
+    "target_mhz": 100.0
+  },
+  "flow": {
+    "name": "LibreLane (OpenLane 2 lineage)",
+    "version": "v3.0.17",
+    "flow": "Classic",
+    "config": {
+      "DESIGN_NAME": "sync_fifo",
+      "VERILOG_FILES": [
+        "dir::src/dut.v"
+      ],
+      "CLOCK_PORT": "clk",
+      "CLOCK_PERIOD": 10,
+      "FP_SIZING": "relative",
+      "FP_CORE_UTIL": 40,
+      "PL_TARGET_DENSITY_PCT": 55,
+      "RUN_LINTER": false
+    }
+  },
+  "pdk": {
+    "family": "sky130",
+    "variant": "sky130A",
+    "library": "sky130_fd_sc_hd",
+    "open_pdks": "8afc8346a57fe1ab7934ba5a6056ea8b43078e71"
+  },
+  "image": {
+    "tag": "ghcr.io/librelane/librelane:3.0.17",
+    "digest": "ghcr.io/librelane/librelane@sha256:24640bd645ae992fa22d4a3e18fde10d728763c78fb140184f9975aa6c7d3e5e"
+  },
+  "tools": {
+    "librelane": "LibreLane v3.0.17",
+    "openroad": "dcf36133a369abc8f3c5e5738cd4d82e4903c0e0",
+    "yosys": "Yosys 0.62",
+    "magic": "8.3.623",
+    "klayout": "KLayout 0.30.7",
+    "netgen": "Netgen 1.5.316 compiled on Tue Feb 10 10:44:29 UTC 2026"
+  },
+  "exit": 0,
+  "seconds": 68.4,
+  "last_step": "72-misc-reportmanufacturability",
+  "constraints": {
+    "sdc": "LibreLane generic fallback SDC (base.sdc)",
+    "output_delay": 2.0,
+    "input_delay": 2.0,
+    "load": 0.0334,
+    "clock_uncertainty": 0.25,
+    "clock_transition": 0.15,
+    "timing_derate": "5.0%"
+  },
+  "corners": [
+    {
+      "corner": "nom_ss_100C_1v60",
+      "process": "ss",
+      "shown": true,
+      "setup_ws_ns": 2.4062,
+      "hold_ws_ns": 0.8401,
+      "setup_violations": 0,
+      "hold_violations": 0,
+      "max_slew_violations": 95,
+      "max_cap_violations": 0,
+      "fmax_mhz": 131.7,
+      "power_total_w": 0.00201883,
+      "power": {
+        "internal_w": 0.001505858,
+        "switching_w": 0.0005067427,
+        "leakage_w": 6.228814e-06,
+        "total_w": 0.00201883
+      }
+    },
+    {
+      "corner": "nom_tt_025C_1v80",
+      "process": "tt",
+      "shown": true,
+      "setup_ws_ns": 5.3082,
+      "hold_ws_ns": 0.3271,
+      "setup_violations": 0,
+      "hold_violations": 0,
+      "max_slew_violations": 0,
+      "max_cap_violations": 0,
+      "fmax_mhz": 213.1,
+      "power_total_w": 0.002535598,
+      "power": {
+        "internal_w": 0.001881825,
+        "switching_w": 0.0006537635,
+        "leakage_w": 9.29402e-09,
+        "total_w": 0.002535598
+      }
+    },
+    {
+      "corner": "nom_ff_n40C_1v95",
+      "process": "ff",
+      "shown": true,
+      "setup_ws_ns": 6.1361,
+      "hold_ws_ns": 0.1254,
+      "setup_violations": 0,
+      "hold_violations": 0,
+      "max_slew_violations": 0,
+      "max_cap_violations": 0,
+      "fmax_mhz": 258.8,
+      "power_total_w": 0.002947179,
+      "power": {
+        "internal_w": 0.002168269,
+        "switching_w": 0.0007788912,
+        "leakage_w": 1.837235e-08,
+        "total_w": 0.002947179
+      }
+    }
+  ],
+  "corners_rc_extremes": [
+    {
+      "corner": "max_ff_n40C_1v95",
+      "process": null,
+      "shown": false,
+      "setup_ws_ns": 6.1133,
+      "hold_ws_ns": 0.1291,
+      "setup_violations": 0,
+      "hold_violations": 0,
+      "max_slew_violations": 0,
+      "max_cap_violations": 0,
+      "fmax_mhz": 257.3,
+      "power_total_w": 0.002971613,
+      "power": {
+        "internal_w": 0.002169274,
+        "switching_w": 0.0008023202,
+        "leakage_w": 1.837235e-08,
+        "total_w": 0.002971613
+      }
+    },
+    {
+      "corner": "max_ss_100C_1v60",
+      "process": null,
+      "shown": false,
+      "setup_ws_ns": 2.3074,
+      "hold_ws_ns": 0.8506,
+      "setup_violations": 0,
+      "hold_violations": 0,
+      "max_slew_violations": 95,
+      "max_cap_violations": 0,
+      "fmax_mhz": 130.0,
+      "power_total_w": 0.002035177,
+      "power": {
+        "internal_w": 0.001506432,
+        "switching_w": 0.0005225161,
+        "leakage_w": 6.228814e-06,
+        "total_w": 0.002035177
+      }
+    },
+    {
+      "corner": "max_tt_025C_1v80",
+      "process": null,
+      "shown": false,
+      "setup_ws_ns": 5.2744,
+      "hold_ws_ns": 0.3331,
+      "setup_violations": 0,
+      "hold_violations": 0,
+      "max_slew_violations": 0,
+      "max_cap_violations": 0,
+      "fmax_mhz": 211.6,
+      "power_total_w": 0.002556432,
+      "power": {
+        "internal_w": 0.001882696,
+        "switching_w": 0.0006737271,
+        "leakage_w": 9.29402e-09,
+        "total_w": 0.002556432
+      }
+    },
+    {
+      "corner": "min_ff_n40C_1v95",
+      "process": null,
+      "shown": false,
+      "setup_ws_ns": 6.1538,
+      "hold_ws_ns": 0.122,
+      "setup_violations": 0,
+      "hold_violations": 0,
+      "max_slew_violations": 0,
+      "max_cap_violations": 0,
+      "fmax_mhz": 260.0,
+      "power_total_w": 0.00292404,
+      "power": {
+        "internal_w": 0.002167256,
+        "switching_w": 0.0007567657,
+        "leakage_w": 1.837235e-08,
+        "total_w": 0.00292404
+      }
+    },
+    {
+      "corner": "min_ss_100C_1v60",
+      "process": null,
+      "shown": false,
+      "setup_ws_ns": 2.5063,
+      "hold_ws_ns": 0.8314,
+      "setup_violations": 0,
+      "hold_violations": 0,
+      "max_slew_violations": 77,
+      "max_cap_violations": 0,
+      "fmax_mhz": 133.4,
+      "power_total_w": 0.002003342,
+      "power": {
+        "internal_w": 0.001505266,
+        "switching_w": 0.0004918471,
+        "leakage_w": 6.228814e-06,
+        "total_w": 0.002003342
+      }
+    },
+    {
+      "corner": "min_tt_025C_1v80",
+      "process": null,
+      "shown": false,
+      "setup_ws_ns": 5.3307,
+      "hold_ws_ns": 0.3221,
+      "setup_violations": 0,
+      "hold_violations": 0,
+      "max_slew_violations": 0,
+      "max_cap_violations": 0,
+      "fmax_mhz": 214.2,
+      "power_total_w": 0.002515808,
+      "power": {
+        "internal_w": 0.001880888,
+        "switching_w": 0.0006349108,
+        "leakage_w": 9.29402e-09,
+        "total_w": 0.002515808
+      }
+    }
+  ],
+  "fmax_note": "clock period minus worst setup slack at that corner, under the flow's SDC (I/O delays, uncertainty, derate)",
+  "power_note": "OpenSTA report_power per corner with SPEF from OpenRCX and default switching activity",
+  "area": {
+    "die_um2": 21090.6,
+    "core_um2": 16465.8,
+    "instances": 2842,
+    "utilization": 0.619149
+  },
+  "checks": {
+    "magic_drc_errors": 0,
+    "klayout_drc_errors": 0,
+    "lvs_errors": 0,
+    "xor_differences": 0,
+    "route_drc_errors": 0,
+    "antenna_violating_nets": 0,
+    "max_slew_violations": 95,
+    "max_cap_violations": 0,
+    "setup_violations": 0,
+    "hold_violations": 0
+  },
+  "gds": true,
+  "gds_sha256": "e61837f92be39db9ed6ef8c36fbf3f9141044ec95de1cf654789611bfb1729fe",
+  "gds_bytes": 1456566,
+  "status": "ok"
+}

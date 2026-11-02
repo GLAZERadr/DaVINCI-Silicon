@@ -15,8 +15,9 @@ python -m api.tokens revoke t_1a2b3c4d      # refused from the next request on, 
 - Store: `runs/_api/tokens.json` (gitignored with `runs/`, written 0600).
 - `DAVINCI_API_TOKEN` keeps working as the admin token (owner `admin`). With no
   admin token and no active issued token, live calls are refused (403, fail closed).
-- A request with a wrong, revoked or malformed token is refused (401) on every
-  endpoint, also for replay/fake runs: a bad token is never silently ignored.
+- A wrong, revoked or malformed token is refused (401) for live runs, approvals,
+  `?mine=1` and `/me`. Free actions (replay/fake runs, listing) treat it as
+  anonymous, so a stale token in a browser tab never blocks a $0 replay.
 - Owner comes from the token only. `POST /runs` rejects unknown fields, so a body
   `owner` is a 422. Owners are recorded in `runs/_api/owners.jsonl` (kind, id,
   owner, token id; approvals also keep the typed `approved_by`) and in

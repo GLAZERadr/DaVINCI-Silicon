@@ -1,0 +1,124 @@
+{
+  "label": "Pre-layout estimate \u00b7 SKY130 hd typical corner \u00b7 no wire parasitics \u00b7 default activity",
+  "kind": "measured",
+  "source": {
+    "run_id": "reference",
+    "rtl": "reference (hand-written)"
+  },
+  "rtl_sha256": "6034c49a727be76474d3ec227252b8038d6122e788fc3c3c374c3741dc56313d",
+  "clock": {
+    "port": "clk",
+    "period_ns": 10.0,
+    "target_mhz": 100.0
+  },
+  "constraints": "ideal clock (no clock tree, so clock-network power is 0); input and output delay 0 ns; no output load; no wire parasitics; OpenSTA default switching activity (no simulation activity)",
+  "pdk": {
+    "family": "sky130",
+    "variant": "sky130A",
+    "open_pdks": "8afc8346a57fe1ab7934ba5a6056ea8b43078e71",
+    "library": "sky130_fd_sc_hd",
+    "liberty": "sky130_fd_sc_hd__tt_025C_1v80.lib",
+    "liberty_sha256": "8e78e14442062dba34d414fca6490b2f6b96038d4510d1438ca44fee31487135",
+    "corner": "tt, 25 \u00b0C, 1.80 V"
+  },
+  "image": {
+    "tag": "ghcr.io/librelane/librelane:3.0.17",
+    "digest": "ghcr.io/librelane/librelane@sha256:24640bd645ae992fa22d4a3e18fde10d728763c78fb140184f9975aa6c7d3e5e"
+  },
+  "sta_script_sha256": "5e91b19c1227b4ef1379f159b0d552c12dd6b45144dccf0829f14c8f6d6a35a5",
+  "synth_script_sha256": "d91f71e751114dcc68e305fdad95328d3b213005ff08e225adef0133a9da58a6",
+  "tools": {
+    "yosys": "Yosys 0.62 (git sha1 7326bb7d6641500ecb285c291a54a662cb1e76cf, clang++ 21.1.2 -fPIC -O3)",
+    "opensta": "OpenSTA 2.7.0"
+  },
+  "synthesis": {
+    "cells": 440,
+    "flip_flops": 151,
+    "area_um2": 6507.4912,
+    "area_source": "sum of liberty cell areas (yosys stat -liberty)",
+    "cells_by_type": {
+      "sky130_fd_sc_hd__a21boi_2": 1,
+      "sky130_fd_sc_hd__a21o_2": 11,
+      "sky130_fd_sc_hd__a21oi_2": 11,
+      "sky130_fd_sc_hd__a31o_2": 4,
+      "sky130_fd_sc_hd__and2_2": 3,
+      "sky130_fd_sc_hd__and2b_2": 13,
+      "sky130_fd_sc_hd__and3_2": 6,
+      "sky130_fd_sc_hd__and3b_2": 2,
+      "sky130_fd_sc_hd__and4_2": 1,
+      "sky130_fd_sc_hd__dfxtp_2": 151,
+      "sky130_fd_sc_hd__inv_2": 5,
+      "sky130_fd_sc_hd__mux2_1": 145,
+      "sky130_fd_sc_hd__mux4_2": 32,
+      "sky130_fd_sc_hd__nand2_2": 12,
+      "sky130_fd_sc_hd__nand2b_2": 3,
+      "sky130_fd_sc_hd__nor2_2": 6,
+      "sky130_fd_sc_hd__nor3_2": 2,
+      "sky130_fd_sc_hd__nor4_2": 1,
+      "sky130_fd_sc_hd__o211a_2": 1,
+      "sky130_fd_sc_hd__o21a_2": 5,
+      "sky130_fd_sc_hd__o21ai_2": 5,
+      "sky130_fd_sc_hd__o221a_2": 8,
+      "sky130_fd_sc_hd__o31a_2": 1,
+      "sky130_fd_sc_hd__or2_2": 2,
+      "sky130_fd_sc_hd__or3_2": 2,
+      "sky130_fd_sc_hd__or3b_2": 3,
+      "sky130_fd_sc_hd__or4_2": 2,
+      "sky130_fd_sc_hd__xnor2_2": 1,
+      "sky130_fd_sc_hd__xor2_2": 1
+    }
+  },
+  "timing": {
+    "setup_ws_ns": 7.436,
+    "hold_ws_ns": 0.0623,
+    "setup_tns_ns": 0.0,
+    "met": true,
+    "min_period_ns": 2.564,
+    "fmax_mhz": 390.0,
+    "fmax_note": "estimate: clock period minus worst setup slack (pre-layout, ideal clock)"
+  },
+  "power": {
+    "total_w": 0.001030571,
+    "groups": {
+      "sequential": {
+        "internal_w": 0.0007238784,
+        "switching_w": 5.634086e-05,
+        "leakage_w": 1.292752e-09,
+        "total_w": 0.0007802206
+      },
+      "combinational": {
+        "internal_w": 0.0001849423,
+        "switching_w": 6.540671e-05,
+        "leakage_w": 1.435138e-09,
+        "total_w": 0.0002503504
+      },
+      "clock": {
+        "internal_w": 0.0,
+        "switching_w": 0.0,
+        "leakage_w": 0.0,
+        "total_w": 0.0
+      },
+      "macro": {
+        "internal_w": 0.0,
+        "switching_w": 0.0,
+        "leakage_w": 0.0,
+        "total_w": 0.0
+      },
+      "pad": {
+        "internal_w": 0.0,
+        "switching_w": 0.0,
+        "leakage_w": 0.0,
+        "total_w": 0.0
+      },
+      "total": {
+        "internal_w": 0.0009088207,
+        "switching_w": 0.0001217475,
+        "leakage_w": 2.727889e-09,
+        "total_w": 0.001030571
+      }
+    },
+    "activity": "OpenSTA default (inputs 0.1 toggle density, clock from create_clock)"
+  },
+  "status": "ok",
+  "seconds": 1.4
+}
