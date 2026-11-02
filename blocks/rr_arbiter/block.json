@@ -1,0 +1,18 @@
+{
+  "name": "rr_arbiter",
+  "title": "Round-robin arbiter (4 requesters)",
+  "top": "rr_arbiter",
+  "spec": "blocks/rr_arbiter/spec.md",
+  "requirements": "blocks/rr_arbiter/requirements.json",
+  "interface": "blocks/rr_arbiter/interface.json",
+  "reference_rtl": "blocks/rr_arbiter/rtl/rr_arbiter.v",
+  "tests_dir": "blocks/rr_arbiter/tests",
+  "test_module": "test_rr_arbiter",
+  "golden_model": "blocks/rr_arbiter/tests/golden_model.py",
+  "mutants": "blocks/rr_arbiter/mutants.json",
+  "runner": "verify/run_block.py",
+  "suite_lock": "blocks/rr_arbiter/suite.sha256",
+  "frozen": ["blocks/rr_arbiter/tests/test_rr_arbiter.py", "blocks/rr_arbiter/tests/golden_model.py",
+             "verify/run_block.py", "blocks/rr_arbiter/mutants.json"],
+  "sweep": null
+}

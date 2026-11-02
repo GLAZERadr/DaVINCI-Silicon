@@ -1,0 +1,16 @@
+[
+  {"id": "M1", "req": "REQ-06", "desc": "priority pointer never advances (fixed priority, starvation)",
+   "find": "ptr   <= pick + 2'd1;", "replace": "ptr   <= ptr;"},
+  {"id": "M2", "req": "REQ-05", "desc": "pointer stays on the winner instead of moving past it",
+   "find": "ptr   <= pick + 2'd1;", "replace": "ptr   <= pick;"},
+  {"id": "M3", "req": "REQ-04", "desc": "grant held when nobody requests",
+   "find": "        end else begin\n            grant <= 4'b0000;", "replace": "        end else begin\n            grant <= grant;"},
+  {"id": "M4", "req": "REQ-01", "desc": "reset does not clear grant",
+   "find": "            grant <= 4'b0000;\n            ptr   <= 2'd0;\n", "replace": "            ptr   <= 2'd0;\n"},
+  {"id": "M5", "req": "REQ-03", "desc": "pointer position granted too (two-hot grant)",
+   "find": "grant <= 4'b0001 << pick;", "replace": "grant <= (4'b0001 << pick) | (4'b0001 << ptr);"},
+  {"id": "M6", "req": "REQ-05", "desc": "search ignores the pointer (always starts at requester 0)",
+   "find": "idx = ptr + k[1:0];", "replace": "idx = k[1:0];"},
+  {"id": "M7", "req": "REQ-01", "desc": "reset gives requester 1 the highest priority",
+   "find": "ptr   <= 2'd0;", "replace": "ptr   <= 2'd1;"}
+]
