@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef } from "react";
 import { type Trace, type TraceTest, simShort } from "@/lib/run";
 
 const CELL = 30; // px per clock cycle
@@ -87,10 +88,21 @@ export function pickTest(t: Trace): string {
 export default function Waveform({ trace, test, cycle, onTest, onCycle }:
   { trace: Trace; test: string; cycle: number; onTest: (t: string) => void; onCycle: (k: number) => void }) {
   const tt = trace.tests.find((x) => x.name === test) ?? trace.tests[0];
+  const scroller = useRef<HTMLDivElement>(null);
+  const at = tt ? Math.max(0, tt.cycles.findIndex((c) => c.k === cycle)) : 0;
+  // Keep the cursor cycle in view: on load (first mismatch), on a new test or attempt, and on every step.
+  useEffect(() => {
+    const el = scroller.current;
+    if (!el) return;
+    const x = at * CELL + CELL / 2;
+    if (x < el.scrollLeft + CELL || x > el.scrollLeft + el.clientWidth - CELL) {
+      el.scrollLeft = Math.max(0, x - el.clientWidth / 2);
+    }
+  }, [at, tt?.name, trace]);
   if (!tt) return <p className="c-empty">No trace for this attempt.</p>;
   const cyc = tt.cycles;
   const rs = rows(trace, tt);
-  const idx = Math.max(0, cyc.findIndex((c) => c.k === cycle));
+  const idx = at;
   const cur = cyc[idx];
   const width = cyc.length * CELL;
   const bad = cyc.map((c, i) => (c.mismatch.length ? i : -1)).filter((i) => i >= 0);
@@ -115,7 +127,7 @@ export default function Waveform({ trace, test, cycle, onTest, onCycle }:
           <div className="wf-ruler-label">cycle</div>
           {rs.map((r) => <div key={r.key} className={`wf-label wf-g-${r.group}`}>{r.label}</div>)}
         </div>
-        <div className="wf-scroll">
+        <div className="wf-scroll" ref={scroller}>
           <svg width={width} height={(rs.length + 1) * ROW} viewBox={`0 0 ${width} ${(rs.length + 1) * ROW}`} role="img"
             aria-label={`Waveform of ${tt.name}: ${cyc.length} cycles${tt.first_mismatch ? `, first mismatch at cycle ${tt.first_mismatch}` : ""}`}>
             {bad.map((i) => <rect key={`b${i}`} x={i * CELL} y={0} width={CELL} height={(rs.length + 1) * ROW} className="wf-badcol" />)}
