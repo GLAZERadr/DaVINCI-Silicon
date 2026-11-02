@@ -1,4 +1,5 @@
 import Link from "next/link";
+import BreakdownView from "./BreakdownView";
 import ModelAvatar from "./ModelAvatar";
 import TestTriage from "./TestTriage";
 import SiteHeader from "./SiteHeader";
@@ -98,7 +99,7 @@ export default function Board({ data, runs }: { data: BoardData; runs: RunSummar
             </h1>
             <div className="title-meta">
               <span className={`state ${runStatus.tone}`}>{runStatus.mark} {runStatus.word} · measured</span>
-              {data.planId && <a className="btn btn-quiet btn-sm" href={`/plans/${data.planId}.md`} download>Download verification plan</a>}
+              {data.planId && <Link className="btn btn-quiet btn-sm" href={`/runs/${live.id}/plan/`}>Open verification plan</Link>}
               <span className="title-actions">
                 <Link className="btn btn-quiet btn-sm" href={`/runs/${live.id}/console/`}>Open in Run Console</Link>
                 <ReplayButton runId={live.id} />
@@ -204,13 +205,12 @@ export default function Board({ data, runs }: { data: BoardData; runs: RunSummar
                 <h2 id="signoff">Sign-off status</h2>
                 <span className="meta-text">{data.signoff.filter((l) => l.status === "met").length} of {data.signoff.length} met · from stored data · modelled on OpenTitan V2</span>
               </div>
-              <ul className="checks">
+              <ul className="checks checks-noid">
                 {data.signoff.map((l) => {
                   const ok = l.status === "met" ? true : l.status === "not met" ? false : null;
                   return (
                     <li key={l.id}>
                       <span className={ok === null ? "mark-neutral" : ok ? "mark-pass" : "mark-fail"} aria-hidden="true">{ok === null ? "○" : ok ? "✓" : "✕"}</span>
-                      <span className="mono check-id">{l.id}</span>
                       <span className="check-name">{l.criterion} <span className="meta-text">{l.evidence}</span></span>
                       <span className={ok === null ? "mark-neutral" : ok ? "mark-pass" : "mark-fail"}>{ok === null ? "Not measured" : ok ? "Met" : "Not met"}</span>
                     </li>
@@ -219,11 +219,9 @@ export default function Board({ data, runs }: { data: BoardData; runs: RunSummar
               </ul>
               <div className="box-footer">
                 <span className="btn-row">
-                  <a className="btn btn-sm" href={`/plans/${data.planId}.md`} download>Verification plan (.md)</a>
-                  <a className="btn btn-quiet btn-sm" href={`/plans/${data.planId}.csv`} download>Testpoints (.csv)</a>
-                  <a className="btn btn-quiet btn-sm" href={`/plans/${data.planId}.hjson`} download>testplan.hjson</a>
+                  <Link className="btn btn-sm" href={`/runs/${live.id}/plan/`}>Open verification plan</Link>
                 </span>
-                <span className="meta-text">Vplan sections · OpenTitan-style testpoints · code coverage not measured</span>
+                <span className="meta-text">Vplan sections · OpenTitan-style testpoints · code coverage not measured · download as <a href={`/plans/${data.planId}.md`} download>.md</a> · <a href={`/plans/${data.planId}.csv`} download>.csv</a> · <a href={`/plans/${data.planId}.hjson`} download>testplan.hjson</a></span>
               </div>
             </section>
           )}
@@ -265,6 +263,19 @@ export default function Board({ data, runs }: { data: BoardData; runs: RunSummar
             </div>
           </section>
 
+          {data.breakdown && (
+            <section className="box" aria-labelledby="breakdown">
+              <div className="box-header">
+                <h2 id="breakdown">Design breakdown before RTL</h2>
+                <span className="meta-text">proposed by the model, approved by {data.breakdown.approved.approved_by}, passed into the RTL prompt</span>
+              </div>
+              <div className="box-pad">
+                <BreakdownView breakdown={data.breakdown.approved.breakdown} model={data.breakdown.model}
+                  approvedBy={data.breakdown.approved.approved_by} check={data.breakdown.check} />
+              </div>
+            </section>
+          )}
+
           <h2 className="group-title">Where and why it failed</h2>
           <section className="box" aria-labelledby="timeline">
             <div className="box-header">
@@ -299,6 +310,7 @@ export default function Board({ data, runs }: { data: BoardData; runs: RunSummar
                           <span className="tag-measured">measured</span>{" "}
                           <span className={ok === null ? "mark-neutral" : ok ? "mark-pass" : "mark-fail"}>{a.total ? `${ok ? "✓" : "✕"} ${a.passed}/${a.total} frozen tests` : `○ ${status(a.status).word}`}</span>
                           {failed.length > 0 && <> · failing <span className="mono">{failed.join(", ")}</span></>}
+                          {a.rejection && <> · rejected before simulation by G1: <span className="mono">{a.rejection}</span></>}
                         </p>
                         {failed.map((f) => (
                           <div key={f} className="tl-triage"><span className="mono">{f}</span><TestTriage test={f} triage={data.triage} runStarted={live.started} /></div>
@@ -347,8 +359,8 @@ export default function Board({ data, runs }: { data: BoardData; runs: RunSummar
             <h2>About</h2>
             <p className="side-text">A verification plan with evidence for AI-written RTL: requirements traced to frozen, mutation-tested simulations; every attempt measured.</p>
             <ul className="side-links">
-              {data.planId && <li>Verification plan: <a href={`/plans/${data.planId}.md`} download>.md</a> · <a href={`/plans/${data.planId}.csv`} download>.csv</a> · <a href={`/plans/${data.planId}.hjson`} download>testplan.hjson</a> · <a href={`/plans/${data.planId}.json`} download>.json</a></li>}
-              {data.referencePlan && <li><a href="/plans/reference.md" download>Reference RTL plan</a></li>}
+              {data.planId && <li><Link href={`/runs/${live.id}/plan/`}>Verification plan</Link> <span className="meta-text">(view in app)</span></li>}
+              {data.referencePlan && <li><Link href="/reference/plan/">Reference RTL plan</Link></li>}
               <li><a href="https://github.com/GLAZERadr/DaVINCI-Silicon/tree/main/evidence">Raw evidence on GitHub</a></li>
             </ul>
             <dl className="side-facts">

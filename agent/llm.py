@@ -188,6 +188,19 @@ def _fake(messages: list, step: str) -> Reply:
     including repair, be exercised without spending credit."""
     rtl = (ROOT / "rtl" / "sync_fifo.v").read_text()
     ref = json.loads((ROOT / "spec" / "requirements.json").read_text())["requirements"]
+    if step == "breakdown":  # the reference RTL's own structure, so the check can be exercised at $0
+        el = lambda name, kind, width, role, reqs: {"name": name, "kind": kind, "width": width, "role": role, "reqs": reqs}
+        return Reply(text=json.dumps({
+            "block": "sync_fifo", "summary": "(fake provider) the reference RTL's structure. Not a model breakdown.",
+            "elements": [el("mem", "memory", "WIDTH", "DEPTH-entry storage", ["REQ-02"]),
+                         el("wr_ptr", "pointer", "CW", "next slot to write", ["REQ-02", "REQ-06"]),
+                         el("rd_ptr", "pointer", "CW", "next slot to read", ["REQ-02", "REQ-06"]),
+                         el("count", "counter", "CW", "stored entries", ["REQ-03", "REQ-09"]),
+                         el("do_write", "wire", "1", "write accepted this cycle", ["REQ-04", "REQ-06", "REQ-10"]),
+                         el("do_read", "wire", "1", "read accepted this cycle", ["REQ-05", "REQ-07"])],
+            "pointer_scheme": "(fake) pointers wrap from DEPTH-1 to 0", "fsm_states": [],
+            "control": ["do_write", "do_read"], "datapath": ["mem", "dout"], "timing_assumptions": []}),
+            provider="fake", model="fake-reference", request_sha256="")
     if step == "extract":  # echoes the reference list, as if read perfectly
         return Reply(text=json.dumps({"block": "sync_fifo", "params": [], "ports": [], "unreadable": [],
                                       "requirements": [{"id": f"EX-{i:02d}", "text": r["text"],

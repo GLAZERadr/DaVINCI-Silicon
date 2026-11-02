@@ -128,13 +128,17 @@ def validate(rtl: str | None) -> str | None:
         missing = sorted(set(want) - set(got))
         extra = sorted(set(got) - set(want))
         wrong = sorted(k for k in set(got) & set(want) if got[k] != want[k])
-        return f"port list does not match the spec interface (missing {missing}, extra {extra}, wrong direction {wrong})"
+        parts = [f"{label} {names}" for label, names in (("missing", missing), ("extra", extra),
+                                                         ("wrong direction", wrong)) if names]
+        return f"port list does not match the spec interface ({'; '.join(parts)})"
     return None
 
 
 def ports(code: str) -> dict:
     """{port name: direction} declared in the module, ANSI header or body."""
     found = {}
+    # Arguments of functions and tasks are declared with input/output too; they are not ports.
+    code = re.sub(r"\b(function|task)\b.*?\bend\1\b", "", code, flags=re.S)
     for direction, names in PORT_DECL.findall(code):
         for name in re.split(r"\s*,\s*", names.strip().rstrip(",")):
             if name:
@@ -336,6 +340,7 @@ def main(argv=None):
     ap.add_argument("--reasoning-effort", default=os.environ.get("DAVINCI_REASONING_EFFORT"))
     ap.add_argument("--spec", type=Path, default=ROOT / "spec" / "fifo_spec.md")
     ap.add_argument("--requirements", type=Path, default=ROOT / "spec" / "requirements.json")
+    ap.add_argument("--breakdown", metavar="BID", help="approved design breakdown to pass into the RTL prompt (agent.breakdown)")
     a = ap.parse_args(argv)
 
     replayer, source = None, None
@@ -347,6 +352,8 @@ def main(argv=None):
         src_run = json.loads((RUNS / source / "run.json").read_text())
         a.seed_bug = src_run.get("seed_bug")
         # Replay against the inputs the source run used, unless overridden.
+        if not a.breakdown and src_run.get("breakdown"):
+            a.breakdown = src_run["breakdown"]["breakdown_id"]
         for opt, key in (("spec", "spec_file"), ("requirements", "requirements_file")):
             if getattr(a, opt) == ap.get_default(opt) and src_run.get(key) and Path(src_run[key]).exists():
                 setattr(a, opt, Path(src_run[key]))
@@ -371,6 +378,14 @@ def main(argv=None):
     run = Run(a.run_id)
     spec, reqs = a.spec.read_text(), a.requirements.read_text()
     ctx = spec_context(spec, reqs)
+    approved_breakdown = None
+    if a.breakdown:  # S1: the human-approved breakdown goes into every RTL prompt
+        from agent import breakdown as bd
+        rec_b = bd.load(a.breakdown)
+        if "approved" not in rec_b:
+            raise SystemExit(f"breakdown {a.breakdown} is not approved (python -m agent.breakdown --approve {a.breakdown} --by NAME)")
+        approved_breakdown = rec_b["approved"]
+        ctx = f"{ctx}\n\n{bd.prompt_section(approved_breakdown)}"
     # Reasoning counts toward output; 8000 cut off a full module on 31 Oct.
     opts = {"max_tokens": int(os.environ.get("DAVINCI_MAX_OUTPUT_TOKENS", "24000"))}
     if a.reasoning_effort:
@@ -390,6 +405,13 @@ def main(argv=None):
                                 "approved_by": approved.get("approved_by"), "approved_at": approved.get("approved_at"),
                                 "source": approved.get("source", {}).get("name"), "untested": approved.get("untested")}
     record["spec_file"], record["requirements_file"] = str(a.spec), str(a.requirements)
+    if approved_breakdown:
+        record["breakdown"] = {"breakdown_id": approved_breakdown["breakdown_id"],
+                               "approved_sha256": rec_b["approved_sha256"],
+                               "approved_by": approved_breakdown["approved_by"],
+                               "approved_at": approved_breakdown["approved_at"],
+                               "cost_usd": rec_b.get("cost_usd"), "provider": rec_b.get("provider")}
+        (run.dir / "breakdown.json").write_text(json.dumps(approved_breakdown, indent=2))
     record["sweep_sha256"] = sweep_locked
     run.event("run_started", run_id=run.id, generate=gen_p, repair=rep_p, seed_bug=a.seed_bug or "-")
 
@@ -547,6 +569,13 @@ def main(argv=None):
     if source:
         record["replay_check"] = replay_check(source, atts)
     (run.dir / "run.json").write_text(json.dumps(record, indent=2))
+    if approved_breakdown:  # measured: did the final RTL follow the approved breakdown?
+        from agent import breakdown as bd
+        chk = bd.check_run(run.dir)
+        if chk:
+            record["breakdown_check"] = {k: chk[k] for k in ("attempt", "present", "total", "width_match",
+                                                             "width_differs", "missing", "reqs_without_element")}
+            (run.dir / "run.json").write_text(json.dumps(record, indent=2))
     run.event("run_finished", status=final, attempts=len(atts), cost_usd=record["cost_usd"])
     return 0 if final == "pass" else 1
 

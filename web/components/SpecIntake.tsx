@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import ApiPanel from "./ApiPanel";
+import BreakdownPanel from "./BreakdownPanel";
 import RunProgress from "./RunProgress";
 import { api, apiBase } from "@/lib/api";
 import type { Json } from "@/lib/run";
@@ -190,6 +191,8 @@ export default function SpecIntake() {
       </section>
 
       {panel}
+
+      <BreakdownPanel apiOk={apiOk} hasToken={hasToken} />
 
       {apiOk && list.length > 0 && (
         <section className="card">

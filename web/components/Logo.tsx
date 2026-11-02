@@ -1,5 +1,6 @@
 // Official DaVINCI mark (web/public/brand/davinci-mark.png, from Adrian's logo
-// file, 1 Nov). The wordmark is live text so it follows light and dark mode.
+// file, 1 Nov). The wordmark is live text so it follows light and dark mode;
+// "Silicon" is the DaVINCI series for chip-design acceleration.
 export function Mark({ height = 24 }: { height?: number }) {
   return (
     // eslint-disable-next-line @next/next/no-img-element
@@ -11,7 +12,7 @@ export default function Logo() {
   return (
     <>
       <Mark />
-      <span className="word">DaVINCI</span>
+      <span className="word">DaVINCI <span className="word-series">Silicon</span></span>
     </>
   );
 }

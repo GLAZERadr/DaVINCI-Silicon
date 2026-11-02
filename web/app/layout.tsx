@@ -14,7 +14,7 @@ export const viewport = {
 };
 
 export const metadata: Metadata = {
-  title: "DaVINCI Evidence Board",
+  title: "DaVINCI Silicon · Evidence Board",
   description: "Verification plan and evidence for AI-written RTL: requirements traced to frozen, mutation-tested simulations, every attempt measured.",
 };
 
