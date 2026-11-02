@@ -1,0 +1,41 @@
+{
+  "label": "measured",
+  "kind": "generic Yosys cells, no standard-cell library: a size indicator, not silicon area",
+  "top": "sync_fifo",
+  "rtl_sha256": "466229822924bf013d4f9ca473df0c347c76a3d3e3cc825eb2e503d6678a863b",
+  "area_sha256": "e7d094cc9602b7a0e3bdb7c097429a9ca01cf75167f124bca327723784735b1e",
+  "script": "read_verilog <rtl>; synth -top sync_fifo; stat",
+  "timing": "not measured (no STA or power flow)",
+  "power": "not measured (no STA or power flow)",
+  "yosys": "Yosys 0.52 (git sha1 fee39a3284c90249e1d9684cf6944ffbbcbb8f90)",
+  "cells": 379,
+  "flops": 153,
+  "flop_types": {
+    "$_DFFE_PP_": 128,
+    "$_SDFFE_PP0N_": 5,
+    "$_SDFFE_PP0P_": 18,
+    "$_SDFF_PP0_": 2
+  },
+  "latches": 0,
+  "cells_by_type": {
+    "$_ANDNOT_": 39,
+    "$_AND_": 8,
+    "$_DFFE_PP_": 128,
+    "$_MUX_": 120,
+    "$_NAND_": 3,
+    "$_NOR_": 6,
+    "$_NOT_": 5,
+    "$_ORNOT_": 14,
+    "$_OR_": 17,
+    "$_SDFFE_PP0N_": 5,
+    "$_SDFFE_PP0P_": 18,
+    "$_SDFF_PP0_": 2,
+    "$_XNOR_": 1,
+    "$_XOR_": 13
+  },
+  "wires": 243,
+  "wire_bits": 396,
+  "status": "ok",
+  "seconds": 0.13,
+  "sandbox": "davinci-sim:latest"
+}
