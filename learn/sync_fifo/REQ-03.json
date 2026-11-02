@@ -5,26 +5,26 @@
   "test": "test_full_flag",
   "label": "AI interpretation · not verified",
   "content": {
-    "explanation": "(fake provider) stand-in text for REQ-03, not written by a model. Regenerate with --provider meta. The requirement says what the FIFO must do; the directed test test_full_flag drives exactly that situation.",
-    "question": "(fake provider) At cycle 18 of test_full_flag, wr_en=1 and rd_en=0. What should count be just after this edge, and why?",
-    "answer": "(fake provider) 16. Before this edge count was 15; a write adds one entry and a read removes one, so the golden model expects 16.",
-    "signal": "count",
+    "answer": "full should be 1 at cycle 18. Cycles 1 and 2 reset the storage to empty, then each cycle from 3 to 18 adds one number and nothing is ever removed, so 16 numbers are stored by the end. Because 16 fills the box completely, the rule says the full light must be on.",
     "cycle": 18,
-    "expected_value": 16
+    "expected_value": 1,
+    "explanation": "Imagine a small box that can hold up to 16 numbers. The full light should turn on only when the box is completely full with 16 numbers, and stay off at all other times. The empty light should turn on only when the box has nothing inside, and stay off whenever anything is stored.",
+    "question": "What should full be at cycle 18, and why must it have that value given everything that was added in the earlier cycles?",
+    "signal": "full"
   },
   "check": {
     "label": "measured · golden model on the reference trace",
     "reference_trace_sha256": "8bd68467e479361450f4bbb409ea10e455a0c596b4c98dcb88fc192bb0964aff",
     "cycle_in_test": true,
-    "golden_value": 16,
+    "golden_value": 1,
     "answer_matches_golden": true
   },
-  "provider": "fake",
-  "model": "fake-reference",
-  "tokens_in": 0,
-  "tokens_out": 0,
-  "cost_usd": 0.0,
+  "provider": "meta",
+  "model": "muse-spark-1.3",
+  "tokens_in": 1392,
+  "tokens_out": 2293,
+  "cost_usd": 0.011485,
   "request_sha256": "17fc2270ba327e29450e399af0db21961b21918e5d44813ce3c34c0cc747b46b",
-  "response_sha256": "111faa8735c9752751667ba7dbeb3ce1cf7a27f01b7e9b64969ba8275049dc65",
+  "response_sha256": "9c21b63da7e27457c3b1e68cf93bc08e1133e1a172245f113e1e4724a97f92c3",
   "requirements_sha256": "7ba5f39c3e28a36b9c9248e13a07dbe5944ce2e5da36589997e7d471140850da"
 }

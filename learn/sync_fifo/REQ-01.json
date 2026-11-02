@@ -5,12 +5,12 @@
   "test": "test_reset_state",
   "label": "AI interpretation · not verified",
   "content": {
-    "explanation": "(fake provider) stand-in text for REQ-01, not written by a model. Regenerate with --provider meta. The requirement says what the FIFO must do; the directed test test_reset_state drives exactly that situation.",
-    "question": "(fake provider) At cycle 6 of test_reset_state, wr_en=0 and rd_en=0. What should count be just after this edge, and why?",
-    "answer": "(fake provider) 0. Before this edge count was 3; a write adds one entry and a read removes one, so the golden model expects 0.",
-    "signal": "count",
+    "answer": "Count should be 0. In cycles 3, 4, and 5 one item was added each time, so the count had climbed to 3. Because reset is 1 in cycle 6, all of those items should disappear and the count should go back to 0.",
     "cycle": 6,
-    "expected_value": 0
+    "expected_value": 0,
+    "explanation": "When reset is 1 at the clock tick, the FIFO should become completely empty just after that tick. That means it holds zero items, it says it is empty, and its data output shows zero. Both mistake signals for writing when full and reading when empty should also show zero.",
+    "question": "What should count be just after cycle 6? Why does the story of cycles 3 to 5 make that cycle the strongest test of reset?",
+    "signal": "count"
   },
   "check": {
     "label": "measured · golden model on the reference trace",
@@ -19,12 +19,12 @@
     "golden_value": 0,
     "answer_matches_golden": true
   },
-  "provider": "fake",
-  "model": "fake-reference",
-  "tokens_in": 0,
-  "tokens_out": 0,
-  "cost_usd": 0.0,
+  "provider": "meta",
+  "model": "muse-spark-1.3",
+  "tokens_in": 702,
+  "tokens_out": 2787,
+  "cost_usd": 0.012722,
   "request_sha256": "eaa6129ffe4cb9fbe5c574d027df1c0964eb17f8d679b4becb8e0bd5f8255ca8",
-  "response_sha256": "50c777f0f4e784a1bc59ca71d522ad0ff5881015f88e4b877b476003fc070cd1",
+  "response_sha256": "a3693ee59d9e30922c91c95655036da81ef2efe7d4db919451d17c0eb9632dd0",
   "requirements_sha256": "7ba5f39c3e28a36b9c9248e13a07dbe5944ce2e5da36589997e7d471140850da"
 }

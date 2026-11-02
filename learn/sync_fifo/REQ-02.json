@@ -5,26 +5,26 @@
   "test": "test_wraparound_order",
   "label": "AI interpretation · not verified",
   "content": {
-    "explanation": "(fake provider) stand-in text for REQ-02, not written by a model. Regenerate with --provider meta. The requirement says what the FIFO must do; the directed test test_wraparound_order drives exactly that situation.",
-    "question": "(fake provider) At cycle 100 of test_wraparound_order, wr_en=0 and rd_en=1. What should count be just after this edge, and why?",
-    "answer": "(fake provider) 0. Before this edge count was 1; a write adds one entry and a read removes one, so the golden model expects 0.",
-    "signal": "count",
-    "cycle": 100,
-    "expected_value": 0
+    "answer": "dout should be 16. Cycles 23 to 38 wrote 10 through 25 in order and filled all 16 spots, so storage looped back to the start. Cycles 39 to 44 already read out 10 through 15, so the next oldest unread piece is 16.",
+    "cycle": 45,
+    "expected_value": 16,
+    "explanation": "A FIFO holds data like people waiting in a line. New values join at the back and old values leave from the front. This rule says the leaving order must match the joining order, even after the storage reaches the end and starts reusing space from the beginning.",
+    "question": "What should dout be at cycle 45, and why does that cycle prove the order was kept across the loop back to the start?",
+    "signal": "dout"
   },
   "check": {
     "label": "measured · golden model on the reference trace",
     "reference_trace_sha256": "8bd68467e479361450f4bbb409ea10e455a0c596b4c98dcb88fc192bb0964aff",
     "cycle_in_test": true,
-    "golden_value": 0,
+    "golden_value": 16,
     "answer_matches_golden": true
   },
-  "provider": "fake",
-  "model": "fake-reference",
-  "tokens_in": 0,
-  "tokens_out": 0,
-  "cost_usd": 0.0,
+  "provider": "meta",
+  "model": "muse-spark-1.3",
+  "tokens_in": 6151,
+  "tokens_out": 2359,
+  "cost_usd": 0.017715,
   "request_sha256": "32b4103376aed051365cbc03320c25fa5b1ba28007b51d79422bd00cd0f185d0",
-  "response_sha256": "ebd39054fa448d2fad3d21ac058739a7663eed3fbd7481f6eaa0f1476056218d",
+  "response_sha256": "065a7e190dbb75c80343cca8401e435c74ced38c844d85968193b4fe1d5aed8c",
   "requirements_sha256": "7ba5f39c3e28a36b9c9248e13a07dbe5944ce2e5da36589997e7d471140850da"
 }
