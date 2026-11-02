@@ -144,7 +144,7 @@ export default function Landing({ data }: { data: LandingData }) {
                 <p className="lp-p">Each run exports a plan written only from stored results: testpoints per requirement, coverage, sign-off criteria and where the model was involved. Markdown, CSV and an OpenTitan-style testplan.</p>
               </div>
               <div className="box lp-row-visual">
-                <div className="box-header"><h2>Sign-off</h2><span className={met === data.signoff.length ? "mark-pass" : "meta-text"}>{met}/{data.signoff.length} met</span></div>
+                <div className="box-header"><h2>Functional sign-off</h2><span className={met === data.signoff.length ? "mark-pass" : "meta-text"}>{met}/{data.signoff.length} met · timing separate</span></div>
                 <ul className="checks checks-noid">
                   {data.signoff.map((l) => (
                     <li key={l.criterion}><span aria-hidden="true" className={l.status === "met" ? "mark-pass" : l.status === "not met" ? "mark-fail" : "mark-neutral"}>{l.status === "met" ? "✓" : l.status === "not met" ? "✕" : "○"}</span>

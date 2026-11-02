@@ -8,6 +8,7 @@ import PhysicalPanel from "./PhysicalPanel";
 import SiteHeader from "./SiteHeader";
 import ReplayButton from "./ReplayButton";
 import { type Attempt, type Board as BoardData, type RunSummary, simShort, status } from "@/lib/evidence";
+import type { Json } from "@/lib/run";
 
 const RANDOM = "test_random_regression";
 
@@ -43,6 +44,25 @@ function Diff({ text }: { text: string }) {
       ))}
     </pre>
   );
+}
+
+// Post-layout setup timing per corner (layout/summary.json), measured. Functional
+// sign-off does not cover timing, so this line sits beside it, never inside it.
+function timingLine(final: Json | null | undefined, ref: Json | null | undefined) {
+  const corners = (final?.corners ?? []).filter((c: Json) => c.shown && typeof c.setup_ws_ns === "number");
+  if (!corners.length) return null;
+  const mhz = final?.clock?.target_mhz;
+  const bad = corners.filter((c: Json) => c.setup_ws_ns < 0 || c.setup_violations > 0);
+  const ns = (x: number) => `${x >= 0 ? "+" : ""}${x.toFixed(3)} ns`;
+  const names = (cs: Json[]) => cs.map((c) => c.process).join("/");
+  const good = corners.filter((c: Json) => !bad.includes(c));
+  const text = bad.length
+    ? `Timing: post-layout ${names(bad)} corner setup violated at ${mhz} MHz (${bad.map((c: Json) => ns(c.setup_ws_ns)).join(", ")})`
+      + (good.length ? `; ${names(good)} met.` : ".")
+    : `Timing: post-layout setup met at ${names(corners)} at ${mhz} MHz.`;
+  const refBad = (ref?.corners ?? []).filter((c: Json) => bad.some((b: Json) => b.process === c.process));
+  const refText = refBad.length ? `hand-written reference RTL: ${refBad.map((c: Json) => `${c.process} ${ns(c.setup_ws_ns)}`).join(", ")}` : "";
+  return { ok: bad.length === 0, text, refText };
 }
 
 // Footer of the run timeline when there is no RTL diff to show, written from the
@@ -88,6 +108,7 @@ export default function Board({ data, runs }: { data: BoardData; runs: RunSummar
   const failedFirst = first?.tests.filter((t) => !t.passed).map((t) => t.name) ?? [];
 
   const seeded = live.seedBug ? live.attempts.find((a) => a.source === "seeded") : undefined;
+  const timing = timingLine(data.physical?.layoutFinal, data.physical?.layoutRef);
   const repairs = live.attemptsToGreen ? live.attemptsToGreen - 1 : null;
   const tests = mutation.matchesPin ? ` · the tests catch ${mutation.killed} of ${mutation.injected} planted bugs` : "";
   const title = shown.status === "pass" ? `${verified} of ${requirements.length} requirements verified${tests}.`
@@ -126,6 +147,14 @@ export default function Board({ data, runs }: { data: BoardData; runs: RunSummar
                 <ReplayButton runId={live.id} />
               </span>
             </div>
+            {timing && (
+              <p className="tl-measured">
+                <span className="tag-measured">measured</span>{" "}
+                <span className={timing.ok ? "mark-pass" : "mark-fail"}>{timing.ok ? "✓" : "✕"} {timing.text}</span>
+                {timing.refText && <span className="meta-text"> · {timing.refText}</span>}
+                <span className="meta-text"> · SKY130 OpenLane 2, not signoff · not part of the functional sign-off below</span>
+              </p>
+            )}
           </section>
 
           <h2 className="group-title">Can the tests be trusted?</h2>
@@ -227,8 +256,8 @@ export default function Board({ data, runs }: { data: BoardData; runs: RunSummar
           {data.signoff && (
             <section className="box" aria-labelledby="signoff">
               <div className="box-header">
-                <h2 id="signoff">Sign-off status</h2>
-                <span className="meta-text">{data.signoff.filter((l) => l.status === "met").length} of {data.signoff.length} met · from stored data · modelled on OpenTitan V2</span>
+                <h2 id="signoff">Functional sign-off (modelled on OpenTitan V2)</h2>
+                <span className="meta-text">{data.signoff.filter((l) => l.status === "met").length} of {data.signoff.length} met · from stored data · functional criteria only, timing reported separately</span>
               </div>
               <ul className="checks checks-noid">
                 {data.signoff.map((l) => {
