@@ -1,0 +1,180 @@
+{
+  "label": "measured (SymbiYosys)",
+  "rtl_sha256": "ea8fc5843c0c258e1875d3e46c9cd55ace7673e87b22c81a560475dc2602e722",
+  "props_sha256": "6a171ba61eb547bfad06906fff21eb2d85e0b87f79706564b99aedde51e0cf53",
+  "formal_sha256": "5668f8f6ea65cc9542ce04f8a5b19380d3f9b142b6aa845db66010df1b4868c7",
+  "depth": 20,
+  "tools": {
+    "yosys": "Yosys 0.52 (git sha1 fee39a3284c90249e1d9684cf6944ffbbcbb8f90)",
+    "sby": "SBY v0.52",
+    "z3": "Z3 version 4.13.3 - 64 bit",
+    "abc": "yosys-abc (bundled with yosys)"
+  },
+  "assumptions": [
+    "reset asserted in the first cycle",
+    "all other inputs free",
+    "default parameters WIDTH 8, DEPTH 16, AF_THRESH 14"
+  ],
+  "properties": [
+    {
+      "id": "P1_count_le_depth",
+      "text": "count <= DEPTH",
+      "bmc": {
+        "engine": "smtbmc z3",
+        "sby_status": "PASS",
+        "seconds": 1.12,
+        "log": "logs/P1_count_le_depth_bmc.log"
+      },
+      "prove": [
+        {
+          "engine": "smtbmc z3",
+          "sby_status": "PASS",
+          "seconds": 1.14,
+          "log": "logs/P1_count_le_depth_kind.log"
+        }
+      ],
+      "bounded": "holds for 20 cycles",
+      "result": "proved",
+      "result_text": "proved (unbounded, smtbmc z3)"
+    },
+    {
+      "id": "P2_full_iff_count",
+      "text": "full == (count == DEPTH)",
+      "bmc": {
+        "engine": "smtbmc z3",
+        "sby_status": "PASS",
+        "seconds": 0.24,
+        "log": "logs/P2_full_iff_count_bmc.log"
+      },
+      "prove": [
+        {
+          "engine": "smtbmc z3",
+          "sby_status": "PASS",
+          "seconds": 0.26,
+          "log": "logs/P2_full_iff_count_kind.log"
+        }
+      ],
+      "bounded": "holds for 20 cycles",
+      "result": "proved",
+      "result_text": "proved (unbounded, smtbmc z3)"
+    },
+    {
+      "id": "P3_empty_iff_count",
+      "text": "empty == (count == 0)",
+      "bmc": {
+        "engine": "smtbmc z3",
+        "sby_status": "PASS",
+        "seconds": 0.91,
+        "log": "logs/P3_empty_iff_count_bmc.log"
+      },
+      "prove": [
+        {
+          "engine": "smtbmc z3",
+          "sby_status": "PASS",
+          "seconds": 0.94,
+          "log": "logs/P3_empty_iff_count_kind.log"
+        }
+      ],
+      "bounded": "holds for 20 cycles",
+      "result": "proved",
+      "result_text": "proved (unbounded, smtbmc z3)"
+    },
+    {
+      "id": "P4_never_full_and_empty",
+      "text": "never full && empty",
+      "bmc": {
+        "engine": "smtbmc z3",
+        "sby_status": "PASS",
+        "seconds": 0.44,
+        "log": "logs/P4_never_full_and_empty_bmc.log"
+      },
+      "prove": [
+        {
+          "engine": "smtbmc z3",
+          "sby_status": "PASS",
+          "seconds": 0.47,
+          "log": "logs/P4_never_full_and_empty_kind.log"
+        }
+      ],
+      "bounded": "holds for 20 cycles",
+      "result": "proved",
+      "result_text": "proved (unbounded, smtbmc z3)"
+    },
+    {
+      "id": "P5_overflow_cause",
+      "text": "overflow only after a write while full with no read (and no reset) on the previous cycle",
+      "bmc": {
+        "engine": "smtbmc z3",
+        "sby_status": "PASS",
+        "seconds": 0.31,
+        "log": "logs/P5_overflow_cause_bmc.log"
+      },
+      "prove": [
+        {
+          "engine": "smtbmc z3",
+          "sby_status": "PASS",
+          "seconds": 0.34,
+          "log": "logs/P5_overflow_cause_kind.log"
+        }
+      ],
+      "bounded": "holds for 20 cycles",
+      "result": "proved",
+      "result_text": "proved (unbounded, smtbmc z3)"
+    },
+    {
+      "id": "P6_count_step",
+      "text": "count changes by at most 1 per cycle (outside reset)",
+      "bmc": {
+        "engine": "smtbmc z3",
+        "sby_status": "PASS",
+        "seconds": 2.21,
+        "log": "logs/P6_count_step_bmc.log"
+      },
+      "prove": [
+        {
+          "engine": "smtbmc z3",
+          "sby_status": "UNKNOWN",
+          "seconds": 3.47,
+          "log": "logs/P6_count_step_kind.log"
+        },
+        {
+          "engine": "abc pdr",
+          "sby_status": "PASS",
+          "seconds": 0.19,
+          "log": "logs/P6_count_step_pdr.log"
+        }
+      ],
+      "bounded": "holds for 20 cycles",
+      "result": "proved",
+      "result_text": "proved (unbounded, abc pdr)"
+    }
+  ],
+  "seconds": 12.05,
+  "bmc_holding": 6,
+  "proved": 6,
+  "failed": [],
+  "errors": [],
+  "summary": "Bounded formal: 6 of 6 properties hold for 20 cycles; 6 proved (unbounded)",
+  "sandbox": {
+    "backend": "docker",
+    "image": "davinci-sim:formal",
+    "limits": [
+      "--network",
+      "none",
+      "--cpus",
+      "1",
+      "--memory",
+      "512m",
+      "--pids-limit",
+      "256",
+      "--read-only",
+      "--tmpfs",
+      "/tmp:size=64m",
+      "--cap-drop",
+      "ALL",
+      "--security-opt",
+      "no-new-privileges"
+    ]
+  },
+  "attempt": 1
+}

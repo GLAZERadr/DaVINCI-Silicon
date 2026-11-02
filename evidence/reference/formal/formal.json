@@ -1,0 +1,294 @@
+{
+  "label": "measured (SymbiYosys)",
+  "rtl_sha256": "6034c49a727be76474d3ec227252b8038d6122e788fc3c3c374c3741dc56313d",
+  "props_sha256": "6a171ba61eb547bfad06906fff21eb2d85e0b87f79706564b99aedde51e0cf53",
+  "formal_sha256": "5668f8f6ea65cc9542ce04f8a5b19380d3f9b142b6aa845db66010df1b4868c7",
+  "depth": 20,
+  "tools": {
+    "yosys": "Yosys 0.52 (git sha1 fee39a3284c90249e1d9684cf6944ffbbcbb8f90)",
+    "sby": "SBY v0.52",
+    "z3": "Z3 version 4.13.3 - 64 bit",
+    "abc": "yosys-abc (bundled with yosys)"
+  },
+  "assumptions": [
+    "reset asserted in the first cycle",
+    "all other inputs free",
+    "default parameters WIDTH 8, DEPTH 16, AF_THRESH 14"
+  ],
+  "properties": [
+    {
+      "id": "P1_count_le_depth",
+      "text": "count <= DEPTH",
+      "bmc": {
+        "engine": "smtbmc z3",
+        "sby_status": "PASS",
+        "seconds": 1.04,
+        "log": "logs/P1_count_le_depth_bmc.log"
+      },
+      "prove": [
+        {
+          "engine": "smtbmc z3",
+          "sby_status": "PASS",
+          "seconds": 1.07,
+          "log": "logs/P1_count_le_depth_kind.log"
+        }
+      ],
+      "bounded": "holds for 20 cycles",
+      "result": "proved",
+      "result_text": "proved (unbounded, smtbmc z3)"
+    },
+    {
+      "id": "P2_full_iff_count",
+      "text": "full == (count == DEPTH)",
+      "bmc": {
+        "engine": "smtbmc z3",
+        "sby_status": "PASS",
+        "seconds": 0.32,
+        "log": "logs/P2_full_iff_count_bmc.log"
+      },
+      "prove": [
+        {
+          "engine": "smtbmc z3",
+          "sby_status": "PASS",
+          "seconds": 0.38,
+          "log": "logs/P2_full_iff_count_kind.log"
+        }
+      ],
+      "bounded": "holds for 20 cycles",
+      "result": "proved",
+      "result_text": "proved (unbounded, smtbmc z3)"
+    },
+    {
+      "id": "P3_empty_iff_count",
+      "text": "empty == (count == 0)",
+      "bmc": {
+        "engine": "smtbmc z3",
+        "sby_status": "PASS",
+        "seconds": 1.08,
+        "log": "logs/P3_empty_iff_count_bmc.log"
+      },
+      "prove": [
+        {
+          "engine": "smtbmc z3",
+          "sby_status": "PASS",
+          "seconds": 1.1,
+          "log": "logs/P3_empty_iff_count_kind.log"
+        }
+      ],
+      "bounded": "holds for 20 cycles",
+      "result": "proved",
+      "result_text": "proved (unbounded, smtbmc z3)"
+    },
+    {
+      "id": "P4_never_full_and_empty",
+      "text": "never full && empty",
+      "bmc": {
+        "engine": "smtbmc z3",
+        "sby_status": "PASS",
+        "seconds": 0.32,
+        "log": "logs/P4_never_full_and_empty_bmc.log"
+      },
+      "prove": [
+        {
+          "engine": "smtbmc z3",
+          "sby_status": "PASS",
+          "seconds": 0.36,
+          "log": "logs/P4_never_full_and_empty_kind.log"
+        }
+      ],
+      "bounded": "holds for 20 cycles",
+      "result": "proved",
+      "result_text": "proved (unbounded, smtbmc z3)"
+    },
+    {
+      "id": "P5_overflow_cause",
+      "text": "overflow only after a write while full with no read (and no reset) on the previous cycle",
+      "bmc": {
+        "engine": "smtbmc z3",
+        "sby_status": "PASS",
+        "seconds": 0.47,
+        "log": "logs/P5_overflow_cause_bmc.log"
+      },
+      "prove": [
+        {
+          "engine": "smtbmc z3",
+          "sby_status": "PASS",
+          "seconds": 0.51,
+          "log": "logs/P5_overflow_cause_kind.log"
+        }
+      ],
+      "bounded": "holds for 20 cycles",
+      "result": "proved",
+      "result_text": "proved (unbounded, smtbmc z3)"
+    },
+    {
+      "id": "P6_count_step",
+      "text": "count changes by at most 1 per cycle (outside reset)",
+      "bmc": {
+        "engine": "smtbmc z3",
+        "sby_status": "PASS",
+        "seconds": 1.9,
+        "log": "logs/P6_count_step_bmc.log"
+      },
+      "prove": [
+        {
+          "engine": "smtbmc z3",
+          "sby_status": "UNKNOWN",
+          "seconds": 4.31,
+          "log": "logs/P6_count_step_kind.log"
+        },
+        {
+          "engine": "abc pdr",
+          "sby_status": "PASS",
+          "seconds": 0.22,
+          "log": "logs/P6_count_step_pdr.log"
+        }
+      ],
+      "bounded": "holds for 20 cycles",
+      "result": "proved",
+      "result_text": "proved (unbounded, abc pdr)"
+    }
+  ],
+  "seconds": 13.09,
+  "bmc_holding": 6,
+  "proved": 6,
+  "failed": [],
+  "errors": [],
+  "summary": "Bounded formal: 6 of 6 properties hold for 20 cycles; 6 proved (unbounded)",
+  "sandbox": {
+    "backend": "docker",
+    "image": "davinci-sim:formal",
+    "limits": [
+      "--network",
+      "none",
+      "--cpus",
+      "1",
+      "--memory",
+      "512m",
+      "--pids-limit",
+      "256",
+      "--read-only",
+      "--tmpfs",
+      "/tmp:size=64m",
+      "--cap-drop",
+      "ALL",
+      "--security-opt",
+      "no-new-privileges"
+    ]
+  },
+  "mutants": {
+    "label": "measured (SymbiYosys), hand-written mutants from verify/mutants.json",
+    "mutants_sha256": "3e17913c1b2117f60c4e2a69a6b28775d8ab5e2e4116b16c8fa46957baf68da1",
+    "props_sha256": "6a171ba61eb547bfad06906fff21eb2d85e0b87f79706564b99aedde51e0cf53",
+    "caught": 3,
+    "injected": 8,
+    "caught_ids": [
+      "M2",
+      "M7",
+      "M8"
+    ],
+    "mutants": [
+      {
+        "id": "M1",
+        "req": "REQ-06",
+        "desc": "write blocked when full even with a same-cycle read",
+        "result": "not caught",
+        "failed_properties": [],
+        "counterexamples": {},
+        "cex_steps": {},
+        "errors": []
+      },
+      {
+        "id": "M2",
+        "req": "REQ-03",
+        "desc": "full asserts one entry early",
+        "result": "caught",
+        "failed_properties": [
+          "P2_full_iff_count"
+        ],
+        "counterexamples": {
+          "P2_full_iff_count": "mutants/M2/formal/cex/P2_full_iff_count_bmc.vcd"
+        },
+        "cex_steps": {
+          "P2_full_iff_count": 16
+        },
+        "errors": []
+      },
+      {
+        "id": "M3",
+        "req": "REQ-08",
+        "desc": "almost_full threshold off by one",
+        "result": "not caught",
+        "failed_properties": [],
+        "counterexamples": {},
+        "cex_steps": {},
+        "errors": []
+      },
+      {
+        "id": "M4",
+        "req": "REQ-02",
+        "desc": "read pointer wraps one slot early",
+        "result": "not caught",
+        "failed_properties": [],
+        "counterexamples": {},
+        "cex_steps": {},
+        "errors": []
+      },
+      {
+        "id": "M5",
+        "req": "REQ-05",
+        "desc": "underflow flag never raised",
+        "result": "not caught",
+        "failed_properties": [],
+        "counterexamples": {},
+        "cex_steps": {},
+        "errors": []
+      },
+      {
+        "id": "M6",
+        "req": "REQ-01",
+        "desc": "reset does not clear dout",
+        "result": "not caught",
+        "failed_properties": [],
+        "counterexamples": {},
+        "cex_steps": {},
+        "errors": []
+      },
+      {
+        "id": "M7",
+        "req": "REQ-07",
+        "desc": "read when empty treated as a real read",
+        "result": "caught",
+        "failed_properties": [
+          "P1_count_le_depth",
+          "P6_count_step"
+        ],
+        "counterexamples": {
+          "P1_count_le_depth": "mutants/M7/formal/cex/P1_count_le_depth_bmc.vcd",
+          "P6_count_step": "mutants/M7/formal/cex/P6_count_step_bmc.vcd"
+        },
+        "cex_steps": {
+          "P1_count_le_depth": 2,
+          "P6_count_step": 2
+        },
+        "errors": []
+      },
+      {
+        "id": "M8",
+        "req": "REQ-10",
+        "desc": "overflow pulses even when a read frees a slot",
+        "result": "caught",
+        "failed_properties": [
+          "P5_overflow_cause"
+        ],
+        "counterexamples": {
+          "P5_overflow_cause": "mutants/M8/formal/cex/P5_overflow_cause_bmc.vcd"
+        },
+        "cex_steps": {
+          "P5_overflow_cause": 18
+        },
+        "errors": []
+      }
+    ]
+  }
+}

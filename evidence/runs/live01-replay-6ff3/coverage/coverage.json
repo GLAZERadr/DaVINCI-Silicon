@@ -1,0 +1,37 @@
+{
+  "label": "measured",
+  "rtl_sha256": "9b33a512be0355d469804c46a5e7e2d4397d02a5f5afd36b6b9d1ed8659f7d39",
+  "suite_sha256": "4adc7da757edd72117db7a297aa7900d5744361903b2b9d1aea339da5dcc7db1",
+  "coverage_sha256": "11aa2cb731b85ec228206081c32d3a1557047e332a646e74abf69a7c07430fdc",
+  "simulator": "Icarus Verilog version 12.0 (stable) ()",
+  "scenarios": {
+    "reset": "rst high at the edge",
+    "full": "full high",
+    "empty": "empty high",
+    "almost_full": "almost_full high",
+    "write_when_full": "write, no read, while full (overflow case)",
+    "read_when_empty": "read while empty (underflow case)",
+    "rw_when_full": "read and write together while full",
+    "rw_when_empty": "read and write together while empty",
+    "overflow_pulse": "overflow output high",
+    "underflow_pulse": "underflow output high",
+    "write_pointer_wrap": "accepted writes since reset reach a multiple of DEPTH=16"
+  },
+  "cycles": 3253,
+  "counts": {
+    "reset": 29,
+    "full": 67,
+    "empty": 320,
+    "almost_full": 213,
+    "write_when_full": 22,
+    "read_when_empty": 141,
+    "rw_when_full": 10,
+    "rw_when_empty": 48,
+    "overflow_pulse": 22,
+    "underflow_pulse": 141,
+    "write_pointer_wrap": 96
+  },
+  "status": "ok",
+  "zero": [],
+  "seconds": 0.53
+}
