@@ -640,7 +640,7 @@ def approve_breakdown(bid: str, body: BreakdownApproval, authorization: str | No
     _breakdown(bid)
     _require_owner("breakdown", bid, ident)
     try:
-        rec = bd.approve(bid, body.approved_by)
+        rec = bd.approve(bid, body.approved_by, "human")  # an approval typed by a signed-in person
     except ValueError as e:
         raise HTTPException(409 if "already" in str(e) or "is " in str(e) else 422, str(e)) from None
     tk.record_owner("breakdown_approval", bid, ident, approved_by=body.approved_by)

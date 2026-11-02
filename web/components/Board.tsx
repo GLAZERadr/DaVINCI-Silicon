@@ -323,6 +323,13 @@ export default function Board({ data, runs }: { data: BoardData; runs: RunSummar
                 <h2 id="breakdown">Design breakdown before RTL</h2>
                 <span className="meta-text">proposed by the model, approved by {data.breakdown.approved.approved_by}, passed into the RTL prompt</span>
               </div>
+              {data.breakdown.reviews.length > 0 && (
+                <p className="box-pad meta-text">
+                  This run used the approval above. Reviewed afterwards by{" "}
+                  {data.breakdown.reviews.map((r) => `${r.approved_by} (${day(r.approved_at)})`).join(", ")}: same breakdown,
+                  approved by a person after the RTL was written, so it does not count as approval before RTL for this run.
+                </p>
+              )}
               <div className="box-pad">
                 <BreakdownView breakdown={data.breakdown.approved.breakdown} model={data.breakdown.model}
                   approvedBy={data.breakdown.approved.approved_by} check={data.breakdown.check} />

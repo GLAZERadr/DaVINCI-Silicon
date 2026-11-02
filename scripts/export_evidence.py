@@ -19,6 +19,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "verify"))
 import plan  # noqa: E402
+sys.path.insert(0, str(ROOT))
+from agent import breakdown as bd  # noqa: E402
 RUNS = ROOT / "runs"
 LIVE = {"meta", "baseten"}
 # S6/S10 physical estimates: only the small summaries (never netlists, GDS or flow logs).
@@ -54,6 +56,10 @@ def export_run(run_id: str, out: Path) -> dict:
     for name in ("run.json", "calls.jsonl", "events.jsonl", "breakdown.json", "breakdown_check.json"):
         if (src / name).exists():
             copy_text(src / name, dst / name)
+    reviews = bd.later_reviews(src)  # human approvals made after the run; the run's own copy stays as it was
+    if reviews:
+        dst.mkdir(parents=True, exist_ok=True)
+        (dst / "breakdown_reviews.json").write_text(json.dumps(reviews, indent=2) + "\n")
     r = json.loads((src / "run.json").read_text())
     if (src / "coverage" / "coverage.json").exists():
         copy_text(src / "coverage" / "coverage.json", dst / "coverage" / "coverage.json")

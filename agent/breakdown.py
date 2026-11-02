@@ -131,24 +131,87 @@ def load(bid: str) -> dict:
     if a.exists():
         rec["approved"] = json.loads(a.read_text())
         rec["approved_sha256"] = _sha(a.read_bytes())
+    rec["approvals"] = history(bid)
     return rec
 
 
-def approve(bid: str, approved_by: str) -> dict:
-    """Human approval of the proposed breakdown, as is."""
+def approval_kind(a: dict) -> str:
+    """human or integration_test. Approvals written before "kind" existed are
+    read from their wording (the integration tests said so in approved_by)."""
+    if a.get("kind"):
+        return a["kind"]
+    return "integration_test" if re.search(r"integration test|not a human review", a.get("approved_by", ""), re.I) \
+        else "human"
+
+
+def content_sha(breakdown: dict) -> str:
+    """Hash of the breakdown content itself, so a later approval can be matched to the one a run used."""
+    return _sha(json.dumps(breakdown, sort_keys=True).encode())
+
+
+def history(bid: str) -> list:
+    """Every approval of this breakdown, oldest first (approvals.jsonl, append-only).
+    A breakdown approved before the history existed has its approved.json as the only entry."""
+    d = BREAKDOWN_DIR / bid
+    f = d / "approvals.jsonl"
+    if f.exists():
+        return [json.loads(l) for l in f.read_text().splitlines() if l.strip()]
+    a = d / "approved.json"
+    if not a.exists():
+        return []
+    rec = json.loads(a.read_text())
+    return [{**rec, "kind": approval_kind(rec), "approved_sha256": _sha(a.read_bytes()),
+             "content_sha256": content_sha(rec["breakdown"])}]
+
+
+def approve(bid: str, approved_by: str, kind: str = "human") -> dict:
+    """Approval of the proposed breakdown, as is. A human may approve a breakdown
+    whose current approval was only an integration test; the earlier approval
+    stays in approvals.jsonl and runs that used it keep their own copy."""
+    if kind not in ("human", "integration_test"):
+        raise ValueError("kind must be human or integration_test")
     rec = load(bid)
-    if "approved" in rec:
-        raise ValueError(f"breakdown {bid} is already approved")
+    current = rec.get("approved")
+    if current and not (approval_kind(current) == "integration_test" and kind == "human"):
+        raise ValueError(f"breakdown {bid} is already approved by {current['approved_by']}")
     if rec["status"] != "awaiting_approval":
         raise ValueError(f"breakdown {bid} is {rec['status']}")
     if not approved_by.strip():
         raise ValueError("approved_by is required")
-    approved = {"breakdown_id": bid, "approved_by": approved_by.strip(),
+    if kind == "human" and re.search(r"\bclaude\b|integration test|not a human review", approved_by, re.I):
+        raise ValueError("a human approval needs the name of the person approving")
+    d = BREAKDOWN_DIR / bid
+    past = history(bid)
+    approved = {"breakdown_id": bid, "approved_by": approved_by.strip(), "kind": kind,
                 "approved_at": time.strftime("%Y-%m-%dT%H:%M:%S%z"),
                 "spec_sha256": rec["spec_sha256"], "requirements_sha256": rec["requirements_sha256"],
                 "breakdown": rec["breakdown"]}
-    (BREAKDOWN_DIR / bid / "approved.json").write_text(json.dumps(approved, indent=2))
+    if current:
+        approved["supersedes"] = {"approved_by": current["approved_by"], "approved_at": current["approved_at"],
+                                  "kind": approval_kind(current), "approved_sha256": rec["approved_sha256"]}
+    text = json.dumps(approved, indent=2)
+    entry = {**approved, "approved_sha256": _sha(text.encode()), "content_sha256": content_sha(rec["breakdown"])}
+    # Write the history first: the earlier approval must be on record before approved.json changes.
+    with (d / "approvals.jsonl").open("w") as f:
+        for row in past + [entry]:
+            f.write(json.dumps(row) + "\n")
+    (d / "approved.json").write_text(text)
     return load(bid)
+
+
+def later_reviews(run_dir: Path) -> list:
+    """Human approvals of the breakdown a run used, made after the run started with
+    the same breakdown content. They do not change what the run was given."""
+    run = json.loads((run_dir / "run.json").read_text())
+    used = run.get("breakdown") or {}
+    copy = run_dir / "breakdown.json"
+    if not used.get("breakdown_id") or not copy.exists() or not BID.match(used["breakdown_id"]):
+        return []
+    same = content_sha(json.loads(copy.read_text())["breakdown"])
+    return [{k: h.get(k) for k in ("approved_by", "approved_at", "kind", "approved_sha256", "content_sha256")}
+            for h in history(used["breakdown_id"])
+            if approval_kind(h) == "human" and h.get("approved_sha256") != used.get("approved_sha256")
+            and h.get("content_sha256") == same and h.get("approved_at", "") > run.get("started", "")]
 
 
 def prompt_section(approved: dict) -> str:
@@ -251,7 +314,9 @@ def main(argv=None):
     ap.add_argument("--provider", default="meta", choices=llm.PROVIDERS)
     ap.add_argument("--bid", help="use this breakdown id (API)")
     ap.add_argument("--approve", metavar="BID")
-    ap.add_argument("--by", default="")
+    ap.add_argument("--by", default="", help="name of the person approving")
+    ap.add_argument("--integration-test", action="store_true",
+                    help="record the approval as an integration test, not a human review")
     ap.add_argument("--check", type=Path, metavar="RUN_DIR")
     a = ap.parse_args(argv)
     if a.create:
@@ -260,8 +325,10 @@ def main(argv=None):
         print(f"{rec['breakdown_id']}: {rec['status']} · {len(b.get('elements', []))} elements · ${rec.get('cost_usd') or 0:.4f}")
         return 0 if rec["status"] == "awaiting_approval" else 1
     if a.approve:
-        rec = approve(a.approve, a.by)
-        print(f"{a.approve}: approved by {rec['approved']['approved_by']}")
+        rec = approve(a.approve, a.by, "integration_test" if a.integration_test else "human")
+        ap_ = rec["approved"]
+        print(f"{a.approve}: approved by {ap_['approved_by']} ({ap_['kind']})"
+              + (f"; replaces {ap_['supersedes']['approved_by']} ({ap_['supersedes']['kind']})" if ap_.get("supersedes") else ""))
         return 0
     if a.check:
         out = check_run(a.check)

@@ -49,7 +49,8 @@ export type Board = {
   scenarios: Json | null; // scenario counts from the linked plan (already checked against pins there)
   signoff: Json[] | null; // sign-off lines from the linked plan (met / not met / not measured)
   triage: Json | null; // test credibility (verify/triage.py)
-  breakdown: { approved: Json; check: Json | null; model?: string } | null; // S1, when the run used one
+  // S1, when the run used one. reviews: human approvals of the same breakdown made after the run.
+  breakdown: { approved: Json; check: Json | null; model?: string; reviews: Json[] } | null;
   gaps: Json | null; // coverage-gap check (verify/gaps.py), only when measured on the pinned suite
   area: Area | null; // S2: Yosys generic cell counts (verify/area.py), when stored
   formal: { run: Json | null; reference: Json | null }; // S5/S9 formal checks (verify/formal.py), when stored
@@ -112,7 +113,8 @@ export function board(id: string): Board {
       const approved = read(`runs/${id}/breakdown.json`);
       if (!approved) return null;
       const check = read(`runs/${entry.replay?.run_id ?? id}/breakdown_check.json`) ?? read(`runs/${id}/breakdown_check.json`);
-      return { approved, check, model: read(`runs/${id}/run.json`)?.attempts?.find((a: Json) => a.model)?.model };
+      return { approved, check, model: read(`runs/${id}/run.json`)?.attempts?.find((a: Json) => a.model)?.model,
+               reviews: (read(`runs/${id}/breakdown_reviews.json`) as Json[] | null) ?? [] };
     })(),
     formal: {
       run: read(`runs/${id}/formal/formal.json`) ?? (entry.replay ? read(`runs/${entry.replay.run_id}/formal/formal.json`) : null),
