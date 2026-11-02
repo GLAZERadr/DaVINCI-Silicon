@@ -11,7 +11,7 @@ const ICON: Record<string, React.ReactNode> = {
 };
 
 const NAV = [
-  { href: "/", label: "Evidence", key: "evidence" },
+  { href: "/evidence/", label: "Evidence", key: "evidence" },
   { href: "/console/", label: "Run Console", key: "console" },
   { href: "/new/", label: "New run", key: "new" },
   { href: "/spec/", label: "Spec intake", key: "spec" },
@@ -36,7 +36,7 @@ export default function SiteHeader({ active, crumbs = [], children }:
         <Link href="/" className="wordmark" aria-label="DaVINCI home"><Logo /></Link>
         <nav className="crumbs" aria-label="Breadcrumb">
           <span className="crumb-sep" aria-hidden="true">/</span>
-          <Link href="/">sync_fifo</Link>
+          <Link href="/evidence/">sync_fifo</Link>
           {crumbs.map((c) => (
             <span key={c.label} className="crumb">
               <span className="crumb-sep" aria-hidden="true">/</span>

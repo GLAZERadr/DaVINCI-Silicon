@@ -29,9 +29,9 @@ function nextPage(): string {
   try {
     const n = sessionStorage.getItem(NEXT_KEY);
     sessionStorage.removeItem(NEXT_KEY);
-    return n && n.startsWith("/") && !n.startsWith("//") ? n : "/";
+    return n && n.startsWith("/") && !n.startsWith("//") ? n : "/evidence/";
   } catch {
-    return "/";
+    return "/evidence/";
   }
 }
 
@@ -86,52 +86,67 @@ export default function AuthForm({ mode }: { mode: Mode }) {
   const reg = mode === "register";
   const off = (p: "google" | "github") => !prov || !prov[p];
   return (
-    <main className="auth">
-      <section className="auth-card card" aria-labelledby="auth-title">
-        <div className="auth-logo"><Logo /></div>
-        <h1 id="auth-title" className="auth-title">{reg ? "Create your account" : "Sign in to DaVINCI Silicon"}</h1>
-        <p className="auth-sub">{reg
-          ? "An account lets you keep your runs together. Live model runs are switched on per account by the DaVINCI team."
-          : "Evidence, Run Console and $0 replays stay open without an account."}</p>
-
-        <div className="auth-sso">
-          <button type="button" className="btn btn-quiet auth-sso-btn" disabled={off("google")} onClick={() => sso("google")}>
-            {GOOGLE}Continue with Google
-          </button>
-          <button type="button" className="btn btn-quiet auth-sso-btn" disabled={off("github")} onClick={() => sso("github")}>
-            {GITHUB}Continue with GitHub
-          </button>
-          {prov && (!prov.google || !prov.github) && (
-            <p className="meta-text auth-note">○ {[!prov.google && "Google", !prov.github && "GitHub"].filter(Boolean).join(" and ")} sign-in is not configured on this server yet.</p>
-          )}
+    <div className="auth-split">
+      <aside className="auth-aside">
+        <Link href="/" className="wordmark auth-home" aria-label="DaVINCI Silicon home"><Logo /></Link>
+        <div className="auth-pitch">
+          <p className="lp-eyebrow">For RTL and verification engineers</p>
+          <h2 className="auth-pitch-title">Spec in, RTL out. <span className="tone-2">Proven against tests the model never touches.</span></h2>
+          <ul className="auth-points">
+            <li><span className="auth-point-icon" aria-hidden="true">✓</span>Frozen tests and a golden model decide every verdict, not the AI.</li>
+            <li><span className="auth-point-icon" aria-hidden="true">✕</span>Planted bugs prove the tests catch failures before any RTL is trusted.</li>
+            <li><span className="auth-point-icon" aria-hidden="true">↻</span>Every attempt, failure and cent is recorded, and any run replays for $0.</li>
+          </ul>
         </div>
+        <p className="meta-text auth-legal">© 2026 DaVINCI Silicon · <Link href="/evidence/">Evidence</Link> · <a href="https://github.com/GLAZERadr/DaVINCI-Silicon">GitHub</a></p>
+      </aside>
 
-        <div className="auth-or" role="separator"><span>or with email</span></div>
+      <main className="auth-main">
+        <section className="auth-card card" aria-labelledby="auth-title">
+          <h1 id="auth-title" className="auth-title">{reg ? "Create your account" : "Sign in"}</h1>
+          <p className="auth-sub">{reg
+            ? "Free to read and replay. Live model runs are switched on per account by the DaVINCI team."
+            : "Welcome back. Recorded runs stay open without an account."}</p>
 
-        <form className="auth-form" onSubmit={submit}>
-          {reg && (
-            <label><span className="label">Name</span>
-              <input value={form.name} onChange={set("name")} required maxLength={80} autoComplete="name" /></label>
-          )}
-          <label><span className="label">Email</span>
-            <input type="email" value={form.email} onChange={set("email")} required maxLength={254} autoComplete="email" /></label>
-          <label><span className="label">Password</span>
-            <input type="password" value={form.password} onChange={set("password")} required minLength={reg ? 10 : 1} maxLength={128}
-              autoComplete={reg ? "new-password" : "current-password"} aria-describedby={reg ? "pw-hint" : undefined} />
-            {reg && <span id="pw-hint" className="meta-text">At least 10 characters.</span>}
-          </label>
-          {error && <p className="mark-fail" role="alert">✕ {error}</p>}
-          {down && <p className="mark-neutral" role="status">○ The DaVINCI API is not reachable from this page, so signing in is not possible right now. Recorded runs stay readable.</p>}
-          <button type="submit" className="btn auth-submit" disabled={busy || down}>
-            {busy ? (reg ? "Creating account…" : "Signing in…") : reg ? "Create account" : "Sign in"}
-          </button>
-        </form>
+          <div className="auth-sso">
+            <button type="button" className="btn btn-quiet auth-sso-btn" disabled={off("google")} onClick={() => sso("google")}>
+              {GOOGLE}Continue with Google
+            </button>
+            <button type="button" className="btn btn-quiet auth-sso-btn" disabled={off("github")} onClick={() => sso("github")}>
+              {GITHUB}Continue with GitHub
+            </button>
+            {prov && (!prov.google || !prov.github) && (
+              <p className="meta-text auth-note">○ {[!prov.google && "Google", !prov.github && "GitHub"].filter(Boolean).join(" and ")} sign-in is not configured on this server yet.</p>
+            )}
+          </div>
 
-        <p className="auth-switch">{reg
-          ? <>Already have an account? <Link href="/login/">Sign in</Link></>
-          : <>New to DaVINCI? <Link href="/register/">Create an account</Link></>}</p>
-      </section>
-      <p className="meta-text auth-foot">Need live model runs? <Link href="/access/">Request access</Link>; it is granted by hand.</p>
-    </main>
+          <div className="auth-or" role="separator"><span>or with email</span></div>
+
+          <form className="auth-form" onSubmit={submit}>
+            {reg && (
+              <label><span className="label">Name</span>
+                <input value={form.name} onChange={set("name")} required maxLength={80} autoComplete="name" placeholder="Ada Lovelace" /></label>
+            )}
+            <label><span className="label">Email</span>
+              <input type="email" value={form.email} onChange={set("email")} required maxLength={254} autoComplete="email" placeholder="you@company.com" /></label>
+            <label><span className="label">Password</span>
+              <input type="password" value={form.password} onChange={set("password")} required minLength={reg ? 10 : 1} maxLength={128}
+                autoComplete={reg ? "new-password" : "current-password"} aria-describedby={reg ? "pw-hint" : undefined} />
+              {reg && <span id="pw-hint" className="meta-text">At least 10 characters.</span>}
+            </label>
+            {error && <p className="mark-fail" role="alert">✕ {error}</p>}
+            {down && <p className="mark-neutral" role="status">○ The DaVINCI API is not reachable from this page, so signing in is not possible right now. Recorded runs stay readable.</p>}
+            <button type="submit" className="btn auth-submit" disabled={busy || down}>
+              {busy ? (reg ? "Creating account…" : "Signing in…") : reg ? "Create account" : "Sign in"}
+            </button>
+          </form>
+
+          <p className="auth-switch">{reg
+            ? <>Already have an account? <Link href="/login/">Sign in</Link></>
+            : <>New to DaVINCI? <Link href="/register/">Create an account</Link></>}</p>
+          <p className="meta-text auth-fine">Need live model runs? <Link href="/access/">Request access</Link>; it is granted by hand.</p>
+        </section>
+      </main>
+    </div>
   );
 }

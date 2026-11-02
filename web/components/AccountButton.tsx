@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { ApiError, api, sessionToken, setSessionToken } from "@/lib/api";
 
 // Header account control: Sign in / Sign up, or the signed-in name with Sign out.
-export default function AccountButton() {
+export default function AccountButton({ landing = false }: { landing?: boolean }) {
   const [me, setMe] = useState<{ name: string; live: boolean } | null | undefined>(undefined);
 
   useEffect(() => {
@@ -32,10 +32,11 @@ export default function AccountButton() {
   if (me === undefined) return null; // storage is read after mount
   if (!me) return (
     <>
-      <Link href="/login/" className="btn btn-quiet btn-sm">Sign in</Link>
-      <Link href="/register/" className="btn btn-sm">Sign up</Link>
+      <Link href="/login/" className={landing ? "lp-nav-link" : "btn btn-quiet btn-sm"}>Sign in</Link>
+      <Link href="/register/" className="btn btn-sm">{landing ? "Get started" : "Sign up"}</Link>
     </>
   );
+  if (landing) return <Link href="/evidence/" className="btn btn-sm">Open DaVINCI</Link>;
   return (
     <>
       <span className="account-name" title={me.live ? "live model runs enabled" : "read-only: live runs not granted yet"}>
