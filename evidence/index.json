@@ -60,9 +60,9 @@
         "from_extraction": false
       },
       "replay": {
-        "run_id": "live02-m1-replay-c7ba",
+        "run_id": "live02-m1-replay-166d",
         "status": "pass",
-        "started": "2026-10-31T23:20:10+0700",
+        "started": "2026-11-02T14:18:22+0700",
         "providers": {
           "generate": "replay",
           "repair": "replay"
@@ -71,7 +71,7 @@
         "replayed_from": "live02-m1",
         "attempts_total": 2,
         "attempts_to_green": 2,
-        "time_to_green_s": 4.74,
+        "time_to_green_s": 2.57,
         "cost_usd": 0.0,
         "suite_sha256": "4adc7da757edd72117db7a297aa7900d5744361903b2b9d1aea339da5dcc7db1",
         "sweep_sha256": "b73c1b823e400e72eaf76f91d72a90aa370f56711604f309f1037ed5710e16e2",

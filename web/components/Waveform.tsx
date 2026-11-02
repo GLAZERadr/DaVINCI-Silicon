@@ -1,6 +1,6 @@
 "use client";
 
-import type { Trace, TraceTest } from "@/lib/run";
+import { type Trace, type TraceTest, simShort } from "@/lib/run";
 
 const CELL = 30; // px per clock cycle
 const ROW = 26;
@@ -155,7 +155,7 @@ export default function Waveform({ trace, test, cycle, onTest, onCycle }:
           </span>
         </div>
       )}
-      <p className="wf-note meta-text">Each column is one rising clock edge: inputs as the DUT sampled them, outputs just after the edge (what the frozen test compares). Measured from the simulator waveform of the frozen tests; the expected lane is the golden model. Traced with suite <span className="mono">{trace.suite_sha256.slice(0, 10)}</span>, {trace.simulator}.</p>
+      <p className="wf-note meta-text">Each column is one rising clock edge: inputs as the DUT sampled them, outputs just after the edge (what the frozen test compares). Measured from the simulator waveform of the frozen tests; the expected lane is the golden model. The waveform is a fresh re-simulation of this RTL in the sandbox ({simShort(trace.simulator)}, suite <span className="mono">{trace.suite_sha256.slice(0, 10)}</span>), not the run&apos;s original log.</p>
     </div>
   );
 }

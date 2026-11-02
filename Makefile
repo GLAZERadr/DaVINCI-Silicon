@@ -2,7 +2,7 @@ RTL ?= rtl/sync_fifo.v
 RUN ?= manual
 IMAGE = davinci-sim:latest
 
-.PHONY: sim mutate weak-demo image sandbox api evidence board plan plan-ref gaps coverage coverage-ref trace trace-ref
+.PHONY: sim mutate weak-demo image sandbox api evidence board plan plan-ref gaps coverage coverage-ref trace trace-ref triage
 
 # Local run (needs iverilog + cocotb installed)
 sim:
@@ -42,6 +42,12 @@ coverage:
 
 coverage-ref:
 	python3 verify/coverage.py --reference
+
+# Test credibility for failure triage ("design or test?"): reference RTL verdict,
+# planted bugs each test kills, situations it drives. Run after plan-ref, mutate,
+# gaps and trace-ref.
+triage:
+	python3 verify/triage.py
 
 # Per-cycle traces (waveform + FIFO views): every simulated attempt of a run, in Docker.
 trace:

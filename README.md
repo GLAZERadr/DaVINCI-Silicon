@@ -1,8 +1,13 @@
 # DaVINCI Silicon
 
-A verification plan with evidence for AI-written RTL. Every requirement is traced to frozen tests, mutation testing shows those tests catch planted bugs before any RTL is judged, and every AI attempt is simulated and counted. The model writes Verilog; it never sees, writes or grades the tests.
+**DaVINCI Silicon turns a chip spec into a verification plan and proof your lead can sign off, then lets AI write and fix the RTL against it.**
 
-Each run produces a verification plan (requirement → tests → mutants killed → measured result at attempt 1 and final), the plan's coverage gaps, and a full record of every attempt that replays at $0.
+What it shows, in this order:
+
+1. **Can the tests be trusted?** Mutation testing against planted bugs, a weak-test check, scenario coverage and the plan's gaps.
+2. **A verification plan a lead can sign off.** Requirement → frozen tests → planted bugs caught → measured result, with sign-off criteria met / not met / not measured (`.md`, `.csv`, OpenTitan-style `testplan.hjson`).
+3. **Where and why it failed.** Every attempt, its waveform and FIFO replay at the failing cycle, and a measured "is it the design or the test?" line for each failing test.
+4. **AI writes and repairs the RTL.** Muse Spark writes Verilog; it never sees, writes or grades the tests, and every attempt is simulated and counted.
 
 Loop: spec → requirements (human-approved) → frozen tests → mutation proof → AI-generated RTL → real simulation → bounded repair → evidence report → replay.
 
@@ -70,17 +75,29 @@ Each run writes `runs/<id>/run.json` (every attempt, cost, status) plus, per att
 
 Run statuses: `pass` (G1–G3), `escaped` (passed the visible suite, failed the sweep), `needs_engineer` (repairs exhausted; failing tests handed over), `no_progress` (the same design twice), `aborted`, `not_verifiable` (spec or requirements the suite cannot judge; no model call). Attempt statuses add `rejected` and `truncated` (reply cut off at the token limit).
 
-## Limitations
+## Limitations and roadmap
 
-- **Design breakdown is done by a person.** The requirements and the port/parameter interface (`spec/requirements.json`, `spec/interface.json`) are written and approved by a person, or extracted from a spec page and then approved. DaVINCI does not derive a microarchitecture from a spec.
-- **Coverage means mutation-based plan coverage.** It shows which of 8 hand-written bugs the tests catch and where the plan is thin (`make gaps`); it is not line, toggle or functional coverage. REQ-04 and REQ-09 have no mutant yet.
-- **The default spec contains the reference equations.** `spec/fifo_spec.md` states `do_write = wr_en && (!full || rd_en)` and the flag equations, so first-pass success on it measures spec-conformant transcription, not design from an ambiguous spec. A prose-only spec arm is planned.
-- **One block, one simulator.** A sync FIFO on Icarus Verilog; not sign-off evidence for a commercial flow.
-- **The mutation score describes the test suite**, measured against the hand-written reference RTL with 8 hand-written mutants. It is not a property of any generated RTL.
-- **Same author for both oracles.** The frozen suite and the sweep share `tests/golden_model.py`; a misreading of the spec shared by the model and the reference would pass both.
-- **Replay re-simulates recorded model output.** "Re-simulation reproducibility" checks the pipeline and simulator, not that the model would answer the same way again.
-- **No synthesis, timing, area or power results.** None are claimed.
+**Today.** DaVINCI proves the tests are strong (mutation analysis, weak-test check, scenario coverage) for one block, a sync FIFO, on open-source tools (Icarus Verilog, cocotb), and measures every AI attempt against them.
+
+**Not yet:**
+
+- **Proving a testbench or reference model is correct.** DaVINCI shows the tests are strong (they catch planted bugs) and agree with a hand-written reference RTL; it does not prove the reference model itself is right. Both oracles share `tests/golden_model.py`, so a misreading of the spec shared by the reference and the model would pass both.
+- **Bit-accurate reference models for fixed-point datapaths.**
+- **Code coverage.** Icarus Verilog has none; "coverage" here is mutation-based plan coverage plus scenario counts, not line, toggle or functional coverage. REQ-04 and REQ-09 have no planted bug yet.
+- **Formal proof.**
+- **Timing, synthesis, area and power.** None are claimed.
+- **Design breakdown.** The requirements and the port/parameter interface (`spec/requirements.json`, `spec/interface.json`) are written and approved by a person, or extracted from a spec page and then approved; DaVINCI does not derive a microarchitecture from a spec.
+
+Also worth knowing:
+
+- **The default spec contains the reference equations** (`spec/fifo_spec.md` states `do_write = wr_en && (!full || rd_en)`), so first-pass success on it measures spec-conformant transcription, not design from an ambiguous spec. A prose-only spec arm is planned.
+- **The mutation score describes the test suite**, measured against the reference RTL with 8 hand-written mutants; it is not a property of any generated RTL.
+- **Replay re-simulates recorded model output.** It checks the pipeline and simulator are deterministic, not that the model would answer the same way again.
 - **Small N.** Live results so far are individual runs, not rates.
+
+**Next (from engineer interviews):** design-vs-testbench triage beyond reference validation; bit-accurate model generation; spec → microarchitecture breakdown.
+
+**Not in this hackathon:** foundry or commercial signoff, full-chip integration, analog/mixed-signal, open self-serve signup with billing.
 
 ## Rules the AI must follow
 

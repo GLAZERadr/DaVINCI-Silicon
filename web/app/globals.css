@@ -485,3 +485,16 @@ tr.row-muted td { color: var(--muted); }
 .model-avatar { border-radius: 50%; flex: none; display: block; object-fit: cover; background: #F3EEE6; box-shadow: 0 0 0 1px var(--border-strong); }
 .model-avatar-ai { display: grid; place-items: center; background: var(--surface-3); color: var(--secondary); font-size: 9px; font-weight: 800; letter-spacing: 0.02em; }
 .ai-head { display: flex; align-items: center; gap: 8px; margin: 0 0 6px !important; font-size: 13px; }
+
+/* ---- scenario chips ---- */
+.chips { list-style: none; margin: 0; padding: 12px 16px; display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 8px; }
+.chips li { display: grid; grid-template-columns: 16px minmax(0, 1fr) auto; gap: 8px; align-items: baseline; padding: 8px 10px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 13px; color: var(--secondary); }
+.chips li strong { color: var(--text); font-variant-numeric: tabular-nums; }
+.chips li.zero { border-color: var(--fail-text); background: var(--fail-soft); }
+
+/* ---- failure triage (measured) ---- */
+.triage { margin: 6px 0 0; font-size: 12.5px; line-height: 1.55; padding: 8px 10px; border: 1px solid var(--border); border-radius: 6px; background: var(--surface); }
+.triage-ok { border-color: var(--pass-text); }
+.triage-ev { color: var(--secondary); }
+.tl-triage { margin-top: 8px; font-size: 12px; }
+.tl-triage > .mono { font-size: 12px; color: var(--secondary); }

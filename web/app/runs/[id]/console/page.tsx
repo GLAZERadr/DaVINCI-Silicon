@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import Console from "@/components/Console";
 import SiteHeader from "@/components/SiteHeader";
-import { consoleRuns, requirementsFor, runList } from "@/lib/evidence";
+import { consoleRuns, requirementsFor, runList, triage } from "@/lib/evidence";
 
 export function generateStaticParams() {
   return runList().map((r) => ({ id: r.id }));
@@ -25,7 +25,7 @@ export default async function RunConsole({ params }: { params: Promise<{ id: str
         ))}
         <Link className="subbar-end" href={`/runs/${id}/`}>Evidence for {id} →</Link>
       </nav>
-      <Console runs={runs} requirements={requirementsFor(runs[0].run)} />
+      <Console runs={runs} requirements={requirementsFor(runs[0].run)} triage={triage()} />
     </>
   );
 }

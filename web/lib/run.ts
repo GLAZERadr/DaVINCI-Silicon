@@ -117,6 +117,10 @@ export function toRun(r: Json, files: AttemptFiles): Run {
 
 export type Requirement = { id: string; text: string; tests: string[] };
 
+// "Icarus Verilog version 13.0 (stable) (v13_0)" → "Icarus 13.0".
+export const simShort = (v?: string | null) =>
+  v ? v.replace(/^Icarus Verilog version ([\d.]+).*$/, "Icarus $1") : "n/a";
+
 // Status words and symbols. Colour is never the only signal.
 export const STATUS: Record<string, { word: string; mark: string; tone: "pass" | "fail" | "neutral" }> = {
   pass: { word: "Pass", mark: "✓", tone: "pass" },

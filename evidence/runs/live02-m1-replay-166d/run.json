@@ -1,6 +1,6 @@
 {
-  "run_id": "live02-m1-replay-c7ba",
-  "started": "2026-10-31T23:20:10+0700",
+  "run_id": "live02-m1-replay-166d",
+  "started": "2026-11-02T14:18:22+0700",
   "providers": {
     "generate": "replay",
     "repair": "replay"
@@ -11,7 +11,7 @@
   "sandbox": {
     "backend": "docker",
     "image": "davinci-sim:latest",
-    "image_id": "sha256:7d2194623d95f4288bace35c697dd33b188f75765745d5761c5f97d6ea2cd8f2"
+    "image_id": "sha256:eb80719d8ebb80ef2a87f718a5b3a14be76e2bc2a9f3ab0c4eca8e2a18df5e21"
   },
   "suite_sha256": "4adc7da757edd72117db7a297aa7900d5744361903b2b9d1aea339da5dcc7db1",
   "spec_sha256": "6e04e4641dc412f506396b1271441ba94d847eac5ec86a121431dbc465444126",
@@ -50,15 +50,15 @@
           }
         ],
         "simulator": "Icarus Verilog version 12.0 (stable) ()",
-        "sim_seconds": 0.25,
+        "sim_seconds": 0.23,
         "suite_sha256": "4adc7da757edd72117db7a297aa7900d5744361903b2b9d1aea339da5dcc7db1",
         "sandbox": "docker"
       },
-      "finished_s": 2.96
+      "finished_s": 0.92
     },
     {
       "n": 2,
-      "started_s": 2.96,
+      "started_s": 0.92,
       "source": "model",
       "provider": "replay",
       "model": "replay:muse-spark-1.3",
@@ -88,14 +88,14 @@
         "total": 10,
         "failed": [],
         "simulator": "Icarus Verilog version 12.0 (stable) ()",
-        "sim_seconds": 0.29,
+        "sim_seconds": 0.28,
         "suite_sha256": "4adc7da757edd72117db7a297aa7900d5744361903b2b9d1aea339da5dcc7db1",
         "sandbox": "docker"
       },
       "sweep": {
         "label": "measured",
         "status": "pass",
-        "seconds": 0.75,
+        "seconds": 0.68,
         "sets": [
           {
             "params": {
@@ -132,19 +132,19 @@
           }
         ]
       },
-      "finished_s": 4.74
+      "finished_s": 2.57
     }
   ],
   "spec_file": "spec/fifo_spec.md",
   "requirements_file": "spec/requirements.json",
   "sweep_sha256": "b73c1b823e400e72eaf76f91d72a90aa370f56711604f309f1037ed5710e16e2",
-  "finished": "2026-10-31T23:20:14+0700",
+  "finished": "2026-11-02T14:18:24+0700",
   "status": "pass",
   "attempts_total": 2,
   "attempts_to_green": 2,
   "first_pass": false,
-  "time_to_green_s": 4.74,
-  "wall_seconds": 4.74,
+  "time_to_green_s": 2.57,
+  "wall_seconds": 2.57,
   "cost_usd": 0.0,
   "tokens": {
     "in": 0,

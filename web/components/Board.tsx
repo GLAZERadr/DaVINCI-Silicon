@@ -1,8 +1,9 @@
 import Link from "next/link";
 import ModelAvatar from "./ModelAvatar";
+import TestTriage from "./TestTriage";
 import SiteHeader from "./SiteHeader";
 import ReplayButton from "./ReplayButton";
-import { type Attempt, type Board as BoardData, type RunSummary, status } from "@/lib/evidence";
+import { type Attempt, type Board as BoardData, type RunSummary, simShort, status } from "@/lib/evidence";
 
 const RANDOM = "test_random_regression";
 
@@ -66,13 +67,15 @@ export default function Board({ data, runs }: { data: BoardData; runs: RunSummar
 
   const seeded = live.seedBug ? live.attempts.find((a) => a.source === "seeded") : undefined;
   const repairs = live.attemptsToGreen ? live.attemptsToGreen - 1 : null;
-  const title = shown.status === "pass" ? `${verified} of ${requirements.length} requirements verified.`
+  const tests = mutation.matchesPin ? ` · the tests catch ${mutation.killed} of ${mutation.injected} planted bugs` : "";
+  const title = shown.status === "pass" ? `${verified} of ${requirements.length} requirements verified${tests}.`
     : shown.status === "escaped" ? "Visible tests passed; the parameter sweep failed."
     : `${runStatus.word}.`;
+  const stats = `${live.timeToGreenS != null ? ` · ${live.timeToGreenS.toFixed(1)} s` : ""} · $${live.costUsd.toFixed(3)}`;
   const subtitle = live.seedBug
-    ? `Seeded bug ${live.seedBug} caught by the frozen tests, repaired by Muse Spark${repairs != null ? ` in ${repairs} repair${repairs === 1 ? "" : "s"}` : ""}.`
-    : live.attempts.length === 1 && shown.status === "pass" ? "Muse Spark wrote the RTL; it passed on the first attempt."
-    : "Muse Spark wrote the RTL; the frozen tests decided.";
+    ? `Seeded bug ${live.seedBug} caught by the frozen tests and repaired by Muse Spark${repairs != null ? ` in ${repairs} attempt${repairs === 1 ? "" : "s"}` : ""}${stats}.`
+    : live.attempts.length === 1 && shown.status === "pass" ? `Muse Spark wrote the RTL; it passed on the first attempt${stats}.`
+    : `Muse Spark wrote the RTL; the frozen tests decided${stats}.`;
   const checks = [
     { id: "G1", name: "Static checks + Verilog-2001 compile", desc: "no $, no directives, no initial/# delays, ports match; iverilog -g2001 -Wall", ok: last?.compileOk ?? null },
     { id: "G2", name: "Frozen suite", desc: lastSim ? `${lastSim.passed}/${lastSim.total} tests, golden model compared every cycle` : "not run", ok: lastSim ? lastSim.passed === lastSim.total : null },
@@ -95,119 +98,11 @@ export default function Board({ data, runs }: { data: BoardData; runs: RunSummar
             </h1>
             <div className="title-meta">
               <span className={`state ${runStatus.tone}`}>{runStatus.mark} {runStatus.word} · measured</span>
-              <span className="meta-text">{live.attemptsTotal} attempt{live.attemptsTotal === 1 ? "" : "s"} · {live.timeToGreenS != null ? `${live.timeToGreenS.toFixed(1)} s to green` : "not green"} · ${live.costUsd.toFixed(3)} model cost</span>
+              {data.planId && <a className="btn btn-quiet btn-sm" href={`/plans/${data.planId}.md`} download>Download verification plan</a>}
               <span className="title-actions">
                 <Link className="btn btn-quiet btn-sm" href={`/runs/${live.id}/console/`}>Open in Run Console</Link>
                 <ReplayButton runId={live.id} />
               </span>
-            </div>
-          </section>
-
-          <section className="box" aria-labelledby="timeline">
-            <div className="box-header">
-              <h2 id="timeline">Run timeline</h2>
-              <span className="meta-text">every attempt counted · AI text kept apart from measured results</span>
-            </div>
-            <ol className="timeline-pr">
-              {live.attempts.map((a) => {
-                const ok = a.total ? a.passed === a.total : null;
-                const failed = a.tests.filter((t) => !t.passed).map((t) => t.name);
-                return (
-                  <li key={a.n}>
-                    {a.diagnosis && (
-                      <div className="tl-comment">
-                        <div className="tl-comment-head">
-                          <ModelAvatar model={a.model} size={26} />
-                          <strong>{a.model ?? "model"}</strong>
-                          <span className="tag-ai">AI interpretation · not verified</span>
-                          <span className="meta-text">diagnosis sent with attempt {a.n}</span>
-                        </div>
-                        <p><Prose text={a.diagnosis} /></p>
-                      </div>
-                    )}
-                    <div className="tl-event">
-                      <span className={`tl-dot ${ok === null ? "neutral" : ok ? "pass" : "fail"}`} aria-hidden="true">{ok === null ? "○" : ok ? "✓" : "✕"}</span>
-                      <div>
-                        <p className="tl-title">
-                          <strong>Attempt {a.n}</strong>{" "}
-                          <span className="meta-text">{a.source === "seeded" ? `reference RTL with seeded bug ${a.seeded?.mutant} (${a.seeded?.desc})` : `RTL written by ${a.model ?? "the model"}`}</span>
-                        </p>
-                        <p className="tl-measured">
-                          <span className="tag-measured">measured</span>{" "}
-                          <span className={ok === null ? "mark-neutral" : ok ? "mark-pass" : "mark-fail"}>{a.total ? `${ok ? "✓" : "✕"} ${a.passed}/${a.total} frozen tests` : `○ ${status(a.status).word}`}</span>
-                          {failed.length > 0 && <> · failing <span className="mono">{failed.join(", ")}</span></>}
-                        </p>
-                      </div>
-                    </div>
-                  </li>
-                );
-              })}
-            </ol>
-            <div className="box-footer">
-              {repair?.diff ? (
-                <details className="disclosure">
-                  <summary>Show RTL diff, attempt {repair.n - 1} → {repair.n}</summary>
-                  <Diff text={repair.diff} />
-                </details>
-              ) : <span className="meta-text">{seeded ? "" : "The first attempt passed, so no repair or diagnosis was requested."}</span>}
-              <span className="meta-text">Test files unchanged on every attempt: run-time suite <span className="mono">{short(live.suiteSha, 10)}</span>{live.attempts.every((a) => !a.suiteSha || a.suiteSha === live.suiteSha) ? "" : " · CHANGED"}</span>
-            </div>
-          </section>
-
-          <section className="box" aria-labelledby="gates">
-            <div className={`box-header checks-head ${failing ? "fail" : pending ? "neutral" : "pass"}`}>
-              <h2 id="gates">
-                <span aria-hidden="true">{failing ? "✕" : pending ? "○" : "✓"}</span>{" "}
-                {failing ? `${failing} check${failing === 1 ? "" : "s"} failing` : pending ? "Some checks not run" : "All checks have passed"}
-              </h2>
-              <span className="meta-text">gates on the final RTL{replay ? `, re-run today by ${replay.id}` : ""}</span>
-            </div>
-            <ul className="checks">
-              {checks.map((c, k) => (
-                <li key={k}>
-                  <span className={c.ok === null ? "mark-neutral" : c.ok ? "mark-pass" : "mark-fail"} aria-hidden="true">{c.ok === null ? "○" : c.ok ? "✓" : "✕"}</span>
-                  <span className="mono check-id">{c.id}</span>
-                  <span className="check-name">{c.name} <span className="meta-text">{c.desc}</span></span>
-                  <span className={c.ok === null ? "mark-neutral" : c.ok ? "mark-pass" : "mark-fail"}>{c.ok === null ? "Not run" : c.ok ? "Pass" : "Fail"}</span>
-                </li>
-              ))}
-            </ul>
-          </section>
-
-          <section className="box" aria-labelledby="trace">
-            <div className="box-header">
-              <h2 id="trace">Traceability</h2>
-              <span className="meta-text">requirement → frozen tests → planted bugs caught → measured result</span>
-            </div>
-            <div className="table-wrap">
-              <table>
-                <thead>
-                  <tr><th>Requirement</th><th>Tests</th><th>Mutants killed</th><th>Attempt 1</th><th>Final</th></tr>
-                </thead>
-                <tbody>
-                  {rows.map((r) => (
-                    <tr key={r.id}>
-                      <td><span className="mono id">{r.id}</span>{r.text}</td>
-                      <td className="mono">{directed(r.tests).join(", ")}</td>
-                      <td>{r.mutants.length === 0 ? <span className="mark-neutral">○ none target it</span>
-                        : r.mutants.map((m) => (
-                          <div key={m.id}>{m.result === "killed" ? <span className="mark-pass">✓</span> : <span className="mark-fail">✕</span>} <span className="mono">{m.id}</span></div>
-                        ))}</td>
-                      <td>{live.seedBug && r.first === false ? <span className="mark-fail">✕ Fail (seeded)</span> : <Mark ok={r.first} />}</td>
-                      <td>{r.final === null ? <span className="pill neutral">○ Unverified</span>
-                        : r.final ? <span className="pill pass">✓ Pass</span> : <span className="pill fail">✕ Fail</span>}</td>
-                    </tr>
-                  ))}
-                  <tr>
-                    <td><span className="mono id">ALL</span>3000 random cycles against the golden model; covers every requirement</td>
-                    <td className="mono">{RANDOM}</td>
-                    <td><span className="mark-neutral">○ part of each kill above</span></td>
-                    <td>{live.seedBug && randomFirst === false ? <span className="mark-fail">✕ Fail (seeded)</span> : <Mark ok={randomFirst} />}</td>
-                    <td>{randomFinal === null ? <span className="pill neutral">○ Unverified</span>
-                      : randomFinal ? <span className="pill pass">✓ Pass</span> : <span className="pill fail">✕ Fail</span>}</td>
-                  </tr>
-                </tbody>
-              </table>
             </div>
           </section>
 
@@ -232,28 +127,22 @@ export default function Board({ data, runs }: { data: BoardData; runs: RunSummar
             </ul>
           </section>
 
-          <h2 className="group-title">Test-plan depth</h2>
         {data.scenarios && (
           <section className="box" aria-labelledby="scenarios">
-            <div className="box-header"><h2 id="scenarios">Scenario coverage</h2></div>
-            <p className="box-lede">
-              How often the frozen suite drove the final RTL into each situation, counted at every rising clock edge
-              over {data.scenarios.cycles.toLocaleString()} cycles from a waveform of the same tests. Measured, on {data.planId}.
-              {!data.scenarios.suite_passed && " The suite did not pass on this RTL, so the counts are partial."}
-            </p>
-            <div className="table-wrap">
-              <table>
-                <thead><tr><th>Scenario</th><th>Count</th></tr></thead>
-                <tbody>
-                  {Object.entries(data.scenarios.counts as Record<string, number>).map(([k, n]) => (
-                    <tr key={k}>
-                      <td>{data.scenarios!.descriptions[k]}</td>
-                      <td>{n > 0 ? <span className="mark-pass">✓ {n}</span> : <span className="mark-fail">✕ never reached</span>}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+            <div className="box-header">
+              <h2 id="scenarios">Scenario coverage</h2>
+              <span className="meta-text">{Object.values(data.scenarios.counts as Record<string, number>).filter((n) => n > 0).length}/{Object.keys(data.scenarios.counts).length} situations reached · {data.scenarios.cycles.toLocaleString()} cycles · measured on the final RTL</span>
             </div>
+            <ul className="chips">
+              {Object.entries(data.scenarios.counts as Record<string, number>).map(([k, n]) => (
+                <li key={k} className={n > 0 ? "" : "zero"} title={data.scenarios!.descriptions[k]}>
+                  <span className={n > 0 ? "mark-pass" : "mark-fail"} aria-hidden="true">{n > 0 ? "✓" : "✕"}</span>
+                  <span>{data.scenarios!.descriptions[k]}</span>
+                  <strong>{n > 0 ? n : "never"}</strong>
+                </li>
+              ))}
+            </ul>
+            {!data.scenarios.suite_passed && <p className="box-lede">The suite did not pass on this RTL, so the counts are partial.</p>}
           </section>
         )}
 
@@ -307,6 +196,150 @@ export default function Board({ data, runs }: { data: BoardData; runs: RunSummar
             </div>
           </section>
         )}
+
+          <h2 className="group-title">Verification plan a lead can sign off</h2>
+          {data.signoff && (
+            <section className="box" aria-labelledby="signoff">
+              <div className="box-header">
+                <h2 id="signoff">Sign-off status</h2>
+                <span className="meta-text">{data.signoff.filter((l) => l.status === "met").length} of {data.signoff.length} met · from stored data · modelled on OpenTitan V2</span>
+              </div>
+              <ul className="checks">
+                {data.signoff.map((l) => {
+                  const ok = l.status === "met" ? true : l.status === "not met" ? false : null;
+                  return (
+                    <li key={l.id}>
+                      <span className={ok === null ? "mark-neutral" : ok ? "mark-pass" : "mark-fail"} aria-hidden="true">{ok === null ? "○" : ok ? "✓" : "✕"}</span>
+                      <span className="mono check-id">{l.id}</span>
+                      <span className="check-name">{l.criterion} <span className="meta-text">{l.evidence}</span></span>
+                      <span className={ok === null ? "mark-neutral" : ok ? "mark-pass" : "mark-fail"}>{ok === null ? "Not measured" : ok ? "Met" : "Not met"}</span>
+                    </li>
+                  );
+                })}
+              </ul>
+              <div className="box-footer">
+                <span className="btn-row">
+                  <a className="btn btn-sm" href={`/plans/${data.planId}.md`} download>Verification plan (.md)</a>
+                  <a className="btn btn-quiet btn-sm" href={`/plans/${data.planId}.csv`} download>Testpoints (.csv)</a>
+                  <a className="btn btn-quiet btn-sm" href={`/plans/${data.planId}.hjson`} download>testplan.hjson</a>
+                </span>
+                <span className="meta-text">Vplan sections · OpenTitan-style testpoints · code coverage not measured</span>
+              </div>
+            </section>
+          )}
+
+          <section className="box" aria-labelledby="trace">
+            <div className="box-header">
+              <h2 id="trace">Traceability</h2>
+              <span className="meta-text">requirement → frozen tests → planted bugs caught → measured result</span>
+            </div>
+            <div className="table-wrap">
+              <table>
+                <thead>
+                  <tr><th>Requirement</th><th>Tests</th><th>Mutants killed</th><th>Attempt 1</th><th>Final</th></tr>
+                </thead>
+                <tbody>
+                  {rows.map((r) => (
+                    <tr key={r.id}>
+                      <td><span className="mono id">{r.id}</span>{r.text}</td>
+                      <td className="mono">{directed(r.tests).join(", ")}</td>
+                      <td>{r.mutants.length === 0 ? <span className="mark-neutral">○ none target it</span>
+                        : r.mutants.map((m) => (
+                          <div key={m.id}>{m.result === "killed" ? <span className="mark-pass">✓</span> : <span className="mark-fail">✕</span>} <span className="mono">{m.id}</span></div>
+                        ))}</td>
+                      <td>{live.seedBug && r.first === false ? <span className="mark-fail">✕ Fail (seeded)</span> : <Mark ok={r.first} />}</td>
+                      <td>{r.final === null ? <span className="pill neutral">○ Unverified</span>
+                        : r.final ? <span className="pill pass">✓ Pass</span> : <span className="pill fail">✕ Fail</span>}</td>
+                    </tr>
+                  ))}
+                  <tr>
+                    <td><span className="mono id">ALL</span>3000 random cycles against the golden model; covers every requirement</td>
+                    <td className="mono">{RANDOM}</td>
+                    <td><span className="mark-neutral">○ part of each kill above</span></td>
+                    <td>{live.seedBug && randomFirst === false ? <span className="mark-fail">✕ Fail (seeded)</span> : <Mark ok={randomFirst} />}</td>
+                    <td>{randomFinal === null ? <span className="pill neutral">○ Unverified</span>
+                      : randomFinal ? <span className="pill pass">✓ Pass</span> : <span className="pill fail">✕ Fail</span>}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+          <h2 className="group-title">Where and why it failed</h2>
+          <section className="box" aria-labelledby="timeline">
+            <div className="box-header">
+              <h2 id="timeline">Run timeline</h2>
+              <span className="meta-text">every attempt counted · AI text kept apart from measured results</span>
+            </div>
+            <ol className="timeline-pr">
+              {live.attempts.map((a) => {
+                const ok = a.total ? a.passed === a.total : null;
+                const failed = a.tests.filter((t) => !t.passed).map((t) => t.name);
+                return (
+                  <li key={a.n}>
+                    {a.diagnosis && (
+                      <div className="tl-comment">
+                        <div className="tl-comment-head">
+                          <ModelAvatar model={a.model} size={26} />
+                          <strong>{a.model ?? "model"}</strong>
+                          <span className="tag-ai">AI interpretation · not verified</span>
+                          <span className="meta-text">diagnosis sent with attempt {a.n}</span>
+                        </div>
+                        <p><Prose text={a.diagnosis} /></p>
+                      </div>
+                    )}
+                    <div className="tl-event">
+                      <span className={`tl-dot ${ok === null ? "neutral" : ok ? "pass" : "fail"}`} aria-hidden="true">{ok === null ? "○" : ok ? "✓" : "✕"}</span>
+                      <div>
+                        <p className="tl-title">
+                          <strong>Attempt {a.n}</strong>{" "}
+                          <span className="meta-text">{a.source === "seeded" ? `reference RTL with seeded bug ${a.seeded?.mutant} (${a.seeded?.desc})` : `RTL written by ${a.model ?? "the model"}`}</span>
+                        </p>
+                        <p className="tl-measured">
+                          <span className="tag-measured">measured</span>{" "}
+                          <span className={ok === null ? "mark-neutral" : ok ? "mark-pass" : "mark-fail"}>{a.total ? `${ok ? "✓" : "✕"} ${a.passed}/${a.total} frozen tests` : `○ ${status(a.status).word}`}</span>
+                          {failed.length > 0 && <> · failing <span className="mono">{failed.join(", ")}</span></>}
+                        </p>
+                        {failed.map((f) => (
+                          <div key={f} className="tl-triage"><span className="mono">{f}</span><TestTriage test={f} triage={data.triage} runStarted={live.started} /></div>
+                        ))}
+                      </div>
+                    </div>
+                  </li>
+                );
+              })}
+            </ol>
+            <div className="box-footer">
+              {repair?.diff ? (
+                <details className="disclosure">
+                  <summary>Show RTL diff, attempt {repair.n - 1} → {repair.n}</summary>
+                  <Diff text={repair.diff} />
+                </details>
+              ) : <span className="meta-text">{seeded ? "" : "The first attempt passed, so no repair or diagnosis was requested."}</span>}
+              <span className="meta-text">Test files unchanged on every attempt: run-time suite <span className="mono">{short(live.suiteSha, 10)}</span>{live.attempts.every((a) => !a.suiteSha || a.suiteSha === live.suiteSha) ? "" : " · CHANGED"}</span>
+            </div>
+          </section>
+
+          <section className="box" aria-labelledby="gates">
+            <div className={`box-header checks-head ${failing ? "fail" : pending ? "neutral" : "pass"}`}>
+              <h2 id="gates">
+                <span aria-hidden="true">{failing ? "✕" : pending ? "○" : "✓"}</span>{" "}
+                {failing ? `${failing} check${failing === 1 ? "" : "s"} failing` : pending ? "Some checks not run" : "All checks have passed"}
+              </h2>
+              <span className="meta-text">gates on the final RTL{replay ? `, re-run today by ${replay.id}` : ""}</span>
+            </div>
+            <ul className="checks">
+              {checks.map((c, k) => (
+                <li key={k}>
+                  <span className={c.ok === null ? "mark-neutral" : c.ok ? "mark-pass" : "mark-fail"} aria-hidden="true">{c.ok === null ? "○" : c.ok ? "✓" : "✕"}</span>
+                  <span className="mono check-id">{c.id}</span>
+                  <span className="check-name">{c.name} <span className="meta-text">{c.desc}</span></span>
+                  <span className={c.ok === null ? "mark-neutral" : c.ok ? "mark-pass" : "mark-fail"}>{c.ok === null ? "Not run" : c.ok ? "Pass" : "Fail"}</span>
+                </li>
+              ))}
+            </ul>
+          </section>
+
         </main>
 
         <aside className="repo-side" aria-label="About this run">
@@ -351,7 +384,10 @@ export default function Board({ data, runs }: { data: BoardData; runs: RunSummar
             <code className="cmd">python -m agent.pipeline --run-id {live.id} --provider replay</code>
             {data.planId && <code className="cmd">make plan RUN={data.planId}</code>}
             <dl className="side-facts">
-              <dt>Simulator</dt><dd>{lastSim?.simulator ?? first?.simulator ?? "n/a"}{replay ? " (replay)" : ""}</dd>
+              <dt>Simulator</dt><dd>
+                Original run: {simShort(first?.simulator)}
+                {replay ? <> · Replay: {simShort(lastSim?.simulator)} · {replay.replayCheck?.reproduced ? "verdict reproduced" : "verdict differs"}</> : null}
+              </dd>
               <dt>Suite pin</dt><dd><code>{short(data.pinnedSuite, 12)}</code>{live.suiteSha && live.suiteSha !== data.pinnedSuite ? <> · live run <code>{short(live.suiteSha, 12)}</code></> : null}</dd>
               <dt>Sweep pin</dt><dd><code>{short(data.pinnedSweep, 12)}</code></dd>
               <dt>Image</dt><dd><code>{replay?.sandbox?.image_id ? short(replay.sandbox.image_id, 12) : "n/a"}</code></dd>

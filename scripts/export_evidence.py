@@ -108,6 +108,7 @@ def main():
     for name, src in (("mutation.json", RUNS / "mutation" / "mutation.json"),
                       ("weak_demo.json", RUNS / "weak_demo" / "weak_demo.json"),
                       ("gaps.json", RUNS / "coverage_gap" / "gaps.json"),
+                      ("triage.json", RUNS / "triage.json"),
                       ("requirements.json", ROOT / "spec" / "requirements.json"),
                       ("interface.json", ROOT / "spec" / "interface.json"),
                       ("mutants.json", ROOT / "verify" / "mutants.json")):

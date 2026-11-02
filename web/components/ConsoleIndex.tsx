@@ -10,7 +10,7 @@ import { type Json, type Requirement, type Run, status } from "@/lib/run";
 type Recorded = { id: string; status: string; seedBug: string | null; fromExtraction: boolean };
 
 // Run Console entry: recorded runs (static) and, with the API, any run on the server.
-export default function ConsoleIndex({ recorded, requirements }: { recorded: Recorded[]; requirements: Requirement[] }) {
+export default function ConsoleIndex({ recorded, requirements, triage }: { recorded: Recorded[]; requirements: Requirement[]; triage: Json | null }) {
   const [apiOk, setApiOk] = useState(false);
   const [runs, setRuns] = useState<Json[]>([]);
   const [jobs, setJobs] = useState<Json[]>([]);
@@ -60,7 +60,7 @@ export default function ConsoleIndex({ recorded, requirements }: { recorded: Rec
           <span className="mono">{open}</span>
           <span className="subbar-end mark-neutral">from the API · requirements: {reqs?.from ?? "default list"}</span>
         </nav>
-        <Console runs={[{ label: "Run", run: loaded }]} requirements={reqs?.list ?? requirements} traceSource="api" />
+        <Console runs={[{ label: "Run", run: loaded }]} requirements={reqs?.list ?? requirements} traceSource="api" triage={triage} />
       </>
     );
   }

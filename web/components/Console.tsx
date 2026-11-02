@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import FifoView from "./FifoView";
 import ModelAvatar from "./ModelAvatar";
+import TestTriage from "./TestTriage";
 import Waveform, { pickTest } from "./Waveform";
 import { apiBase } from "@/lib/api";
-import { type Attempt, type Requirement, type Run, type Trace, status } from "@/lib/run";
+import { type Attempt, type Json, type Requirement, type Run, type Trace, simShort, status } from "@/lib/run";
 
 const RANDOM = "test_random_regression";
 
@@ -98,8 +99,8 @@ function traceUrl(source: "static" | "api", runId: string, n: number) {
     : `${apiBase()}/runs/${encodeURIComponent(runId)}/attempts/${n}/trace/trace.json`;
 }
 
-export default function Console({ runs, requirements, traceSource = "static" }:
-  { runs: ConsoleRun[]; requirements: Requirement[]; traceSource?: "static" | "api" }) {
+export default function Console({ runs, requirements, traceSource = "static", triage = null }:
+  { runs: ConsoleRun[]; requirements: Requirement[]; traceSource?: "static" | "api"; triage?: Json | null }) {
   const [which, setWhich] = useState(0);
   const run = runs[which].run;
   const [sel, setSel] = useState(startAttempt(run));
@@ -115,6 +116,9 @@ export default function Console({ runs, requirements, traceSource = "static" }:
   const results = useMemo(() => new Map((sim?.tests ?? []).map((t) => [t.name, t])), [sim]);
 
   // Load the trace of the design this attempt stands on (no-progress repeats share it).
+  // Switching attempts keeps the selected test and cycle, so #1 and #2 compare at the same point.
+  const selected = useRef({ test: wTest, cycle: wCycle });
+  selected.current = { test: wTest, cycle: wCycle };
   const traceKey = sim ? `${run.id}/${sim.n}` : "";
   useEffect(() => {
     if (!sim || !sim.tests.length) { setTrace(null); return; }
@@ -126,9 +130,12 @@ export default function Console({ runs, requirements, traceSource = "static" }:
         if (!live) return;
         setTrace({ key: traceKey, data: d && d.status === "ok" ? d : null });
         if (d && d.status === "ok") {
-          const t = pickTest(d);
-          setWTest(t);
-          setWCycle(d.tests.find((x) => x.name === t)?.first_mismatch ?? 1);
+          const prev = selected.current;
+          const kept = d.tests.find((x) => x.name === prev.test);
+          const t = kept ?? d.tests.find((x) => x.name === pickTest(d));
+          if (!t) return;
+          setWTest(t.name);
+          setWCycle(kept && t.cycles.some((c) => c.k === prev.cycle) ? prev.cycle : t.first_mismatch ?? t.cycles[0]?.k ?? 1);
         }
       });
     return () => { live = false; };
@@ -264,13 +271,14 @@ export default function Console({ runs, requirements, traceSource = "static" }:
             : sim && sim.tests.length ? (
               <>
                 {a.sameAs ? <p className="mark-neutral">○ Same design as attempt {a.sameAs}; not simulated again. Showing attempt {a.sameAs}.</p> : null}
-                <p className="label">Measured · {sim.simulator ?? "simulator"} · suite at run time {short(sim.suiteSha, 10)}</p>
+                <p className="label">Measured · {simShort(sim.simulator)} ({run.replayedFrom ? `replay of ${run.replayedFrom}` : "this run"}) · suite at run time {short(sim.suiteSha, 10)}</p>
                 <ul className="c-results">
                   {ordered.map((t) => (
                     <li key={t.name}>
                       <span className={t.passed ? "mark-pass" : "mark-fail"}>{t.passed ? "✓ PASS" : "✕ FAIL"}</span>{" "}
                       <span className="mono">{t.name}</span>
                       {t.message ? <pre className="c-msg">{t.message}</pre> : null}
+                      {!t.passed && <TestTriage test={t.name} triage={triage} runStarted={run.started} />}
                     </li>
                   ))}
                 </ul>
@@ -346,6 +354,7 @@ export default function Console({ runs, requirements, traceSource = "static" }:
         <span className="c-sb">Attempt {a?.n ?? "–"} of {run.attemptsTotal}</span>
         <span className="c-sb">{run.providers.generate}{run.providers.repair !== run.providers.generate ? ` → ${run.providers.repair}` : ""}</span>
         <span className="c-sb">${run.costUsd.toFixed(4)} <span className="c-sb-dim">· {run.tokens.in.toLocaleString()} in / {run.tokens.out.toLocaleString()} out</span></span>
+        <span className="c-sb">{run.replayedFrom ? "Replay" : "This run"}: {simShort(sim?.simulator ?? a?.simulator)}</span>
         {run.sandbox ? <span className="c-sb">Sandbox: {run.sandbox.backend}</span> : null}
         <span className="c-sb c-sb-end"><span className="c-sb-dim">Suite at run time</span> <span className="mono">{short(run.suiteSha, 10)}</span></span>
         {run.replayCheck ? <span className={`c-sb ${run.replayCheck.reproduced ? "mark-pass" : "mark-fail"}`}>{run.replayCheck.reproduced ? "✓ Replay reproduced" : "✕ Replay differs"}</span> : null}

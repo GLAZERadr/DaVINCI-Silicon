@@ -45,6 +45,8 @@ export type Board = {
   planId: string | null; // run whose verification plan is linked (the replay when there is one)
   referencePlan: boolean;
   scenarios: Json | null; // scenario counts from the linked plan (already checked against pins there)
+  signoff: Json[] | null; // sign-off lines from the linked plan (met / not met / not measured)
+  triage: Json | null; // test credibility (verify/triage.py)
   gaps: Json | null; // coverage-gap check (verify/gaps.py), only when measured on the pinned suite
 };
 
@@ -87,6 +89,8 @@ export function board(id: string): Board {
     referencePlan: fs.existsSync(path.join(ROOT, "reference", "verification_plan.md")),
     planId,
     scenarios: planId ? read(`runs/${planId}/verification_plan.json`)?.scenarios ?? null : null,
+    signoff: planId ? read(`runs/${planId}/verification_plan.json`)?.signoff ?? null : null,
+    triage: read("triage.json"),
     pinnedSuite: idx.pinned_suite_sha256,
     pinnedSweep: idx.pinned_sweep_sha256,
     ledger: {
@@ -106,6 +110,10 @@ export function requirementsFor(r: Run): Requirement[] {
 
 export function mutants(): { id: string; req: string; desc: string }[] {
   return (read("mutants.json") as unknown as Json[]).map((m) => ({ id: m.id, req: m.req, desc: m.desc }));
+}
+
+export function triage(): Json | null {
+  return read("triage.json");
 }
 
 export function defaultRequirements(): Requirement[] {

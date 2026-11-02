@@ -201,8 +201,10 @@ def _fake(messages: list, step: str) -> Reply:
                                                    for r in ref]}),
                      provider="fake", model="fake-reference", request_sha256="")
     if step == "repair":
-        text = ("DIAGNOSIS: (fake provider) the write enable ignores a same-cycle read when full; "
-                "allow the write when rd_en is high.\n\n```verilog\n" + rtl + "```\n")
+        # Neutral on purpose: the stand-in fixes any seeded bug by returning the
+        # reference, so it must not describe one particular bug.
+        text = ("DIAGNOSIS: (fake provider) scripted repair: restores the reference RTL. Not a model diagnosis."
+                "\n\n```verilog\n" + rtl + "```\n")
     else:
         text = "```verilog\n" + rtl + "```\n"
     return Reply(text=text, provider="fake", model="fake-reference", request_sha256="")

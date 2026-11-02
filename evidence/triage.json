@@ -1,0 +1,244 @@
+{
+  "label": "measured",
+  "generator": "verify/triage.py",
+  "pinned_suite_sha256": "4adc7da757edd72117db7a297aa7900d5744361903b2b9d1aea339da5dcc7db1",
+  "reference": {
+    "rtl_sha256": "6034c49a727be76474d3ec227252b8038d6122e788fc3c3c374c3741dc56313d",
+    "suite_sha256": "4adc7da757edd72117db7a297aa7900d5744361903b2b9d1aea339da5dcc7db1",
+    "simulator": "Icarus Verilog version 13.0 (stable) (v13_0)",
+    "suite_matches_pin": true
+  },
+  "mutation_suite_matches_pin": true,
+  "test_code": {
+    "files": {
+      "tests/test_sync_fifo.py": "403ff9a5d274ead3bd1a4d56a1052f400ab4b1fe71377170a5a79553d53823bd",
+      "tests/golden_model.py": "dc1ba04bd0553a8e052862049563ce11df8d6f80073fd28e9150b9311c79b73f"
+    },
+    "last_changed": "2026-10-31T15:28:39+07:00"
+  },
+  "rule": "validated = passes on the reference RTL under the pinned suite and kills at least one planted bug",
+  "tests": {
+    "test_almost_full": {
+      "passes_on_reference": true,
+      "kills": [
+        "M2",
+        "M3",
+        "M4",
+        "M6"
+      ],
+      "only_directed_killer_of": [],
+      "scenarios": {
+        "reset": 2,
+        "full": 1,
+        "empty": 1,
+        "almost_full": 5
+      },
+      "flags_seen": {
+        "empty": 3,
+        "almost_full": 5,
+        "full": 1
+      },
+      "scenarios_partial": false,
+      "validated": true
+    },
+    "test_empty_flag": {
+      "passes_on_reference": true,
+      "kills": [
+        "M6"
+      ],
+      "only_directed_killer_of": [],
+      "scenarios": {
+        "reset": 2,
+        "empty": 1
+      },
+      "flags_seen": {
+        "empty": 3
+      },
+      "scenarios_partial": false,
+      "validated": true
+    },
+    "test_empty_simultaneous_rw": {
+      "passes_on_reference": true,
+      "kills": [
+        "M5",
+        "M6",
+        "M7"
+      ],
+      "only_directed_killer_of": [],
+      "scenarios": {
+        "reset": 2,
+        "empty": 1,
+        "read_when_empty": 1,
+        "rw_when_empty": 1,
+        "underflow_pulse": 1
+      },
+      "flags_seen": {
+        "empty": 3,
+        "underflow": 1
+      },
+      "scenarios_partial": false,
+      "validated": true
+    },
+    "test_full_flag": {
+      "passes_on_reference": true,
+      "kills": [
+        "M2",
+        "M3",
+        "M6"
+      ],
+      "only_directed_killer_of": [],
+      "scenarios": {
+        "reset": 2,
+        "empty": 1,
+        "almost_full": 2
+      },
+      "flags_seen": {
+        "empty": 2,
+        "almost_full": 3,
+        "full": 1
+      },
+      "scenarios_partial": false,
+      "validated": true
+    },
+    "test_full_simultaneous_rw": {
+      "passes_on_reference": true,
+      "kills": [
+        "M1",
+        "M2",
+        "M3",
+        "M4",
+        "M6",
+        "M8"
+      ],
+      "only_directed_killer_of": [
+        "M1",
+        "M8"
+      ],
+      "scenarios": {
+        "reset": 2,
+        "full": 5,
+        "empty": 1,
+        "almost_full": 9,
+        "rw_when_full": 4
+      },
+      "flags_seen": {
+        "empty": 3,
+        "almost_full": 9,
+        "full": 5
+      },
+      "scenarios_partial": false,
+      "validated": true
+    },
+    "test_overflow": {
+      "passes_on_reference": true,
+      "kills": [
+        "M2",
+        "M3",
+        "M4",
+        "M6"
+      ],
+      "only_directed_killer_of": [],
+      "scenarios": {
+        "reset": 2,
+        "full": 2,
+        "empty": 1,
+        "almost_full": 6,
+        "write_when_full": 1,
+        "overflow_pulse": 1
+      },
+      "flags_seen": {
+        "empty": 3,
+        "almost_full": 6,
+        "full": 2,
+        "overflow": 1
+      },
+      "scenarios_partial": false,
+      "validated": true
+    },
+    "test_random_regression": {
+      "passes_on_reference": true,
+      "kills": [
+        "M1",
+        "M2",
+        "M3",
+        "M4",
+        "M5",
+        "M6",
+        "M7",
+        "M8"
+      ],
+      "only_directed_killer_of": [],
+      "scenarios": {
+        "reset": 2,
+        "empty": 22,
+        "read_when_empty": 8,
+        "underflow_pulse": 8
+      },
+      "flags_seen": {
+        "empty": 23,
+        "underflow": 8
+      },
+      "scenarios_partial": true,
+      "validated": true
+    },
+    "test_reset_state": {
+      "passes_on_reference": true,
+      "kills": [
+        "M6"
+      ],
+      "only_directed_killer_of": [],
+      "scenarios": {
+        "reset": 3,
+        "empty": 1
+      },
+      "flags_seen": {
+        "empty": 3
+      },
+      "scenarios_partial": false,
+      "validated": true
+    },
+    "test_underflow": {
+      "passes_on_reference": true,
+      "kills": [
+        "M5",
+        "M6",
+        "M7"
+      ],
+      "only_directed_killer_of": [],
+      "scenarios": {
+        "reset": 2,
+        "empty": 2,
+        "read_when_empty": 1
+      },
+      "flags_seen": {
+        "empty": 4,
+        "underflow": 1
+      },
+      "scenarios_partial": false,
+      "validated": true
+    },
+    "test_wraparound_order": {
+      "passes_on_reference": true,
+      "kills": [
+        "M2",
+        "M3",
+        "M4",
+        "M6"
+      ],
+      "only_directed_killer_of": [],
+      "scenarios": {
+        "reset": 2,
+        "full": 2,
+        "empty": 4,
+        "almost_full": 10
+      },
+      "flags_seen": {
+        "empty": 6,
+        "almost_full": 10,
+        "full": 2
+      },
+      "scenarios_partial": false,
+      "validated": true
+    }
+  }
+}
