@@ -243,7 +243,6 @@ export default function Landing({ data }: { data: LandingData }) {
           <span className="meta-text">© 2026 DaVINCI Silicon</span>
           <nav className="lp-foot-links" aria-label="Footer">
             <Link href="/evidence/">Evidence</Link>
-            <Link href="/access/">Request access</Link>
             <a href="https://github.com/GLAZERadr/DaVINCI-Silicon">GitHub</a>
           </nav>
         </div>

@@ -144,7 +144,6 @@ export default function AuthForm({ mode }: { mode: Mode }) {
           <p className="auth-switch">{reg
             ? <>Already have an account? <Link href="/login/">Sign in</Link></>
             : <>New to DaVINCI? <Link href="/register/">Create an account</Link></>}</p>
-          <p className="meta-text auth-fine">Need live model runs? <Link href="/access/">Request access</Link>; it is granted by hand.</p>
         </section>
       </main>
     </div>

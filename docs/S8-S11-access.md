@@ -121,3 +121,9 @@ sends anyone else to `/login/?next=<page>`; sign-in returns to that page. It is 
 client-side gate on a static site, and the evidence also lives in the public repo.
 Consequence: on the hosted board (Vercel) the app pages need a reachable API to sign
 in, so until the API is hosted, visitors there only see the landing page.
+
+## Request access removed from the UI (2 Nov, Adrian)
+
+The `/access/` page, the sidebar entry and every link to it were removed. Accounts start
+read-only and the lead switches on live runs with `python -m api.users grant <email>`.
+The `POST /access-requests` endpoint (`api/access.py`) is still in the API, unused by the UI.

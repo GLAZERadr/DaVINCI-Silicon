@@ -77,7 +77,6 @@ export default function AccountView() {
               ) : (
                 <>
                   <p className="account-p">You can read every recorded run, open the Run Console and replay runs for $0. Live model runs, extractions and approvals are switched on per account by the DaVINCI team, so model credit is never spent by an account nobody checked.</p>
-                  <Link href="/access/" className="btn btn-quiet btn-sm">Request live access</Link>
                 </>
               )}
             </div>

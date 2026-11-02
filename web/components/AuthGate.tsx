@@ -5,9 +5,9 @@ import { useEffect, useState } from "react";
 import { ApiError, api, apiToken, setSessionToken } from "@/lib/api";
 
 // App pages need a signed-in account (or a token set in Connection settings). The
-// landing, sign-in, register and request-access pages stay public. This is a
+// landing, sign-in and register pages stay public. This is a
 // client-side gate on a static site: the raw evidence also lives in the public repo.
-const PUBLIC = ["/", "/login/", "/register/", "/access/"];
+const PUBLIC = ["/", "/login/", "/register/"];
 
 export default function AuthGate({ children }: { children: React.ReactNode }) {
   const path = usePathname();

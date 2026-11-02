@@ -14,7 +14,6 @@ const ICON: Record<string, React.ReactNode> = {
   console: <path d="M2 3h12v10H2zM4.5 6.5 6.5 8l-2 1.5M8 10h3.5" />,
   new: <path d="M5 3.2v9.6L12.5 8 5 3.2Z" />,
   spec: <path d="M4 1.8h5.2L12 4.6v9.6H4zM9 1.8v3h3M6 8h4M6 10.5h4" />,
-  access: <path d="M8 1.8a3 3 0 1 1 0 6 3 3 0 0 1 0-6ZM2.8 14.2c.6-2.6 2.6-4.2 5.2-4.2s4.6 1.6 5.2 4.2" />,
   menu: <path d="M2.5 4h11M2.5 8h11M2.5 12h11" />,
   close: <path d="M3.5 3.5l9 9M12.5 3.5l-9 9" />,
 };
@@ -26,7 +25,7 @@ const NAV = [
   { href: "/spec/", label: "Spec intake", key: "spec" },
 ] as const;
 
-export type Section = (typeof NAV)[number]["key"] | "account" | "access";
+export type Section = (typeof NAV)[number]["key"] | "account";
 
 export function Icon({ name }: { name: keyof typeof ICON }) {
   return (
@@ -46,7 +45,7 @@ export default function SiteHeader({ active, crumbs = [], children }:
     window.addEventListener("keydown", esc);
     return () => window.removeEventListener("keydown", esc);
   }, [open]);
-  const section = active ?? (crumbs[0]?.label === "account" ? "account" : crumbs[0]?.label === "request access" ? "access" : undefined);
+  const section = active ?? (crumbs[0]?.label === "account" ? "account" : undefined);
 
   return (
     <>
@@ -62,9 +61,6 @@ export default function SiteHeader({ active, crumbs = [], children }:
               <Icon name={n.key} />{n.label}
             </Link>
           ))}
-        </nav>
-        <nav className="sb-nav sb-nav-2" aria-label="More">
-          <Link href="/access/" aria-current={section === "access" ? "page" : undefined}><Icon name="access" />Request access</Link>
         </nav>
         <div className="sb-bottom"><AccountButton active={section === "account"} /></div>
       </aside>
