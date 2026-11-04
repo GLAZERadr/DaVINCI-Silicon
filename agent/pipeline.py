@@ -163,6 +163,10 @@ def compile_check(rtl_path: Path, backend: str) -> tuple[bool, str]:
     """Measured: does the RTL compile as plain Verilog-2001 (no SystemVerilog)?
     Runs where the simulation would run. Returns (ok, compiler output)."""
     cmd = ["iverilog", "-g2001", "-Wall", "-o", "/dev/null"]
+    if backend == "modal":  # hosted: a throwaway Modal Sandbox, no network (agent/modal_sandbox.py)
+        from agent import modal_sandbox
+        code, out = modal_sandbox.run(rtl_path, None, [*cmd, "/tmp/in/dut.v"], 60)
+        return code == 0, out.replace("/tmp/in/dut.v", "dut.v").strip()[-2000:]
     if backend == "docker":
         cmd = ["docker", "run", "--rm", *DOCKER_LIMITS, "--entrypoint", "timeout",
                "-v", f"{rtl_path.resolve()}:/work/in/dut.v:ro", SANDBOX_IMAGE, "60", *cmd, "/work/in/dut.v"]
@@ -216,6 +220,20 @@ def simulate(rtl_path: Path, out: Path, backend: str = "local", block: dict | No
     local:  a separate Python process with a hard timeout.
     docker: the locked-down sandbox image; RTL mounted read-only."""
     out.mkdir(parents=True, exist_ok=True)
+    if backend == "modal":
+        from agent import modal_sandbox
+        argv = (["python", "verify/run_block.py", block["name"], "/tmp/in/dut.v", "--out", "/tmp/out"] if block
+                else ["python", "verify/run_suite.py", "/tmp/in/dut.v", "--out", "/tmp/out"])
+        try:
+            code, log = modal_sandbox.run(rtl_path, out, argv, 120)
+        except Exception as e:  # sandbox could not start (quota, image build): recorded, never retried silently
+            return {"status": "sim_error", "passed": 0, "total": 0, "tests": [], "sandbox": backend,
+                    "error": f"modal sandbox failed: {type(e).__name__}: {str(e)[:500]}"}
+        vf = out / "verdict.json"
+        if not vf.exists():
+            return {"status": "timeout" if code == 124 else "sim_error", "passed": 0, "total": 0, "tests": [],
+                    "sandbox": backend, "error": f"runner wrote no verdict (exit {code}): {log[-1500:]}"}
+        return json.loads(vf.read_text()) | {"sandbox": backend}
     if backend == "docker":
         cmd = ["docker", "run", "--rm", *DOCKER_LIMITS,
                "-v", f"{rtl_path.resolve()}:/work/in/dut.v:ro", "-v", f"{out.resolve()}:/work/out", SANDBOX_IMAGE]
@@ -246,6 +264,15 @@ def sweep(rtl_path: Path, out: Path, backend: str) -> dict:
     """G3: run the parameter sweep (verify/run_sweep.py) where the simulation ran.
     Measured; its output never goes into a prompt."""
     out.mkdir(parents=True, exist_ok=True)
+    if backend == "modal":
+        from agent import modal_sandbox
+        try:
+            code, log = modal_sandbox.run(rtl_path, out, ["python", "verify/run_sweep.py", "/tmp/in/dut.v", "--out", "/tmp/out"], 120)
+        except Exception as e:
+            return {"status": "sim_error", "sets": [], "error": f"modal sandbox failed: {type(e).__name__}: {str(e)[:500]}"}
+        f = out / "sweep.json"
+        return json.loads(f.read_text()) if f.exists() else {
+            "status": "sim_error", "sets": [], "error": f"sweep wrote no result (exit {code}): {log[-1000:]}"}
     if backend == "docker":
         cmd = ["docker", "run", "--rm", *DOCKER_LIMITS, "--entrypoint", "timeout",
                "-v", f"{rtl_path.resolve()}:/work/in/dut.v:ro", "-v", f"{out.resolve()}:/work/out",
@@ -359,7 +386,7 @@ def main(argv=None):
     ap.add_argument("--replay-from", help="run to replay; --run-id then names the new run")
     ap.add_argument("--seed-bug", help="start from the reference RTL with this mutant applied (e.g. M1)")
     ap.add_argument("--max-repairs", type=int, default=3)
-    ap.add_argument("--sandbox", default=os.environ.get("DAVINCI_SANDBOX") or None, choices=["local", "docker"],
+    ap.add_argument("--sandbox", default=os.environ.get("DAVINCI_SANDBOX") or None, choices=["local", "docker", "modal"],
                     help="where the simulator runs; default docker whenever model-written RTL is involved")
     ap.add_argument("--reasoning-effort", default=os.environ.get("DAVINCI_REASONING_EFFORT"))
     ap.add_argument("--spec", type=Path, default=ROOT / "spec" / "fifo_spec.md")

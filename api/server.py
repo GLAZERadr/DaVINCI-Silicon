@@ -139,7 +139,9 @@ def _worker():
             p = subprocess.run([sys.executable, "-m", "agent.pipeline", *job["argv"]],
                                cwd=ROOT, stdout=f, stderr=subprocess.STDOUT)
         rj = RUNS / run_id / "run.json"
-        if rj.exists():  # per-cycle traces for the waveform and FIFO views (Docker); a failure only loses the views
+        # Per-cycle traces for the waveform and FIFO views need Docker; the hosted (Modal) API has none,
+        # so its new runs show results without a waveform. A failure here only loses the views.
+        if rj.exists() and os.environ.get("DAVINCI_SANDBOX") != "modal":
             with log.open("a") as f:
                 subprocess.run([sys.executable, "verify/trace.py", "--run", str(RUNS / run_id)],
                                cwd=ROOT, stdout=f, stderr=subprocess.STDOUT, timeout=600)
