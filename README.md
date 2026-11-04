@@ -99,6 +99,16 @@ Also worth knowing:
 
 **Not in this hackathon:** foundry or commercial signoff, full-chip integration, analog/mixed-signal, open self-serve signup with billing.
 
+## Built with Meta AI
+
+**In the product: Muse Spark 1.3** (Meta Model API) writes and repairs the RTL, extracts requirements from a datasheet PDF or image, proposes the design breakdown before RTL, and writes the Learn-mode explanations. Every call is in `runs/_ledger.jsonl` with its tokens and cost, and its text is always labelled AI interpretation.
+
+**In development: Muse Code**, Meta's terminal coding agent, run headless (`muse exec`) on scoped tasks. Each session is recorded in `docs/muse-code/` with the prompt, the files it read and wrote, the tests it ran and a hand review, and the commits it produced say so in their message.
+
+| Date | Session | What Muse Code wrote |
+| --- | --- | --- |
+| 4 Nov 2026 | [auth unit tests](docs/muse-code/2026-11-04-auth-unit-tests.md) | `tests_unit/test_auth_accounts.py` (19 tests for accounts, sessions, OAuth state and avatar hosts) and the `make unit` target |
+
 ## Rules the AI must follow
 
 - Tests and the golden model are frozen: the repair agent may only edit RTL; `suite_sha256` is checked every run.
