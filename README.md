@@ -1,5 +1,7 @@
 # DaVINCI Silicon
 
+![DaVINCI Silicon: prove the tests first, then let the model write the RTL. Evidence board and Run Console of the recorded run live02-m1](docs/assets/cover.png)
+
 **DaVINCI Silicon turns a chip spec into a verification plan and proof your lead can sign off, then lets AI write and fix the RTL against it.**
 
 What it shows, in this order:
@@ -12,6 +14,16 @@ What it shows, in this order:
 Loop: spec → requirements (human-approved) → frozen tests → mutation proof → AI-generated RTL → real simulation → bounded repair → evidence report → replay.
 
 **Live board:** https://davinci-silicon-fe.vercel.app/ — the Evidence board, Run Console and verification plans of every recorded run are public and need no account (served from the committed evidence bundle). New run and Spec intake need a signed-in account with live access and the API.
+
+### UI sneak peek
+
+Screens from the live board, recorded run `live02-m1` (seeded bug M1, caught by the frozen tests, repaired by Muse Spark in one attempt).
+
+| Evidence board | Run Console |
+| --- | --- |
+| ![Evidence board: 10 of 10 requirements verified, tests catch 8 of 8 planted bugs, suite self-check and scenario coverage](docs/assets/ui-evidence.png) | ![Run Console: attempts, requirements to tests, waveform with the first mismatch at cycle 19, AI diagnosis next to the measured result](docs/assets/ui-console.png) |
+
+![Landing page with the recorded run's waveform and attempts](docs/assets/ui-landing.png)
 
 The API is hosted on Modal at `https://adrianbadjideh--davinci-api.modal.run`: each compile, test run and sweep of model-written RTL runs in its own throwaway Modal Sandbox with no network and no secrets (`agent/modal_sandbox.py`; a $0 replay of `live02-m1` there reproduced the recorded verdicts). To run it locally instead, use `make api` (Docker running) and enter `http://127.0.0.1:8000` under Connection settings on the board's New run or Spec intake page. Chrome asks once to allow the site to reach your local network; allow it. The API only accepts the board's own origins (`CORS` in the Makefile).
 
