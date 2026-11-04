@@ -11,7 +11,7 @@ What it shows, in this order:
 
 Loop: spec → requirements (human-approved) → frozen tests → mutation proof → AI-generated RTL → real simulation → bounded repair → evidence report → replay.
 
-**Live board:** https://davinci-silicon-fe.vercel.app/ (Evidence and Run Console from the committed evidence bundle; New run and Spec intake need the API).
+**Live board:** https://davinci-silicon-fe.vercel.app/ — the Evidence board, Run Console and verification plans of every recorded run are public and need no account (served from the committed evidence bundle). New run and Spec intake need a signed-in account with live access and the API.
 
 Until the API is hosted, run it on your machine with `make api` (Docker running) and enter `http://127.0.0.1:8000` under Connection settings on the board's New run or Spec intake page. Chrome asks once to allow the site to reach your local network; allow it. The API only accepts the board's own origins (`CORS` in the Makefile).
 
@@ -28,7 +28,7 @@ Built for the Meta Global AI Developer Hackathon 2026 (Startup Track, "Push the 
 | Parameter sweep at 3 other parameter sets, never shown to the model (`verify/run_sweep.py`, `tests_sweep/`) | done; reference passes, hard-coded widths fail |
 | Docker sandbox (`docker/Dockerfile`, `make sandbox`, `--sandbox docker`) | done: no network, read-only tests, CPU/mem/pid caps, 120 s timeout |
 | Model client: Meta / Baseten / replay, cost ledger, budget guard (`agent/llm.py`) | done; Meta tested live, Baseten not yet |
-| Verified loop with bounded repair, evidence `run.json` (`agent/pipeline.py`) | done; 2 live runs + extraction-based live runs |
+| Verified loop with bounded repair, evidence `run.json` (`agent/pipeline.py`) | done; 4 recorded live runs on Muse Spark 1.3 (`live01`, `live02-m1`, `live03-pdf`, `live04-breakdown`), each re-checked by a $0 replay under today's gates (`live04-breakdown`'s attempt 1 was falsely rejected by an older port check, fixed since; its replay passes on attempt 1) |
 | HTTP API: runs, SSE progress, replay, mutation, ledger (`api/server.py`) | done |
 | Image/PDF spec input → extracted requirements → human approval → RTL (`agent/extract.py`) | done |
 | Web UI (`web/`, `make evidence board`): Evidence Board and Run Console as a static site over `evidence/`; New run (live progress) and Spec intake (upload → review → approve → run) against the API | done; API URL from `NEXT_PUBLIC_DAVINCI_API` or the page's Connection settings |
@@ -36,6 +36,13 @@ Built for the Meta Global AI Developer Hackathon 2026 (Startup Track, "Push the 
 | Scenario counters: how often the frozen suite reaches full, empty, overflow/underflow cases, simultaneous read+write, wraparound (`verify/coverage.py`, `make coverage`) | done; every scenario reached on the reference and all exported RTLs |
 | Waveform and FIFO replay of every attempt: per-cycle trace of the frozen tests with the golden model's expected values, drawn in the Run Console (`verify/trace.py`, `make trace`) | done; measured from the simulator, model RTL traced in Docker |
 | Verification plan per run in the industry shape (Vplan sections, OpenTitan-style testpoints and sign-off, plus mutation evidence and AI provenance) as `.md`, `.csv` and `testplan.hjson`, from stored files only (`verify/plan.py`, `make plan`; format in `docs/verification-plan-format.md`) | done; in the evidence bundle and downloadable from the board |
+| Design breakdown before RTL: Muse Spark proposes state, widths, pointer scheme and control/datapath per requirement; a person approves; the final RTL is checked against it (`agent/breakdown.py`) | done; `live04-breakdown`: 12/12 planned elements present in the final RTL, 10 widths match, 2 not checked |
+| Formal properties with SymbiYosys on the reference and every exported model RTL (`verify/formal.py`, `formal/`) | done; 6/6 hand-written properties proved (unbounded) on all; they catch 3 of the 8 planted bugs (M2, M7, M8), the rest are behaviours no property states |
+| SKY130 estimates: synthesis + static timing + power pre-layout (Yosys, OpenSTA), and a full open-source layout run with multi-corner timing (LibreLane/OpenLane 2) (`verify/sta.py`, `verify/layout.py`) | done for the reference and the 4 live RTLs; DRC/LVS clean and a GDS for all five; at the slow corner `live02-m1` misses 100 MHz by 0.172 ns and every design has slew violations. Open-source estimates, not foundry signoff |
+| Generic cell and flip-flop count per RTL (`verify/area.py`) | done; reference 384 cells / 153 flip-flops |
+| More blocks with their own frozen suites and planted bugs: saturating gain stage (bit-accurate golden model) and round-robin arbiter (`blocks/`) | done; 7/7 planted bugs caught on each; recorded live model runs are all on `sync_fifo` |
+| Learn mode: per requirement an explanation and a question, answers checked against the golden model (`agent/learn.py`) | done; written by Muse Spark (AI interpretation), 10/10 answers match the golden model |
+| Accounts: email + password, Google and GitHub sign-in; accounts are read-only until live access is granted by hand (`api/users.py`, `api/auth.py`) | done; unit-tested (`make unit`) |
 
 ## Run
 
@@ -77,27 +84,28 @@ Run statuses: `pass` (G1–G3), `escaped` (passed the visible suite, failed the 
 
 ## Limitations and roadmap
 
-**Today.** DaVINCI proves the tests are strong (mutation analysis, weak-test check, scenario coverage) for one block, a sync FIFO, on open-source tools (Icarus Verilog, cocotb), and measures every AI attempt against them.
+**Today.** DaVINCI shows the tests are strong (planted bugs, weak-test check, scenario counts, plan gaps) and measures every AI attempt against them, end to end for one block, a sync FIFO, on open-source tools. Formal properties and SKY130 timing/power/layout estimates sit next to the simulation results; two more small blocks have frozen suites and planted bugs.
 
 **Not yet:**
 
-- **Proving a testbench or reference model is correct.** DaVINCI shows the tests are strong (they catch planted bugs) and agree with a hand-written reference RTL; it does not prove the reference model itself is right. Both oracles share `tests/golden_model.py`, so a misreading of the spec shared by the reference and the model would pass both.
-- **Bit-accurate reference models for fixed-point datapaths.**
-- **Code coverage.** Icarus Verilog has none; "coverage" here is mutation-based plan coverage plus scenario counts, not line, toggle or functional coverage. REQ-04 and REQ-09 have no planted bug yet.
-- **Formal proof.**
-- **Timing, synthesis, area and power.** None are claimed.
-- **Design breakdown.** The requirements and the port/parameter interface (`spec/requirements.json`, `spec/interface.json`) are written and approved by a person, or extracted from a spec page and then approved; DaVINCI does not derive a microarchitecture from a spec.
+- **Proving the reference model is correct.** The tests are shown to be strong and to agree with a hand-written reference RTL; both share `tests/golden_model.py`, so a misreading of the spec shared by the reference and the model would pass both.
+- **Code coverage.** Icarus Verilog has none; coverage here is planted-bug coverage plus scenario counts, not line, toggle or covergroup coverage. REQ-04 and REQ-09 have no planted bug yet.
+- **Complete formal proof.** Six hand-written properties are proved; they do not state every requirement, so they catch only 3 of the 8 planted bugs. Simulation remains the main check.
+- **Signoff-grade timing and power.** SKY130 numbers come from open-source flows with default constraints and activity; they are estimates per design, placement varies between runs, and the slow corner shows slew violations. Not a foundry or commercial signoff flow.
+- **Microarchitecture from an ambiguous spec.** The design breakdown is proposed by the model and approved by a person; it is checked against the final RTL, not derived or proven correct.
+- **More than one block end to end.** The gain stage and arbiter have frozen suites and planted bugs, but every recorded live model run is on the sync FIFO.
+- **Rates.** Results are individual recorded runs (4 live runs), not a benchmark; no success rate is claimed.
+- **Hosted API.** The board is hosted; the API (live runs, spec intake, sign-in) runs on a local machine for now, and the Modal sandbox backend is not built.
 
 Also worth knowing:
 
-- **The default spec contains the reference equations** (`spec/fifo_spec.md` states `do_write = wr_en && (!full || rd_en)`), so first-pass success on it measures spec-conformant transcription, not design from an ambiguous spec. A prose-only spec arm is planned.
-- **The mutation score describes the test suite**, measured against the reference RTL with 8 hand-written mutants; it is not a property of any generated RTL.
+- **The default spec contains the reference equations** (`spec/fifo_spec.md` states `do_write = wr_en && (!full || rd_en)`), so first-pass success on it measures spec-conformant transcription, not design from an ambiguous spec. The PDF-spec run (`live03-pdf`) starts from an extracted, approved list instead.
+- **The planted-bug score describes the test suite**, measured against the reference RTL with 8 hand-written mutants; it is not a property of any generated RTL.
 - **Replay re-simulates recorded model output.** It checks the pipeline and simulator are deterministic, not that the model would answer the same way again.
-- **Small N.** Live results so far are individual runs, not rates.
 
-**Next (from engineer interviews):** design-vs-testbench triage beyond reference validation; bit-accurate model generation; spec → microarchitecture breakdown.
+**Next:** design-vs-testbench triage beyond reference validation; live runs on the other blocks; a benchmark with rates; hosted API with simulations in Modal sandboxes.
 
-**Not in this hackathon:** foundry or commercial signoff, full-chip integration, analog/mixed-signal, open self-serve signup with billing.
+**Not in this hackathon:** foundry signoff, full-chip integration, analog/mixed-signal, self-serve billing.
 
 ## Built with Meta AI
 
@@ -114,6 +122,6 @@ Also worth knowing:
 - Tests and the golden model are frozen: the repair agent may only edit RTL; `suite_sha256` is checked every run.
 - Every result shown is labelled measured (simulator) or AI interpretation (not verified).
 - All attempts are counted, including failures.
-- Model-written RTL is only simulated inside the Docker sandbox; live model calls through the API need `DAVINCI_API_TOKEN`.
+- Model-written RTL is only simulated inside the Docker sandbox; live model calls through the API need an account with live access (granted by hand) or an issued token.
 
 Architecture review and decisions: `docs/architecture/`.
