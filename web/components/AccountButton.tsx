@@ -39,7 +39,13 @@ export default function AccountButton({ landing = false, active = false }: { lan
       <Link href="/login/" className="lp-nav-link">Sign in</Link>
       <Link href="/register/" className="btn btn-sm">Get started</Link>
     </>
-  ) : null;
+  ) : (
+    // Signed out inside the app: recorded runs stay readable; signing in unlocks new runs.
+    <div className="sb-signin">
+      <Link href="/login/" className="btn btn-sm">Sign in</Link>
+      <Link href="/register/" className="btn btn-quiet btn-sm">Create account</Link>
+    </div>
+  );
   if (landing) return <Link href="/evidence/" className="btn btn-sm">Open DaVINCI</Link>;
   // Sidebar profile: avatar, name and access, linking to /account/, with sign-out next to it.
   return (

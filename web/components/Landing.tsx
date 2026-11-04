@@ -54,7 +54,7 @@ const FAQ = [
   ["What can it design today?", "One block end to end: a synchronous FIFO, simulated with Icarus Verilog. Two more small blocks, a saturating gain stage and a round-robin arbiter, have their own frozen suites. It is a working prototype, not a full chip flow."],
   ["How do I know the tests are good enough?", "Before any RTL is trusted, the suite runs against hand-written buggy versions of the reference design, and every planted bug must make a test fail. The evidence shows which test catches which bug, and what slips through when a test is removed."],
   ["Is generated code run safely?", "Model-written RTL is compiled and simulated only in a sandbox with no network, a non-root user, read-only tests and CPU, memory and time limits. Code with system tasks or compiler directives is rejected before it runs."],
-  ["What does it cost?", "Reading the evidence and replaying recorded runs is free with an account. Live runs call Muse Spark and are switched on per account by the DaVINCI team; the cost of every call is recorded with the run."],
+  ["What does it cost?", "Reading the evidence and the recorded runs is free and needs no account. Live runs call Muse Spark and are switched on per account by the DaVINCI team; the cost of every call is recorded with the run."],
 ];
 
 const usd = (n: number) => `$${n < 0.1 ? n.toFixed(4) : n.toFixed(2)}`;
@@ -85,7 +85,7 @@ export default function Landing({ data }: { data: LandingData }) {
             <p className="lp-lede">DaVINCI checks a frozen testbench against planted bugs, then simulates model-written Verilog against it, cycle by cycle, in a sandbox. You get every attempt, the waveform of each failure and a verification plan a lead can sign off. Today: one block, a synchronous FIFO.</p>
             <div className="lp-cta-row">
               <Link href="/register/" className="btn lp-btn">Get started</Link>
-              <a href="#how" className="btn btn-quiet lp-btn">See how it works</a>
+              <Link href="/evidence/" className="btn btn-quiet lp-btn">See a recorded run</Link>
             </div>
           </div>
           {data.trace && s && <div className="lp-wrap lp-hero-demo"><ProductDemo data={data} /></div>}
@@ -228,9 +228,9 @@ export default function Landing({ data }: { data: LandingData }) {
         <section className="lp-section lp-section-line lp-end">
           <div className="lp-wrap">
             <h2 className="lp-h2">Open the recorded runs.</h2>
-            <p className="lp-p">With an account you can read the evidence, step through the waveforms and replay runs for $0. The code and every stored run are on GitHub.</p>
+            <p className="lp-p">No account needed: read the evidence, step through the waveforms and open the verification plans. The code and every stored run are on GitHub.</p>
             <div className="lp-cta-row">
-              <Link href="/register/" className="btn lp-btn">Create an account</Link>
+              <Link href="/evidence/" className="btn lp-btn">Open the evidence</Link>
               <a href="https://github.com/GLAZERadr/DaVINCI-Silicon" className="btn btn-quiet lp-btn">View on GitHub</a>
             </div>
           </div>

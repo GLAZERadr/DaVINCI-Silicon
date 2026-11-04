@@ -779,3 +779,5 @@ tr.row-muted td { color: var(--muted); }
 .auth-gate-card { max-width: 460px; }
 .sb-account .account-dot { width: 32px; height: 32px; font-size: 14px; }
 .avatar-img { object-fit: cover; background: var(--surface-3); }
+.sb-signin { display: grid; gap: 8px; }
+.sb-signin .btn { width: 100%; justify-content: center; }

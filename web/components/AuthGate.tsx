@@ -4,14 +4,15 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { ApiError, api, apiToken, setSessionToken } from "@/lib/api";
 
-// App pages need a signed-in account (or a token set in Connection settings). The
-// landing, sign-in and register pages stay public. This is a
-// client-side gate on a static site: the raw evidence also lives in the public repo.
-const PUBLIC = ["/", "/login/", "/register/"];
+// Pages that start work or show an account need a signed-in account (or a token set in
+// Connection settings). Everything else is public and read-only: the landing page, the
+// Evidence board, the Run Console and verification plans of recorded runs, so a visitor
+// can check the evidence without an account. Client-side gate on a static site.
+const GATED = ["/new/", "/spec/", "/account/"];
 
 export default function AuthGate({ children }: { children: React.ReactNode }) {
   const path = usePathname();
-  const open = PUBLIC.includes(path.endsWith("/") ? path : `${path}/`);
+  const open = !GATED.includes(path.endsWith("/") ? path : `${path}/`);
   const [state, setState] = useState<"checking" | "ok" | "down">("checking");
 
   useEffect(() => {
