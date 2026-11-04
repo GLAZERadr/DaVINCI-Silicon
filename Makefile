@@ -2,7 +2,7 @@ RTL ?= rtl/sync_fifo.v
 RUN ?= manual
 IMAGE = davinci-sim:latest
 
-.PHONY: sim mutate weak-demo image sandbox api evidence board plan plan-ref gaps coverage coverage-ref trace trace-ref triage formal-image formal formal-ref formal-mutants sta sta-ref layout layout-ref
+.PHONY: sim mutate weak-demo image sandbox api evidence board plan plan-ref gaps coverage coverage-ref trace trace-ref triage formal-image formal formal-ref formal-mutants sta sta-ref layout layout-ref unit
 
 # Local run (needs iverilog + cocotb installed)
 sim:
@@ -102,6 +102,9 @@ plan-ref:
 CORS ?= https://davinci-silicon-fe.vercel.app,http://127.0.0.1:4320,http://localhost:3000
 api:
 	DAVINCI_CORS_ORIGINS="$(CORS)" uvicorn api.server:app --host 127.0.0.1 --port 8000
+
+unit:
+	python3 -m pytest -q tests_unit
 
 # Committed evidence bundle for the Evidence Board (live runs + today's-gates replays).
 LIVE ?= live01 live02-m1 live03-pdf live04-breakdown
