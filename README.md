@@ -1,6 +1,6 @@
 # DaVINCI Silicon
 
-![DaVINCI Silicon: prove the tests first, then let the model write the RTL. Screens from the Evidence board, Run Console, verification plan and landing page, light and dark mode](docs/assets/cover.png)
+![DaVINCI Silicon: prove the tests first, then let the model write the RTL. Run Console, Evidence board and verification plan of the recorded run live02-m1, with the loop from spec to evidence](docs/assets/cover.png)
 
 **DaVINCI Silicon turns a chip spec into a verification plan and proof your lead can sign off, then lets AI write and fix the RTL against it.**
 
