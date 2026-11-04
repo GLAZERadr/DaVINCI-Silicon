@@ -8,7 +8,7 @@ import { api, apiBase, setSessionToken } from "@/lib/api";
 // Sign in / register (api/auth.py). Google and GitHub run the OAuth flow on the API,
 // which sends the browser back here with the session token in the URL fragment.
 type Mode = "login" | "register";
-type Providers = { password: boolean; google: boolean; github: boolean };
+type Providers = { password: boolean; google: boolean; github: boolean; password_live?: boolean; live_per_day?: number };
 const NEXT_KEY = "davinci.next";
 
 const GOOGLE = (
@@ -105,7 +105,9 @@ export default function AuthForm({ mode }: { mode: Mode }) {
         <section className="auth-card card" aria-labelledby="auth-title">
           <h1 id="auth-title" className="auth-title">{reg ? "Create your account" : "Sign in"}</h1>
           <p className="auth-sub">{reg
-            ? "The recorded runs are open to everyone. An account keeps your own runs; live model runs are switched on per account by the DaVINCI team."
+            ? (prov?.password_live
+              ? `The recorded runs are open to everyone. An account with email and password can start live runs on Muse Spark right away, up to ${prov.live_per_day ?? 5} a day; replays are free.`
+              : "The recorded runs are open to everyone. An account keeps your own runs; live model runs are switched on per account by the DaVINCI team.")
             : "Welcome back. Sign in to start runs and open your account. Recorded runs are open without one."}</p>
 
           <div className="auth-sso">

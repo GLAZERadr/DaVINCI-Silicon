@@ -30,7 +30,9 @@ image = (
     modal.Image.debian_slim(python_version="3.12")
     .pip_install("fastapi==0.162.0", "uvicorn==0.54.0", "python-multipart==0.0.32",
                  "pillow==13.0.0", "pypdfium2==5.14.0", "modal")
+    # Hosted demo: email/password accounts start live (judges can try it), capped per account per day.
     .env({"DAVINCI_SANDBOX": "modal", "DAVINCI_API_PUBLIC_URL": PUBLIC_URL,
+          "DAVINCI_AUTO_LIVE_PASSWORD": "1", "DAVINCI_LIVE_PER_DAY": "5",
           "DAVINCI_CORS_ORIGINS": f"{BOARD},http://127.0.0.1:4320,http://localhost:3000"})
     .add_local_dir(ROOT, "/root/app", copy=True, ignore=[
         ".git", ".venv", ".claude", "web", "runs", "evidence", "docs", "learn", "**/__pycache__",

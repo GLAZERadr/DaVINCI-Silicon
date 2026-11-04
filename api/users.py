@@ -104,7 +104,7 @@ def _new(email: str, name: str) -> dict:
             "created": time.strftime("%Y-%m-%dT%H:%M:%S%z")}
 
 
-def register(email: str, name: str, password: str) -> dict:
+def register(email: str, name: str, password: str, live: bool = False) -> dict:
     email, name = email.strip().lower(), name.strip()
     if not EMAIL.match(email):
         raise ValueError("not an email address")
@@ -119,6 +119,7 @@ def register(email: str, name: str, password: str) -> dict:
             raise FileExistsError("an account with this email already exists; sign in instead")
         u = _new(email, name)
         u["password"] = pw
+        u["live"] = live
         users.append(u)
         _save(users)
     return u

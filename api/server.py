@@ -155,14 +155,14 @@ def _worker():
 threading.Thread(target=_worker, daemon=True).start()
 
 
-def _enqueue(run_id: str, argv: list, kind: str, owner: "tk.Identity | None" = None) -> dict:
+def _enqueue(run_id: str, argv: list, kind: str, owner: "tk.Identity | None" = None, live: bool = False) -> dict:
     with _lock:
         if run_id in _jobs or (RUNS / run_id).exists():
             raise HTTPException(409, f"run {run_id} already exists")
         _jobs[run_id] = {"run_id": run_id, "kind": kind, "state": "queued", "argv": argv,
                          "queued": time.time()}
         ahead = sum(j["state"] in ("queued", "running") for j in _jobs.values()) - 1
-    tk.record_owner("run", run_id, owner, via=kind)
+    tk.record_owner("run", run_id, owner, via=kind, live=live)
     _log_job({**_jobs[run_id], "owner": owner.owner if owner else None})
     _queue.put(run_id)
     return {"run_id": run_id, "state": "queued", "runs_ahead": ahead}
@@ -203,8 +203,29 @@ def _require_token(providers: set, authorization: str | None) -> "tk.Identity | 
     if ident is None:
         raise HTTPException(401, "live model calls and approvals need an API token; replay and fake runs are open")
     if not ident.live:
-        raise HTTPException(403, "this account has no live access yet: request access, the DaVINCI team grants it by hand")
+        raise HTTPException(403, "this account has no live access yet; the DaVINCI team switches it on per account")
     return ident
+
+
+LIVE_PER_DAY = int(os.environ.get("DAVINCI_LIVE_PER_DAY", "5"))
+
+
+def _live_quota(ident: "tk.Identity | None"):
+    """Accounts get at most LIVE_PER_DAY live model calls (runs, extractions, breakdowns) per
+    day; replays stay free. The admin token and CLI-issued tokens are not capped. The
+    $120 budget guard in agent/llm.py still applies to everyone on top of this."""
+    if ident is None or ident.admin or ident.user_id is None:
+        return
+    today = time.strftime("%Y-%m-%d")
+    used = 0
+    if tk.OWNERS.exists():
+        for line in tk.OWNERS.read_text().splitlines():
+            if line.strip():
+                r = json.loads(line)
+                used += r.get("live") is True and r.get("owner") == ident.owner and r["ts"].startswith(today)
+    if used >= LIVE_PER_DAY:
+        raise HTTPException(429, f"this account has used its {LIVE_PER_DAY} live model calls for today; "
+                                 "replays of recorded runs stay free")
 
 
 def _require_owner(kind: str, obj_id: str, ident: "tk.Identity"):
@@ -234,6 +255,9 @@ def create_run(req: RunRequest, authorization: str | None = Header(None)):
     elif req.seed_bug and req.seed_bug not in MUTANTS:
         raise HTTPException(422, f"seed_bug must be one of {sorted(MUTANTS)}")
     ident = _require_token(providers, authorization)
+    live = bool(providers & set(llm.LIVE))
+    if live:
+        _live_quota(ident)
 
     run_id = _new_id("run")
     # No --sandbox: the pipeline puts any model-written RTL in the Docker sandbox.
@@ -268,7 +292,7 @@ def create_run(req: RunRequest, authorization: str | None = Header(None)):
         if req.requirements is not None:
             (inputs / "requirements.json").write_text(json.dumps(req.requirements, indent=2))
             argv += ["--requirements", str(inputs / "requirements.json")]
-    return _enqueue(run_id, argv, "run", ident)
+    return _enqueue(run_id, argv, "run", ident, live=live)
 
 
 @app.post("/runs/{run_id}/replay", status_code=202)
@@ -485,6 +509,8 @@ async def create_extraction(file: UploadFile = File(...), provider: str = Form("
     if provider not in ("meta", "baseten", "fake"):
         raise HTTPException(422, "provider must be meta, baseten or fake")
     ident = _require_token({provider}, authorization)
+    if provider in llm.LIVE:
+        _live_quota(ident)
     suffix = Path(file.filename or "").suffix.lower()
     if suffix != ".pdf" and suffix not in ex.IMAGE_MIME:
         raise HTTPException(422, f"file must be PDF or one of {sorted(ex.IMAGE_MIME)}")
@@ -500,7 +526,7 @@ async def create_extraction(file: UploadFile = File(...), provider: str = Form("
     path.write_bytes(data)
     _extractions[xid] = {"extraction_id": xid, "status": "running", "provider": provider,
                          "source": {"name": Path(file.filename or "upload").name, "bytes": len(data)}}
-    tk.record_owner("extraction", xid, ident)
+    tk.record_owner("extraction", xid, ident, live=provider in llm.LIVE)
     _log_job({"run_id": xid, "kind": "extraction", **_extractions[xid], "owner": ident.owner if ident else None})
     threading.Thread(target=_run_extraction, args=(xid, path, provider), daemon=True).start()
     return {"extraction_id": xid, "status": "running"}
@@ -602,6 +628,8 @@ def create_breakdown(req: BreakdownRequest, authorization: str | None = Header(N
     if req.provider not in ("meta", "baseten", "fake"):
         raise HTTPException(422, "provider must be meta, baseten or fake")
     ident = _require_token({req.provider}, authorization)
+    if req.provider in llm.LIVE:
+        _live_quota(ident)
     argv = ["--provider", req.provider]
     if req.extraction_id:
         rec = _extraction(req.extraction_id)
@@ -612,7 +640,7 @@ def create_breakdown(req: BreakdownRequest, authorization: str | None = Header(N
     bid = bd.new_bid()
     _breakdowns[bid] = {"breakdown_id": bid, "status": "running", "provider": req.provider,
                         "extraction_id": req.extraction_id}
-    tk.record_owner("breakdown", bid, ident)
+    tk.record_owner("breakdown", bid, ident, live=req.provider in llm.LIVE)
     _log_job({"run_id": bid, "kind": "breakdown", **_breakdowns[bid], "owner": ident.owner if ident else None})
     threading.Thread(target=_run_breakdown, args=(bid, argv), daemon=True).start()
     return {"breakdown_id": bid, "status": "running"}
