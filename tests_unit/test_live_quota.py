@@ -24,16 +24,32 @@ def _register(email):
     return auth.register(body, SimpleNamespace(client=SimpleNamespace(host="10.0.0.1")))
 
 
-def test_password_accounts_read_only_by_default(isolated, monkeypatch):
-    monkeypatch.delenv("DAVINCI_AUTO_LIVE_PASSWORD", raising=False)
+def test_new_accounts_read_only_by_default(isolated, monkeypatch):
+    monkeypatch.delenv("DAVINCI_AUTO_LIVE", raising=False)
     assert _register("a@example.com")["user"]["live"] is False
+    assert users.from_provider("google", "g-1", "g@example.com", "G")["live"] is False
 
 
-def test_password_accounts_live_on_hosted_demo(isolated, monkeypatch):
-    monkeypatch.setenv("DAVINCI_AUTO_LIVE_PASSWORD", "1")
+def test_new_accounts_live_during_judging(isolated, monkeypatch):
+    monkeypatch.setenv("DAVINCI_AUTO_LIVE", "1")
+    monkeypatch.setenv("DAVINCI_AUTO_LIVE_UNTIL", "2999-12-31")
     r = _register("b@example.com")
     assert r["user"]["live"] is True
     assert tokens.authenticate(f"Bearer {r['token']}").live is True
+    assert users.from_provider("github", "gh-1", "gh@example.com", "GH")["live"] is True
+
+
+def test_auto_live_ends_after_the_date(isolated, monkeypatch):
+    monkeypatch.setenv("DAVINCI_AUTO_LIVE", "1")
+    monkeypatch.setenv("DAVINCI_AUTO_LIVE_UNTIL", "2000-01-01")
+    assert _register("late@example.com")["user"]["live"] is False
+
+
+def test_linking_keeps_an_existing_accounts_access(isolated, monkeypatch):
+    monkeypatch.delenv("DAVINCI_AUTO_LIVE", raising=False)
+    users.register("own@example.com", "Own", "own-password-12")
+    monkeypatch.setenv("DAVINCI_AUTO_LIVE", "1")
+    assert users.from_provider("google", "g-2", "own@example.com", "Own")["live"] is False
 
 
 def test_daily_cap_counts_only_live_calls_of_that_account(isolated, monkeypatch):

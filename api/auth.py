@@ -112,7 +112,7 @@ class Login(BaseModel):
 def providers():
     return {"password": True, **{p: _creds(p) is not None for p in OAUTH},
             # Shown on the register form: whether a new email account can start live runs right away.
-            "password_live": os.environ.get("DAVINCI_AUTO_LIVE_PASSWORD") == "1",
+            "auto_live": users.auto_live(), "auto_live_until": os.environ.get("DAVINCI_AUTO_LIVE_UNTIL") or None,
             "live_per_day": int(os.environ.get("DAVINCI_LIVE_PER_DAY", "5"))}
 
 
@@ -121,10 +121,9 @@ def register(body: Register, request: Request):
     if _limited(f"reg:{_ip(request)}", REGISTER_PER_IP, 3600):
         raise HTTPException(429, "too many new accounts from this address; try again in an hour")
     try:
-        # DAVINCI_AUTO_LIVE_PASSWORD=1 (hosted demo): email/password accounts start with live
-        # runs on, so judges can try them; the daily per-account cap in api/server.py still applies.
-        u = users.register(body.email, body.name, body.password,
-                           live=os.environ.get("DAVINCI_AUTO_LIVE_PASSWORD") == "1")
+        # Judging window (users.auto_live): new accounts start with live runs; the daily
+        # per-account cap in api/server.py still applies.
+        u = users.register(body.email, body.name, body.password, live=users.auto_live())
     except FileExistsError as e:
         raise HTTPException(409, str(e)) from None
     except ValueError as e:

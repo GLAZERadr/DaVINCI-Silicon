@@ -104,6 +104,16 @@ def _new(email: str, name: str) -> dict:
             "created": time.strftime("%Y-%m-%dT%H:%M:%S%z")}
 
 
+def auto_live() -> bool:
+    """Hosted judging window: new accounts (any sign-in method) start with live runs when
+    DAVINCI_AUTO_LIVE=1, until the date in DAVINCI_AUTO_LIVE_UNTIL (YYYY-MM-DD, inclusive,
+    local time). After that date new accounts are read-only again."""
+    if os.environ.get("DAVINCI_AUTO_LIVE") != "1":
+        return False
+    until = os.environ.get("DAVINCI_AUTO_LIVE_UNTIL", "")
+    return not until or time.strftime("%Y-%m-%d") <= until
+
+
 def register(email: str, name: str, password: str, live: bool = False) -> dict:
     email, name = email.strip().lower(), name.strip()
     if not EMAIL.match(email):
@@ -142,6 +152,7 @@ def from_provider(provider: str, subject: str, email: str, name: str, avatar: st
             u = next((x for x in users if x["email"] == email), None)
             if u is None:
                 u = _new(email, (name or email.split("@")[0]).strip()[:80] or email)
+                u["live"] = auto_live()
                 users.append(u)
             elif not u.get("email_verified"):
                 u["password"] = None  # unverified password on someone else's email: drop it
