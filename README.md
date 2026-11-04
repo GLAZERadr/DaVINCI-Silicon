@@ -13,7 +13,7 @@ Loop: spec → requirements (human-approved) → frozen tests → mutation proof
 
 **Live board:** https://davinci-silicon-fe.vercel.app/ — the Evidence board, Run Console and verification plans of every recorded run are public and need no account (served from the committed evidence bundle). New run and Spec intake need a signed-in account with live access and the API.
 
-Until the API is hosted, run it on your machine with `make api` (Docker running) and enter `http://127.0.0.1:8000` under Connection settings on the board's New run or Spec intake page. Chrome asks once to allow the site to reach your local network; allow it. The API only accepts the board's own origins (`CORS` in the Makefile).
+The API is hosted on Modal at `https://adrianbadjideh--davinci-api.modal.run`: each compile, test run and sweep of model-written RTL runs in its own throwaway Modal Sandbox with no network and no secrets (`agent/modal_sandbox.py`; a $0 replay of `live02-m1` there reproduced the recorded verdicts). To run it locally instead, use `make api` (Docker running) and enter `http://127.0.0.1:8000` under Connection settings on the board's New run or Spec intake page. Chrome asks once to allow the site to reach your local network; allow it. The API only accepts the board's own origins (`CORS` in the Makefile).
 
 Built for the Meta Global AI Developer Hackathon 2026 (Startup Track, "Push the Frontier"). Everything in this repo was written during the hackathon (Oct 27 – Nov 4, 2026).
 
@@ -95,7 +95,7 @@ Run statuses: `pass` (G1–G3), `escaped` (passed the visible suite, failed the 
 - **Microarchitecture from an ambiguous spec.** The design breakdown is proposed by the model and approved by a person; it is checked against the final RTL, not derived or proven correct.
 - **More than one block end to end.** The gain stage and arbiter have frozen suites and planted bugs, but every recorded live model run is on the sync FIFO.
 - **Rates.** Results are individual recorded runs (4 live runs), not a benchmark; no success rate is claimed.
-- **Hosted API.** The board is hosted; the API (live runs, spec intake, sign-in) runs on a local machine for now, and the Modal sandbox backend is not built.
+- **Hosting capacity.** The API runs on Modal (`modal_app.py`) on a starter credit: one container that sleeps when idle, so the first request after a pause takes a few seconds, and new runs show results without a waveform (traces still need Docker).
 
 Also worth knowing:
 
@@ -103,7 +103,7 @@ Also worth knowing:
 - **The planted-bug score describes the test suite**, measured against the reference RTL with 8 hand-written mutants; it is not a property of any generated RTL.
 - **Replay re-simulates recorded model output.** It checks the pipeline and simulator are deterministic, not that the model would answer the same way again.
 
-**Next:** design-vs-testbench triage beyond reference validation; live runs on the other blocks; a benchmark with rates; hosted API with simulations in Modal sandboxes.
+**Next:** design-vs-testbench triage beyond reference validation; live runs on the other blocks; a benchmark with rates; waveform traces for hosted runs.
 
 **Not in this hackathon:** foundry signoff, full-chip integration, analog/mixed-signal, self-serve billing.
 
